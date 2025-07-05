@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -15,6 +15,7 @@ import { Progress } from '@/components/ui/progress'
 import { Toaster, toast } from 'sonner'
 import WriterScoreResult from '@/components/writer-analysis/writer-score-result'
 import AnalysisOptions from '@/components/writer-analysis/analysis-options'
+import { useApiSecurity } from '@/components/api-security-provider'
 
 export interface WriterAnalysisResult {
   overallScore: number
@@ -51,9 +52,24 @@ export default function WriterAnalysisPage() {
     setEnabledOptions({ ...enabledOptions, [key]: value })
   }
 
+  // 获取安全API客户端
+  const { isInitialized, secureApiCall } = useApiSecurity()
+
+  // 检测API安全是否初始化
+  useEffect(() => {
+    if (!isInitialized) {
+      console.log('API安全组件正在初始化...')
+    }
+  }, [isInitialized])
+
   const handleAnalyze = async () => {
     if (!content.trim()) {
       toast.error('请输入作品内容再进行分析')
+      return
+    }
+
+    if (!isInitialized) {
+      toast.error('API安全组件尚未初始化，请稍后再试')
       return
     }
 
@@ -73,7 +89,8 @@ export default function WriterAnalysisPage() {
         })
       }, 500)
 
-      const response = await fetch('/api/writer-analysis', {
+      // 使用安全API调用
+      const data = await secureApiCall('/api/writer-analysis', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -85,12 +102,6 @@ export default function WriterAnalysisPage() {
       })
 
       clearInterval(progressInterval)
-
-      if (!response.ok) {
-        throw new Error('分析请求失败')
-      }
-
-      const data = await response.json()
       setProgress(100)
       setResult(data)
     } catch (error) {

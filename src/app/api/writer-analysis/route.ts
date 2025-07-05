@@ -7,6 +7,7 @@ import {
   generateRatingTag
 } from '@/utils/score-calculator'
 import { getLlmApiConfig, isValidLlmApiConfig } from '@/config/api'
+import { signResponseData } from '@/middleware/auth-middleware'
 
 const apiConfig = getLlmApiConfig()
 
@@ -68,7 +69,16 @@ export async function POST(request: Request) {
         overallScore
       }
 
-      return NextResponse.json(finalResult)
+      // 对响应结果进行签名
+      const responseData = JSON.stringify(finalResult)
+      const { publicKey, signature } = await signResponseData(responseData)
+
+      // 创建响应并添加签名信息
+      const response = NextResponse.json(finalResult)
+      response.headers.set('X-Server-Public-Key', publicKey)
+      response.headers.set('X-Server-Signature', signature)
+
+      return response
     } catch (error) {
       console.error('无法解析AI返回的JSON结果:', resultText)
       return NextResponse.json({ error: '分析结果格式错误' }, { status: 500 })
