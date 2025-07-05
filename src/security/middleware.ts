@@ -1,13 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Ed25519Algorithm } from '@yoursunny/webcrypto-ed25519'
-import { base64ToArrayBuffer, verifySignature } from './crypto'
+import { verifySignature } from './crypto'
 
 async function verifyRequestSignature(
   data: string,
   signature: string,
   publicKey: string
 ): Promise<boolean> {
-  return await verifySignature(data, signature, publicKey)
+  try {
+    console.log('[Server] Verifying request signature:', {
+      dataLength: data.length,
+      signatureLength: signature.length,
+      publicKeyLength: publicKey.length
+    })
+
+    const isValid = await verifySignature(data, signature, publicKey)
+    console.log('[Server] Signature verification result:', isValid)
+    return isValid
+  } catch (error) {
+    console.error('[Server] Signature verification error:', error)
+    return false
+  }
 }
 
 export async function authMiddleware(
@@ -78,20 +90,27 @@ export async function signResponseData(data: string): Promise<{
   signature: string
   keyPair: CryptoKeyPair
 }> {
-  const keyPair = (await crypto.subtle.generateKey(Ed25519Algorithm, true, [
-    'sign',
-    'verify'
-  ])) as CryptoKeyPair
+  const keyPair = (await crypto.subtle.generateKey(
+    {
+      name: 'ECDSA',
+      namedCurve: 'P-256'
+    },
+    true,
+    ['sign', 'verify']
+  )) as CryptoKeyPair
 
   const dataBuffer = new TextEncoder().encode(data)
   const signatureBuffer = await crypto.subtle.sign(
-    Ed25519Algorithm,
+    {
+      name: 'ECDSA',
+      hash: { name: 'SHA-256' }
+    },
     keyPair.privateKey,
     dataBuffer
   )
 
   const publicKeyBuffer = await crypto.subtle.exportKey(
-    'raw',
+    'spki',
     keyPair.publicKey
   )
   const publicKey = btoa(

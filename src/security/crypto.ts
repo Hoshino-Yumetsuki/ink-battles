@@ -1,12 +1,3 @@
-import { Ed25519Algorithm, polyfillEd25519 } from '@yoursunny/webcrypto-ed25519'
-
-try {
-  polyfillEd25519()
-  console.debug('Ed25519 polyfill loaded successfully')
-} catch (error) {
-  console.error('Failed to load Ed25519 polyfill:', error)
-}
-
 export class AuthKeyManager {
   private static instance: AuthKeyManager | null = null
   private keyPair: CryptoKeyPair | null = null
@@ -25,15 +16,14 @@ export class AuthKeyManager {
     this.destroyKeyPair()
 
     try {
-      console.debug(
-        'Generating key pair with Ed25519Algorithm:',
-        Ed25519Algorithm
-      )
-
-      this.keyPair = (await crypto.subtle.generateKey(Ed25519Algorithm, true, [
-        'sign',
-        'verify'
-      ])) as CryptoKeyPair
+      this.keyPair = (await crypto.subtle.generateKey(
+        {
+          name: 'ECDSA',
+          namedCurve: 'P-256'
+        },
+        true,
+        ['sign', 'verify']
+      )) as CryptoKeyPair
 
       if (!this.keyPair || !this.keyPair.publicKey) {
         throw new Error('Failed to generate valid key pair')
@@ -47,7 +37,7 @@ export class AuthKeyManager {
 
       try {
         const publicKeyBuffer = await crypto.subtle.exportKey(
-          'raw',
+          'spki',
           this.keyPair.publicKey
         )
 
@@ -83,7 +73,10 @@ export class AuthKeyManager {
     try {
       const dataBuffer = new TextEncoder().encode(data)
       const signatureBuffer = await crypto.subtle.sign(
-        Ed25519Algorithm,
+        {
+          name: 'ECDSA',
+          hash: { name: 'SHA-256' }
+        },
         this.keyPair.privateKey,
         dataBuffer
       )
@@ -118,16 +111,9 @@ export function base64ToArrayBuffer(base64: string): ArrayBuffer {
     const paddedBase64 = base64
       .replace(/=+$/, '')
       .padEnd(base64.length + ((4 - (base64.length % 4 || 4)) % 4), '=')
-    const binaryString = window.atob(paddedBase64)
-    const bytes = new Uint8Array(binaryString.length)
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i)
-    }
+    const buffer = Buffer.from(paddedBase64, 'base64')
+    const bytes = new Uint8Array(buffer)
 
-    console.debug(
-      'Successfully converted base64 to ArrayBuffer, length:',
-      bytes.length
-    )
     return bytes.buffer
   } catch (error) {
     console.error('Error converting base64 to ArrayBuffer:', error)
@@ -143,14 +129,13 @@ export async function verifySignature(
   publicKey: string
 ): Promise<boolean> {
   try {
-    console.debug(
-      'Verifying signature with data length:',
-      data.length,
-      'signature length:',
-      signature.length,
-      'public key length:',
-      publicKey.length
-    )
+    if (!signature || signature.length < 10) {
+      return false
+    }
+
+    if (!publicKey || publicKey.length < 10) {
+      return false
+    }
 
     let publicKeyBuffer: ArrayBuffer
     let signatureBuffer: ArrayBuffer
@@ -159,40 +144,41 @@ export async function verifySignature(
       publicKeyBuffer = base64ToArrayBuffer(publicKey)
       signatureBuffer = base64ToArrayBuffer(signature)
     } catch (conversionError) {
-      console.error('Base64 conversion error:', conversionError)
+      console.error('Base64 转换错误:', conversionError)
       return false
     }
 
     const dataBuffer = new TextEncoder().encode(data)
 
-    console.debug('Buffers created successfully. Importing public key...')
     try {
       const cryptoKey = await crypto.subtle.importKey(
-        'raw',
+        'spki',
         publicKeyBuffer,
-        Ed25519Algorithm,
+        {
+          name: 'ECDSA',
+          namedCurve: 'P-256'
+        },
         true,
         ['verify']
       )
 
-      console.debug('Public key imported successfully. Verifying signature...')
-
       const result = await crypto.subtle.verify(
-        Ed25519Algorithm,
+        {
+          name: 'ECDSA',
+          hash: { name: 'SHA-256' }
+        },
         cryptoKey,
         signatureBuffer,
         dataBuffer
       )
-
-      console.debug('Signature verification result:', result)
       return result
     } catch (cryptoError) {
-      console.error('WebCrypto operation failed:', cryptoError)
+      console.error('WebCrypto 操作失败:', cryptoError)
       return false
     }
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error)
-    console.error(`Signature verification failed: ${errorMessage}`)
+    console.error(`签名验证失败: ${errorMessage}`)
     return false
   }
 }
