@@ -15,7 +15,7 @@ import { Progress } from '@/components/ui/progress'
 import { Toaster, toast } from 'sonner'
 import WriterScoreResult from '@/components/writer-analysis/writer-score-result'
 import AnalysisOptions from '@/components/writer-analysis/analysis-options'
-import { useApiSecurity } from '@/components/api-security-provider'
+import { useApiSecurity } from '@/security/provider'
 
 export interface WriterAnalysisResult {
   overallScore: number

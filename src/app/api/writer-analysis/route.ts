@@ -7,7 +7,7 @@ import {
   generateRatingTag
 } from '@/utils/score-calculator'
 import { getLlmApiConfig, isValidLlmApiConfig } from '@/config/api'
-import { signResponseData } from '@/middleware/auth-middleware'
+import { signResponseData } from '@/security/middleware'
 
 const apiConfig = getLlmApiConfig()
 

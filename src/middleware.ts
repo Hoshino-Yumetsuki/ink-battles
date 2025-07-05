@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { authMiddleware } from './middleware/auth-middleware'
+import { authMiddleware } from './security/middleware'
 
 const PROTECTED_API_PATHS = ['/api/writer-analysis']
 
