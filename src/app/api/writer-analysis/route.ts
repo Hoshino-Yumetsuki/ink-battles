@@ -42,11 +42,24 @@ export async function POST(request: Request) {
       response_format: { type: 'json_object' }
     })
 
-    const resultText = response.choices[0].message.content
+    if (
+      !response.choices ||
+      !Array.isArray(response.choices) ||
+      response.choices.length === 0
+    ) {
+      console.error('无效的AI响应结构:', JSON.stringify(response))
+      return NextResponse.json(
+        { error: '内容分析被拒绝或返回了空响应，请检查您的输入是否合规' },
+        { status: 422 }
+      )
+    }
+
+    const resultText = response.choices[0]?.message?.content
 
     if (!resultText) {
+      console.error('AI响应中缺少内容:', JSON.stringify(response.choices[0]))
       return NextResponse.json(
-        { error: '分析失败，未能获取结果' },
+        { error: '分析失败，未能获取有效结果' },
         { status: 500 }
       )
     }
@@ -54,14 +67,48 @@ export async function POST(request: Request) {
     try {
       const result = JSON.parse(resultText)
 
+      if (!result || typeof result !== 'object') {
+        console.error('解析后AI响应不是有效对象:', resultText)
+        return NextResponse.json(
+          {
+            error: '服务器无法处理AI响应',
+            fallback: { title: '分析失败', feedback: '服务器无法处理响应' }
+          },
+          { status: 500 }
+        )
+      }
+
+      if (!result.dimensions || typeof result.dimensions !== 'object') {
+        console.error('AI响应缺少维度数据:', result)
+        result.dimensions = {
+          structure: { score: 3, feedback: '无法评估' },
+          content: { score: 3, feedback: '无法评估' },
+          language: { score: 3, feedback: '无法评估' },
+          creativity: { score: 3, feedback: '无法评估' },
+          coherence: { score: 3, feedback: '无法评估' }
+        }
+      }
+
       const overallScore = calculateOverallScore(result.dimensions)
 
-      if (!result.title || result.title.includes('基于评分的标题')) {
+      if (
+        !result.title ||
+        result.title.includes('基于评分的标题') ||
+        typeof result.title !== 'string'
+      ) {
         result.title = generateTitleByScore(overallScore)
       }
 
-      if (!result.ratingTag || result.ratingTag.includes('评价标签')) {
+      if (
+        !result.ratingTag ||
+        result.ratingTag.includes('评价标签') ||
+        typeof result.ratingTag !== 'string'
+      ) {
         result.ratingTag = generateRatingTag(overallScore)
+      }
+
+      if (!result.feedback || typeof result.feedback !== 'string') {
+        result.feedback = '无法生成详细的反馈意见。'
       }
 
       const finalResult = {
@@ -69,11 +116,9 @@ export async function POST(request: Request) {
         overallScore
       }
 
-      // 对响应结果进行签名
       const responseData = JSON.stringify(finalResult)
       const { publicKey, signature } = await signResponseData(responseData)
 
-      // 创建响应并添加签名信息
       const response = NextResponse.json(finalResult)
       response.headers.set('X-Server-Public-Key', publicKey)
       response.headers.set('X-Server-Signature', signature)
