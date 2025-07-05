@@ -108,7 +108,17 @@ export default function WriterAnalysisPage() {
       <p className="text-center text-gray-500 mb-8">
         基于 AI 的文本分析工具，为您的创作提供深度洞察与评分。
       </p>
-
+      <p className="text-xs text-gray-500" style={{ textAlign: 'center' }}>
+        本分析报告由AI生成，仅供参考。灵感来源
+        iykrzu，测试量表由三角之外设计，站点由 Q78KG 设计并编写。
+      </p>
+      <p className="text-xs text-gray-500" style={{ textAlign: 'center' }}>
+        我们将严格保护您的隐私，并仅将您的数据用于提供本服务。
+      </p>
+      <p className="text-xs text-gray-500" style={{ textAlign: 'center' }}>
+        您在使用本服务即视为同意将相关数据提供给为本服务提供支持的第三方服务商，以便其提供本服务。我们不对第三方服务商的行为负责。
+      </p>
+      &nbsp;
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="h-full">
           <CardHeader>
@@ -164,7 +174,6 @@ export default function WriterAnalysisPage() {
           {result && <WriterScoreResult result={result} />}
         </div>
       </div>
-
       <Toaster position="top-right" />
     </div>
   )
