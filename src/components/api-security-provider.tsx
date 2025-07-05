@@ -9,7 +9,6 @@ import {
 } from 'react'
 import ApiClient from '@/utils/api-client'
 
-// 创建上下文
 interface ApiSecurityContextType {
   isInitialized: boolean
   publicKey: string | null
@@ -24,7 +23,6 @@ const ApiSecurityContext = createContext<ApiSecurityContextType>({
   }
 })
 
-// 安全API上下文提供者组件
 interface ApiSecurityProviderProps {
   children: ReactNode
 }
@@ -33,7 +31,6 @@ export function ApiSecurityProvider({ children }: ApiSecurityProviderProps) {
   const [isInitialized, setIsInitialized] = useState<boolean>(false)
   const [publicKey, setPublicKey] = useState<string | null>(null)
 
-  // 初始化API安全客户端
   useEffect(() => {
     const initApiSecurity = async () => {
       try {
@@ -50,13 +47,11 @@ export function ApiSecurityProvider({ children }: ApiSecurityProviderProps) {
 
     initApiSecurity()
 
-    // 组件卸载时销毁密钥
     return () => {
       ApiClient.getInstance().destroy()
     }
   }, [])
 
-  // 提供安全的API调用方法
   const secureApiCall = async <T = any>(
     url: string,
     options?: RequestInit
@@ -89,7 +84,6 @@ export function ApiSecurityProvider({ children }: ApiSecurityProviderProps) {
   )
 }
 
-// 自定义Hook，用于在组件中使用API安全功能
 export function useApiSecurity() {
   return useContext(ApiSecurityContext)
 }

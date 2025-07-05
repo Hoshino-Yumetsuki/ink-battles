@@ -7,8 +7,7 @@ export class AuthKeyManager {
   private keyPair: CryptoKeyPair | null = null
   private publicKeyData: string | null = null
 
-  private constructor() {
-  }
+  private constructor() {}
 
   public static getInstance(): AuthKeyManager {
     if (!this.instance) {
@@ -20,11 +19,10 @@ export class AuthKeyManager {
   public async generateKeyPair(): Promise<string> {
     this.destroyKeyPair()
 
-    this.keyPair = (await crypto.subtle.generateKey(
-      Ed25519Algorithm,
-      true,
-      ['sign', 'verify']
-    )) as CryptoKeyPair
+    this.keyPair = (await crypto.subtle.generateKey(Ed25519Algorithm, true, [
+      'sign',
+      'verify'
+    ])) as CryptoKeyPair
 
     const publicKeyBuffer = await crypto.subtle.exportKey(
       'raw',
@@ -47,7 +45,9 @@ export class AuthKeyManager {
    */
   public async signData(data: string): Promise<string | null> {
     if (!this.keyPair || !this.keyPair.privateKey) {
-      throw new Error('未初始化密钥对，请先调用generateKeyPair')
+      throw new Error(
+        'Key pair not initialized, please call generateKeyPair first'
+      )
     }
 
     try {
@@ -119,7 +119,7 @@ export async function verifySignature(
       dataBuffer
     )
   } catch (error) {
-    console.error('验证签名失败:', error)
+    console.error('Signature verification failed:', error)
     return false
   }
 }

@@ -92,8 +92,7 @@ export async function authMiddleware(
     try {
       const bodyText = await requestClone.text()
       requestBody = bodyText
-    } catch (error) {
-    }
+    } catch (error) {}
 
     const dataToVerify = `${request.nextUrl.pathname}|${timestamp}|${requestBody}`
     const isValid = await verifyRequestSignature(
@@ -103,13 +102,19 @@ export async function authMiddleware(
     )
 
     if (!isValid) {
-      return NextResponse.json({ error: 'Signature verification failed' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Signature verification failed' },
+        { status: 401 }
+      )
     }
 
     return null
   } catch (error) {
     console.error('Authentication middleware error:', error)
-    return NextResponse.json({ error: 'Server authentication processing error' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Server authentication processing error' },
+      { status: 500 }
+    )
   }
 }
 
