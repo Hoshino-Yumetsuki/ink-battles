@@ -7,17 +7,9 @@ async function verifyRequestSignature(
   publicKey: string
 ): Promise<boolean> {
   try {
-    console.log('[Server] Verifying request signature:', {
-      dataLength: data.length,
-      signatureLength: signature.length,
-      publicKeyLength: publicKey.length
-    })
-
     const isValid = await verifySignature(data, signature, publicKey)
-    console.log('[Server] Signature verification result:', isValid)
     return isValid
   } catch (error) {
-    console.error('[Server] Signature verification error:', error)
     return false
   }
 }
