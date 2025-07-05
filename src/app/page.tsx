@@ -118,6 +118,9 @@ export default function WriterAnalysisPage() {
       <p className="text-xs text-gray-500" style={{ textAlign: 'center' }}>
         您在使用本服务即视为同意将相关数据提供给为本服务提供支持的第三方服务商，以便其提供本服务。我们不对第三方服务商的行为负责。
       </p>
+      <p className="text-xs text-gray-500" style={{ textAlign: 'center' }}>
+        站点代码基于 MIT 许可证开源
+      </p>
       &nbsp;
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="h-full">
