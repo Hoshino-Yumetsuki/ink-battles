@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifySignature } from './crypto'
+import { verifySignature, signData } from './crypto'
 
 async function verifyRequestSignature(
   data: string,
@@ -90,40 +90,5 @@ export async function signResponseData(data: string): Promise<{
   signature: string
   keyPair: CryptoKeyPair
 }> {
-  const keyPair = (await crypto.subtle.generateKey(
-    {
-      name: 'ECDSA',
-      namedCurve: 'P-256'
-    },
-    true,
-    ['sign', 'verify']
-  )) as CryptoKeyPair
-
-  const dataBuffer = new TextEncoder().encode(data)
-  const signatureBuffer = await crypto.subtle.sign(
-    {
-      name: 'ECDSA',
-      hash: { name: 'SHA-256' }
-    },
-    keyPair.privateKey,
-    dataBuffer
-  )
-
-  const publicKeyBuffer = await crypto.subtle.exportKey(
-    'spki',
-    keyPair.publicKey
-  )
-  const publicKey = btoa(
-    Array.from(new Uint8Array(publicKeyBuffer))
-      .map((byte) => String.fromCharCode(byte))
-      .join('')
-  )
-
-  const signature = btoa(
-    Array.from(new Uint8Array(signatureBuffer))
-      .map((byte) => String.fromCharCode(byte))
-      .join('')
-  )
-
-  return { publicKey, signature, keyPair }
+  return await signData(data)
 }

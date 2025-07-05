@@ -144,7 +144,7 @@ export async function verifySignature(
       publicKeyBuffer = base64ToArrayBuffer(publicKey)
       signatureBuffer = base64ToArrayBuffer(signature)
     } catch (conversionError) {
-      console.error('Base64 转换错误:', conversionError)
+      console.error('Base64 conversion error:', conversionError)
       return false
     }
 
@@ -173,12 +173,90 @@ export async function verifySignature(
       )
       return result
     } catch (cryptoError) {
-      console.error('WebCrypto 操作失败:', cryptoError)
+      console.error('WebCrypto error:', cryptoError)
       return false
     }
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error)
-    console.error(`签名验证失败: ${errorMessage}`)
+    console.error(`Signature verification failed: ${errorMessage}`)
     return false
   }
+}
+
+export async function generateECDSAKeyPair(): Promise<CryptoKeyPair> {
+  return (await crypto.subtle.generateKey(
+    {
+      name: 'ECDSA',
+      namedCurve: 'P-256'
+    },
+    true,
+    ['sign', 'verify']
+  )) as CryptoKeyPair
+}
+
+export async function signWithPrivateKey(
+  privateKey: CryptoKey,
+  data: string
+): Promise<string> {
+  const dataBuffer = new TextEncoder().encode(data)
+  const signatureBuffer = await crypto.subtle.sign(
+    {
+      name: 'ECDSA',
+      hash: { name: 'SHA-256' }
+    },
+    privateKey,
+    dataBuffer
+  )
+
+  return btoa(
+    Array.from(new Uint8Array(signatureBuffer))
+      .map((byte) => String.fromCharCode(byte))
+      .join('')
+  )
+}
+
+export async function exportPublicKey(publicKey: CryptoKey): Promise<string> {
+  const publicKeyBuffer = await crypto.subtle.exportKey('spki', publicKey)
+  return btoa(
+    Array.from(new Uint8Array(publicKeyBuffer))
+      .map((byte) => String.fromCharCode(byte))
+      .join('')
+  )
+}
+
+export async function signData(data: string): Promise<{
+  publicKey: string
+  signature: string
+  keyPair: CryptoKeyPair
+}> {
+  const keyPair = await generateECDSAKeyPair()
+  const dataBuffer = new TextEncoder().encode(data)
+
+  const signatureBuffer = await crypto.subtle.sign(
+    {
+      name: 'ECDSA',
+      hash: { name: 'SHA-256' }
+    },
+    keyPair.privateKey,
+    dataBuffer
+  )
+
+  const publicKeyBuffer = await crypto.subtle.exportKey(
+    'spki',
+    keyPair.publicKey
+  )
+
+  const publicKey = btoa(
+    Array.from(new Uint8Array(publicKeyBuffer))
+      .map((byte) => String.fromCharCode(byte))
+      .join('')
+  )
+
+  const signature = btoa(
+    Array.from(new Uint8Array(signatureBuffer))
+      .map((byte) => String.fromCharCode(byte))
+      .join('')
+  )
+
+  return { publicKey, signature, keyPair }
 }
