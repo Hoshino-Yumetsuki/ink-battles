@@ -1,6 +1,11 @@
 import { Ed25519Algorithm, polyfillEd25519 } from '@yoursunny/webcrypto-ed25519'
 
-polyfillEd25519()
+try {
+  polyfillEd25519()
+  console.debug('Ed25519 polyfill loaded successfully')
+} catch (error) {
+  console.error('Failed to load Ed25519 polyfill:', error)
+}
 
 export class AuthKeyManager {
   private static instance: AuthKeyManager | null = null
@@ -19,23 +24,53 @@ export class AuthKeyManager {
   public async generateKeyPair(): Promise<string> {
     this.destroyKeyPair()
 
-    this.keyPair = (await crypto.subtle.generateKey(Ed25519Algorithm, true, [
-      'sign',
-      'verify'
-    ])) as CryptoKeyPair
+    try {
+      console.debug(
+        'Generating key pair with Ed25519Algorithm:',
+        Ed25519Algorithm
+      )
 
-    const publicKeyBuffer = await crypto.subtle.exportKey(
-      'raw',
-      this.keyPair.publicKey
-    )
+      this.keyPair = (await crypto.subtle.generateKey(Ed25519Algorithm, true, [
+        'sign',
+        'verify'
+      ])) as CryptoKeyPair
 
-    this.publicKeyData = btoa(
-      Array.from(new Uint8Array(publicKeyBuffer))
-        .map((byte) => String.fromCharCode(byte))
-        .join('')
-    )
+      if (!this.keyPair || !this.keyPair.publicKey) {
+        throw new Error('Failed to generate valid key pair')
+      }
 
-    return this.publicKeyData
+      console.debug(
+        'Key pair generated successfully:',
+        this.keyPair.publicKey instanceof CryptoKey,
+        this.keyPair.privateKey instanceof CryptoKey
+      )
+
+      try {
+        const publicKeyBuffer = await crypto.subtle.exportKey(
+          'raw',
+          this.keyPair.publicKey
+        )
+
+        this.publicKeyData = btoa(
+          Array.from(new Uint8Array(publicKeyBuffer))
+            .map((byte) => String.fromCharCode(byte))
+            .join('')
+        )
+
+        return this.publicKeyData
+      } catch (exportError: unknown) {
+        console.error('Failed to export public key:', exportError)
+        const errorMessage =
+          exportError instanceof Error
+            ? exportError.message
+            : String(exportError)
+        throw new Error(`Failed to export public key: ${errorMessage}`)
+      }
+    } catch (error) {
+      console.error('Key pair generation failed:', error)
+      this.destroyKeyPair()
+      throw error
+    }
   }
 
   public async signData(data: string): Promise<string | null> {
@@ -83,18 +118,22 @@ export function base64ToArrayBuffer(base64: string): ArrayBuffer {
     const paddedBase64 = base64
       .replace(/=+$/, '')
       .padEnd(base64.length + ((4 - (base64.length % 4 || 4)) % 4), '=')
-
-    const binaryString = atob(paddedBase64)
+    const binaryString = window.atob(paddedBase64)
     const bytes = new Uint8Array(binaryString.length)
-
     for (let i = 0; i < binaryString.length; i++) {
       bytes[i] = binaryString.charCodeAt(i)
     }
 
+    console.debug(
+      'Successfully converted base64 to ArrayBuffer, length:',
+      bytes.length
+    )
     return bytes.buffer
   } catch (error) {
     console.error('Error converting base64 to ArrayBuffer:', error)
-    throw new Error('Failed to convert base64 to ArrayBuffer')
+    throw new Error(
+      `Failed to convert base64 to ArrayBuffer: ${error instanceof Error ? error.message : String(error)}`
+    )
   }
 }
 
@@ -104,26 +143,56 @@ export async function verifySignature(
   publicKey: string
 ): Promise<boolean> {
   try {
-    const publicKeyBuffer = base64ToArrayBuffer(publicKey)
-    const signatureBuffer = base64ToArrayBuffer(signature)
+    console.debug(
+      'Verifying signature with data length:',
+      data.length,
+      'signature length:',
+      signature.length,
+      'public key length:',
+      publicKey.length
+    )
+
+    let publicKeyBuffer: ArrayBuffer
+    let signatureBuffer: ArrayBuffer
+
+    try {
+      publicKeyBuffer = base64ToArrayBuffer(publicKey)
+      signatureBuffer = base64ToArrayBuffer(signature)
+    } catch (conversionError) {
+      console.error('Base64 conversion error:', conversionError)
+      return false
+    }
+
     const dataBuffer = new TextEncoder().encode(data)
 
-    const cryptoKey = await crypto.subtle.importKey(
-      'raw',
-      publicKeyBuffer,
-      Ed25519Algorithm,
-      true,
-      ['verify']
-    )
+    console.debug('Buffers created successfully. Importing public key...')
+    try {
+      const cryptoKey = await crypto.subtle.importKey(
+        'raw',
+        publicKeyBuffer,
+        Ed25519Algorithm,
+        true,
+        ['verify']
+      )
 
-    return await crypto.subtle.verify(
-      Ed25519Algorithm,
-      cryptoKey,
-      signatureBuffer,
-      dataBuffer
-    )
-  } catch (error) {
-    console.error('Signature verification failed:', error)
+      console.debug('Public key imported successfully. Verifying signature...')
+
+      const result = await crypto.subtle.verify(
+        Ed25519Algorithm,
+        cryptoKey,
+        signatureBuffer,
+        dataBuffer
+      )
+
+      console.debug('Signature verification result:', result)
+      return result
+    } catch (cryptoError) {
+      console.error('WebCrypto operation failed:', cryptoError)
+      return false
+    }
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error(`Signature verification failed: ${errorMessage}`)
     return false
   }
 }
