@@ -52,15 +52,9 @@ export default function WriterAnalysisPage() {
     setEnabledOptions({ ...enabledOptions, [key]: value })
   }
 
-  // 获取安全API客户端
   const { isInitialized, secureApiCall } = useApiSecurity()
 
-  // 检测API安全是否初始化
-  useEffect(() => {
-    if (!isInitialized) {
-      console.log('API安全组件正在初始化...')
-    }
-  }, [isInitialized])
+  useEffect(() => {}, [isInitialized])
 
   const handleAnalyze = async () => {
     if (!content.trim()) {
@@ -89,7 +83,6 @@ export default function WriterAnalysisPage() {
         })
       }, 500)
 
-      // 使用安全API调用
       const data = await secureApiCall('/api/writer-analysis', {
         method: 'POST',
         headers: {
