@@ -60,12 +60,26 @@ export function ApiSecurityProvider({ children }: ApiSecurityProviderProps) {
       const response = await apiClient.fetch<T>(url, options)
 
       if (!response.isVerified && response.data) {
-        console.warn('Server response signature verification failed')
+        console.warn('服务器响应签名验证失败')
+      }
+
+      // 检查响应是否包含错误信息
+      const data = response.data as any
+
+      if (data && data.error) {
+        // 如果服务器返回了错误信息和回退数据
+        if (data.fallback) {
+          console.warn(`API错误: ${data.error}, 使用回退数据`)
+          return data.fallback as T
+        }
+
+        // 没有回退数据时抛出错误
+        throw new Error(data.error)
       }
 
       return response.data
     } catch (error) {
-      console.error('Secure API call failed:', error)
+      console.error('安全API调用失败:', error)
       throw error
     }
   }

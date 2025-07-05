@@ -83,23 +83,46 @@ export default function WriterAnalysisPage() {
         })
       }, 500)
 
-      const data = await secureApiCall('/api/writer-analysis', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          content,
-          options: enabledOptions
+      try {
+        const data = await secureApiCall('/api/writer-analysis', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            content,
+            options: enabledOptions
+          })
         })
-      })
 
-      clearInterval(progressInterval)
-      setProgress(100)
-      setResult(data)
-    } catch (error) {
-      console.error('分析错误:', error)
-      toast.error('分析过程中出现错误，请稍后重试')
+        if (!data || typeof data !== 'object') {
+          throw new Error('返回的分析结果格式无效')
+        }
+        if (!('dimensions' in data) || !Array.isArray(data.dimensions)) {
+          toast.warning('分析数据不完整，部分功能可能受到影响')
+          data.dimensions = data.dimensions || []
+        }
+
+        const defaultResult = {
+          overallScore: 0,
+          title: '分析结果',
+          ratingTag: '未知',
+          strengths: [],
+          improvements: []
+        }
+
+        const safeData = { ...defaultResult, ...data }
+
+        clearInterval(progressInterval)
+        setProgress(100)
+        setResult(safeData)
+      } catch (error: any) {
+        console.error('分析数据错误:', error)
+        toast.error(`分析错误: ${error?.message || '未知错误'}`)
+      }
+    } catch (error: any) {
+      console.error('分析过程错误:', error)
+      toast.error(`分析失败: ${error?.message || '请检查您的网络并稍后重试'}`)
     } finally {
       setIsLoading(false)
       setTimeout(() => setProgress(0), 1000)

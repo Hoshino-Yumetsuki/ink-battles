@@ -4,6 +4,7 @@ import './globals.css'
 import Navbar from '@/components/navbar'
 import { ApiSecurityProvider } from '@/security/provider'
 import { ThemeProvider } from '@/components/theme-provider'
+import ErrorBoundary from '@/components/error-boundary'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -36,10 +37,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ApiSecurityProvider>
-            <Navbar />
-            <main className="flex-1">{children}</main>
-          </ApiSecurityProvider>
+          <ErrorBoundary>
+            <ApiSecurityProvider>
+              <Navbar />
+              <main className="flex-1">{children}</main>
+            </ApiSecurityProvider>
+          </ErrorBoundary>
         </ThemeProvider>
       </body>
     </html>
