@@ -7,7 +7,7 @@ COPY . .
 RUN corepack enable
 RUN corepack prepare
 
-RUN yarn install
+RUN yarn install --immutable
 RUN yarn build
 
 EXPOSE 3000
