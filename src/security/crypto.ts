@@ -75,12 +75,27 @@ export class AuthKeyManager {
 }
 
 export function base64ToArrayBuffer(base64: string): ArrayBuffer {
-  const binaryString = atob(base64)
-  const bytes = new Uint8Array(binaryString.length)
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i)
+  if (!base64) {
+    throw new Error('Invalid base64 string: empty or undefined')
   }
-  return bytes.buffer
+
+  try {
+    const paddedBase64 = base64
+      .replace(/=+$/, '')
+      .padEnd(base64.length + ((4 - (base64.length % 4 || 4)) % 4), '=')
+
+    const binaryString = atob(paddedBase64)
+    const bytes = new Uint8Array(binaryString.length)
+
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i)
+    }
+
+    return bytes.buffer
+  } catch (error) {
+    console.error('Error converting base64 to ArrayBuffer:', error)
+    throw new Error('Failed to convert base64 to ArrayBuffer')
+  }
 }
 
 export async function verifySignature(
