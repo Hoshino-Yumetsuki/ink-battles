@@ -63,7 +63,7 @@ export default function WriterAnalysisPage() {
     }
 
     if (!isInitialized) {
-      toast.error('API安全组件尚未初始化，请稍后再试')
+      toast.error('API Security not initialized')
       return
     }
 
@@ -144,7 +144,7 @@ export default function WriterAnalysisPage() {
             />
           </CardContent>
           <CardFooter className="flex justify-between">
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 dark:text-gray-400">
               字数统计: {content.length} 字
             </div>
             <Button

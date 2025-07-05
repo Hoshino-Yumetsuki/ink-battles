@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { ThemeSwitcher } from './theme-switcher'
 
 export default function Navbar() {
   const pathname = usePathname()
@@ -35,22 +36,25 @@ export default function Navbar() {
         </div>
 
         <nav>
-          <ul className="flex items-center gap-6">
-            {navItems.map((item) => (
-              <li key={item.path}>
-                <Link
-                  href={item.path}
-                  className={`transition-colors hover:text-blue-600 ${
-                    pathname === item.path
-                      ? 'text-blue-600 font-medium'
-                      : 'text-gray-600'
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <div className="flex items-center gap-6">
+            <ul className="flex items-center gap-6">
+              {navItems.map((item) => (
+                <li key={item.path}>
+                  <Link
+                    href={item.path}
+                    className={`transition-colors hover:text-blue-600 ${
+                      pathname === item.path
+                        ? 'text-blue-600 font-medium'
+                        : 'text-gray-600 dark:text-gray-300'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <ThemeSwitcher />
+          </div>
         </nav>
       </div>
     </header>
