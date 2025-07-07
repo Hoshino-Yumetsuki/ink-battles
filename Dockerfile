@@ -1,4 +1,4 @@
-FROM node:lts-alpine
+FROM node:lts-slim
 
 WORKDIR /app
 
@@ -7,7 +7,9 @@ COPY . .
 RUN corepack enable
 RUN corepack prepare
 
-RUN yarn install --immutable
+RUN export NODE_ENV=production
+
+RUN yarn install
 RUN yarn build
 
 EXPOSE 3000
