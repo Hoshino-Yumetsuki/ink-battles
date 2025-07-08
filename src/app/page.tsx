@@ -127,10 +127,10 @@ export default function WriterAnalysisPage() {
   }
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="max-w-[1200px] w-full mx-auto px-2 sm:px-3 py-6 sm:py-8">
       <PageHeader />
       &nbsp;
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 align-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 align-start">
         <motion.div
           className="content-start"
           initial={{ opacity: 0, x: -20 }}
