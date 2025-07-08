@@ -3,7 +3,7 @@
  * 用于根据用户选择的模式组合提示词
  */
 import { basePrompt } from './base'
-import { promptModes, PromptMode } from './modes'
+import { promptModes, type PromptMode } from './modes'
 
 export function buildPrompt(enabledModes: Record<string, boolean>): string {
   let finalPrompt = basePrompt

@@ -1,22 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card'
-import { Textarea } from '@/components/ui/textarea'
-import { Progress } from '@/components/ui/progress'
 import { Toaster, toast } from 'sonner'
-import WriterScoreResult from '@/components/writer-analysis/writer-score-result'
-import AnalysisOptions from '@/components/writer-analysis/analysis-options'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useApiSecurity } from '@/security/provider'
-import { motion, AnimatePresence } from 'framer-motion'
+
+// 导入组件
+import PageHeader from '@/components/writer-analysis/page-header'
+import ContentInputCard from '@/components/writer-analysis/content-input-card'
+import LoadingProgress from '@/components/writer-analysis/loading-progress'
+import AnalysisOptions from '@/components/writer-analysis/analysis-options'
+import WriterScoreResult from '@/components/writer-analysis/writer-score-result'
+import AnimatedBackground from '@/components/writer-analysis/animated-background'
 
 export interface WriterAnalysisResult {
   overallScore: number
@@ -56,12 +51,6 @@ export default function WriterAnalysisPage() {
   const { isInitialized, secureApiCall } = useApiSecurity()
 
   useEffect(() => {}, [isInitialized])
-
-  const fadeInUp = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -20 }
-  }
 
   const handleAnalyze = async () => {
     if (!content.trim()) {
@@ -139,41 +128,7 @@ export default function WriterAnalysisPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <motion.h1
-        className="text-3xl font-bold text-center mb-8"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        Ink Battles
-      </motion.h1>
-      <motion.p
-        className="text-center text-gray-500 mb-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        基于 AI 的文本分析工具，为您的创作提供深度洞察与评分。
-      </motion.p>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.8, duration: 1 }}
-      >
-        <p className="text-xs text-gray-500 text-center">
-          本分析报告由AI生成，仅供参考。灵感来源
-          iykrzu，测试量表由三角之外设计，站点由 Q78KG 设计并编写。
-        </p>
-        <p className="text-xs text-gray-500 text-center">
-          我们将严格保护您的隐私，并仅将您的数据用于提供本服务。
-        </p>
-        <p className="text-xs text-gray-500 text-center">
-          您在使用本服务即视为同意将相关数据提供给为本服务提供支持的第三方服务商，以便其提供本服务。我们不对第三方服务商的行为负责。
-        </p>
-        <p className="text-xs text-gray-500 text-center">
-          站点代码基于 MIT 许可证开源
-        </p>
-      </motion.div>
+      <PageHeader />
       &nbsp;
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 align-start">
         <motion.div
@@ -182,65 +137,12 @@ export default function WriterAnalysisPage() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
         >
-          <Card className="h-auto">
-            <CardHeader>
-              <CardTitle>作品输入</CardTitle>
-              <CardDescription>
-                请粘贴您要分析的作品内容，支持小说、散文、诗歌等多种文体
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                placeholder="请在此处粘贴您的作品全文..."
-                className="min-h-[400px] resize-none"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                disabled={isLoading}
-              />
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                字数统计: {content.length} 字
-              </div>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Button
-                  onClick={handleAnalyze}
-                  disabled={isLoading || !content.trim()}
-                  className="relative overflow-hidden"
-                >
-                  {isLoading ? (
-                    <span className="flex items-center">
-                      <motion.span
-                        animate={{ rotate: 360 }}
-                        transition={{
-                          duration: 1.5,
-                          repeat: Infinity,
-                          ease: 'linear'
-                        }}
-                        className="inline-block mr-2"
-                      >
-                        ⟳
-                      </motion.span>
-                      分析中...
-                    </span>
-                  ) : (
-                    <>
-                      <span>开始分析</span>
-                      <motion.span
-                        className="absolute inset-0 bg-white/10"
-                        initial={{ x: '-100%' }}
-                        whileHover={{ x: '100%' }}
-                        transition={{ duration: 0.6 }}
-                      />
-                    </>
-                  )}
-                </Button>
-              </motion.div>
-            </CardFooter>
-          </Card>
+          <ContentInputCard
+            content={content}
+            setContentAction={setContent}
+            isLoading={isLoading}
+            onAnalyzeAction={handleAnalyze}
+          />
         </motion.div>
 
         <motion.div
@@ -264,40 +166,7 @@ export default function WriterAnalysisPage() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.4 }}
               >
-                <Card className="overflow-hidden">
-                  <CardHeader>
-                    <CardTitle>分析进行中</CardTitle>
-                    <CardDescription>
-                      正在使用AI分析您的作品，这可能需要几分钟时间...
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="relative overflow-hidden h-2 mb-4 bg-muted rounded-md">
-                      <div
-                        className="h-full bg-primary transition-all duration-300 ease-out rounded-md"
-                        style={{ width: `${progress}%` }}
-                      />
-                      <motion.div
-                        className="absolute top-0 h-full w-1/3 bg-gradient-to-r from-transparent via-primary/30 to-transparent"
-                        animate={{
-                          x: ['-100%', '400%']
-                        }}
-                        transition={{
-                          repeat: Infinity,
-                          duration: 2.5,
-                          ease: 'linear'
-                        }}
-                      />
-                    </div>
-                    <motion.p
-                      className="text-sm text-right font-mono text-primary/80 dark:text-primary/70"
-                      animate={{ opacity: [0.7, 1, 0.7] }}
-                      transition={{ duration: 1.8, repeat: Infinity }}
-                    >
-                      {progress}%
-                    </motion.p>
-                  </CardContent>
-                </Card>
+                <LoadingProgress progress={progress} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -321,17 +190,7 @@ export default function WriterAnalysisPage() {
         </motion.div>
       </div>
       <Toaster position="top-right" />
-      <motion.div
-        className="fixed inset-0 -z-10 pointer-events-none bg-gradient-to-br from-background/20 via-background to-background/80 dark:from-background dark:via-background/80 dark:to-background/40"
-        animate={{
-          opacity: [0.8, 0.95, 0.8]
-        }}
-        transition={{
-          duration: 10,
-          repeat: Infinity,
-          repeatType: 'reverse'
-        }}
-      />
+      <AnimatedBackground />
     </div>
   )
 }

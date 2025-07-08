@@ -54,7 +54,7 @@
         "noNonNullAssertion": "off",
         "noUselessElse": "off",
         "useBlockStatements": "off",
-        "useImportType": "off"
+        "useImportType": "warn"
       },
       "suspicious": {
         "noArrayIndexKey": "off",

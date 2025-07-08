@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { authMiddleware } from './security/middleware'
 
 const PROTECTED_API_PATHS = ['/api/writer-analysis']

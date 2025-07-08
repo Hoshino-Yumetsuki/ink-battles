@@ -1,6 +1,6 @@
 'use client'
 
-import React, { ErrorInfo } from 'react'
+import React, { type ErrorInfo } from 'react'
 import { Button } from './ui/button'
 
 interface ErrorBoundaryProps {

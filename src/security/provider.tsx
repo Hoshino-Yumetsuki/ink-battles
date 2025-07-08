@@ -1,6 +1,7 @@
 'use client'
 
-import React, { createContext, useState, useEffect, useContext } from 'react'
+import type React from 'react'
+import { createContext, useState, useEffect, useContext } from 'react'
 import ApiClient from './api-client'
 
 type ApiSecurityContextType = {
