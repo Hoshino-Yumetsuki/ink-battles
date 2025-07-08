@@ -51,7 +51,7 @@ export function useAuth() {
       }
 
       const timestamp = Date.now().toString()
-      const method = options.method || 'GET'
+      const _method = options.method || 'GET'
       const body = options.body ? options.body.toString() : ''
 
       const dataToSign = `${url}|${timestamp}|${body}`

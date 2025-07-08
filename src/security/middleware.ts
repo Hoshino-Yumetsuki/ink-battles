@@ -9,7 +9,7 @@ async function verifyRequestSignature(
   try {
     const isValid = await verifySignature(data, signature, publicKey)
     return isValid
-  } catch (error) {
+  } catch (_error) {
     return false
   }
 }
@@ -36,7 +36,7 @@ export async function authMiddleware(
     const requestTime = parseInt(timestamp)
 
     if (
-      isNaN(requestTime) ||
+      Number.isNaN(requestTime) ||
       Math.abs(currentTime - requestTime) > 5 * 60 * 1000
     ) {
       return NextResponse.json(
@@ -51,7 +51,7 @@ export async function authMiddleware(
     try {
       const bodyText = await requestClone.text()
       requestBody = bodyText
-    } catch (error) {}
+    } catch (_error) {}
 
     const dataToVerify = `${request.nextUrl.pathname}|${timestamp}|${requestBody}`
     const isValid = await verifyRequestSignature(

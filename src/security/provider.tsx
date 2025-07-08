@@ -66,7 +66,7 @@ export function ApiSecurityProvider({ children }: ApiSecurityProviderProps) {
 
       const data = response.data as any
 
-      if (data && data.error) {
+      if (data?.error) {
         if (data.fallback) {
           console.warn(`API error: ${data.error}, using fallback data`)
           return data.fallback as T

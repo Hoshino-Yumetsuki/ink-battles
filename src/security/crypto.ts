@@ -6,10 +6,10 @@ export class AuthKeyManager {
   private constructor() {}
 
   public static getInstance(): AuthKeyManager {
-    if (!this.instance) {
-      this.instance = new AuthKeyManager()
+    if (!AuthKeyManager.instance) {
+      AuthKeyManager.instance = new AuthKeyManager()
     }
-    return this.instance
+    return AuthKeyManager.instance
   }
 
   public async generateKeyPair(): Promise<string> {

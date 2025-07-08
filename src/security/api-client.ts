@@ -8,10 +8,10 @@ class ApiClient {
   private constructor() {}
 
   public static getInstance(): ApiClient {
-    if (!this.instance) {
-      this.instance = new ApiClient()
+    if (!ApiClient.instance) {
+      ApiClient.instance = new ApiClient()
     }
-    return this.instance
+    return ApiClient.instance
   }
 
   public async initialize(): Promise<boolean> {
@@ -72,7 +72,7 @@ class ApiClient {
     }
 
     const timestamp = Date.now().toString()
-    const method = options.method || 'GET'
+    const _method = options.method || 'GET'
     const body = options.body ? options.body.toString() : ''
     const dataToSign = `${url}|${timestamp}|${body}`
     const signature = await this.signData(dataToSign)

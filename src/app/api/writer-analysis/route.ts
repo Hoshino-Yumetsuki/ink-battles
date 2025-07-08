@@ -124,7 +124,7 @@ export async function POST(request: Request) {
       response.headers.set('X-Server-Signature', signature)
 
       return response
-    } catch (error) {
+    } catch (_error) {
       console.error('无法解析AI返回的JSON结果:', resultText)
       return NextResponse.json({ error: '分析结果格式错误' }, { status: 500 })
     }

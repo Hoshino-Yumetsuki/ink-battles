@@ -28,7 +28,7 @@ export function calculateOverallScore(dimensions: DimensionScore[]): number {
     return 0
   }
 
-  let baseScore = 60
+  const baseScore = 60
 
   let score = baseScore
 

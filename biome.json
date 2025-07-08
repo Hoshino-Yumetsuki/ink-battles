@@ -32,29 +32,9 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": false,
-      "a11y": {
-        "noNoninteractiveTabindex": "off",
-        "useButtonType": "off",
-        "useKeyWithClickEvents": "off",
-        "useKeyWithMouseEvents": "off",
-        "useSemanticElements": "off"
-      },
-      "complexity": {
-        "noBannedTypes": "off"
-      },
-      "correctness": {
-        "noInvalidUseBeforeDeclaration": "off",
-        "noUnknownProperty": "off"
-      },
+      "recommended": true,
       "security": {
         "noGlobalEval": "error"
-      },
-      "style": {
-        "noNonNullAssertion": "off",
-        "noUselessElse": "off",
-        "useBlockStatements": "off",
-        "useImportType": "warn"
       },
       "suspicious": {
         "noArrayIndexKey": "off",

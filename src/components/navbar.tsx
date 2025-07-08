@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ThemeSwitcher } from './theme-switcher'
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 export default function Navbar() {
   const pathname = usePathname()

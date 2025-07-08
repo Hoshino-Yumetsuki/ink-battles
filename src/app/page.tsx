@@ -50,7 +50,7 @@ export default function WriterAnalysisPage() {
 
   const { isInitialized, secureApiCall } = useApiSecurity()
 
-  useEffect(() => {}, [isInitialized])
+  useEffect(() => {}, [])
 
   const handleAnalyze = async () => {
     if (!content.trim()) {
