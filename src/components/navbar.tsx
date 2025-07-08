@@ -3,14 +3,38 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ThemeSwitcher } from './theme-switcher'
+import { motion, useScroll, useMotionValueEvent } from 'framer-motion'
+import { useState, useEffect } from 'react'
 
 export default function Navbar() {
   const pathname = usePathname()
+  const { scrollY } = useScroll()
+  const [hidden, setHidden] = useState(false)
+  const [lastScrollY, setLastScrollY] = useState(0)
 
   const navItems = [{ label: '首页', path: '/' }]
 
+  useMotionValueEvent(scrollY, 'change', (latest) => {
+    // 向下滚动超过10px时隐藏，向上滚动时显示
+    if (latest > lastScrollY && latest > 80) {
+      setHidden(true)
+    } else {
+      setHidden(false)
+    }
+
+    setLastScrollY(latest)
+  })
+
   return (
-    <header className="border-b">
+    <motion.header
+      className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+      variants={{
+        visible: { y: 0 },
+        hidden: { y: '-100%' }
+      }}
+      animate={hidden ? 'hidden' : 'visible'}
+      transition={{ duration: 0.35, ease: 'easeInOut' }}
+    >
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <svg
@@ -57,6 +81,6 @@ export default function Navbar() {
           </div>
         </nav>
       </div>
-    </header>
+    </motion.header>
   )
 }
