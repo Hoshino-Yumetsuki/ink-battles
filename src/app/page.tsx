@@ -318,12 +318,12 @@ export default function WriterAnalysisPage() {
       </div>
       <Toaster position="top-right" />
       <motion.div
-        className="fixed inset-0 -z-10 pointer-events-none bg-gradient-to-br from-blue-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-blue-950/50"
+        className="fixed inset-0 -z-10 pointer-events-none bg-gradient-to-br from-background/20 via-background to-background/80 dark:from-background dark:via-background/80 dark:to-background/40"
         animate={{
-          opacity: [0.7, 0.9, 0.7]
+          opacity: [0.8, 0.95, 0.8]
         }}
         transition={{
-          duration: 8,
+          duration: 10,
           repeat: Infinity,
           repeatType: 'reverse'
         }}
