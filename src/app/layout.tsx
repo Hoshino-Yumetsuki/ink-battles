@@ -9,7 +9,7 @@ import ErrorBoundary from '@/components/error-boundary'
 
 export const metadata: Metadata = {
   title: 'Ink Battles',
-  description: '基于 AI 的文本分析工具，为您的创作提供深度洞察'
+  description: '基于 AI 的作品分析工具，为您的创作提供深度洞察'
 }
 
 export default function RootLayout({

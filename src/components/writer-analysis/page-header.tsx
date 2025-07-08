@@ -19,7 +19,7 @@ export default function PageHeader() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        基于 AI 的文本分析工具，为您的创作提供深度洞察与评分。
+        基于 AI 的作品分析工具，为您的创作提供深度洞察与评分。
       </motion.p>
       <motion.div
         initial={{ opacity: 0 }}
