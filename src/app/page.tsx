@@ -175,13 +175,14 @@ export default function WriterAnalysisPage() {
         </p>
       </motion.div>
       &nbsp;
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 align-start">
         <motion.div
+          className="content-start"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
         >
-          <Card className="h-full">
+          <Card className="h-auto">
             <CardHeader>
               <CardTitle>作品输入</CardTitle>
               <CardDescription>
@@ -191,7 +192,7 @@ export default function WriterAnalysisPage() {
             <CardContent>
               <Textarea
                 placeholder="请在此处粘贴您的作品全文..."
-                className="min-h-[400px]"
+                className="min-h-[400px] resize-none"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 disabled={isLoading}
@@ -243,7 +244,7 @@ export default function WriterAnalysisPage() {
         </motion.div>
 
         <motion.div
-          className="space-y-6"
+          className="space-y-6 content-start"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
@@ -271,24 +272,27 @@ export default function WriterAnalysisPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="relative">
-                      <Progress value={progress} className="h-2 mb-2" />
+                    <div className="relative overflow-hidden h-2 mb-4 bg-muted rounded-md">
+                      <div
+                        className="h-full bg-primary transition-all duration-300 ease-out rounded-md"
+                        style={{ width: `${progress}%` }}
+                      />
                       <motion.div
-                        className="absolute top-0 left-0 h-full bg-primary/20 w-full"
+                        className="absolute top-0 h-full w-1/3 bg-gradient-to-r from-transparent via-primary/30 to-transparent"
                         animate={{
-                          x: ['-100%', '100%']
+                          x: ['-100%', '400%']
                         }}
                         transition={{
                           repeat: Infinity,
-                          duration: 1.5,
+                          duration: 2.5,
                           ease: 'linear'
                         }}
                       />
                     </div>
                     <motion.p
-                      className="text-sm text-right"
-                      animate={{ opacity: [0.5, 1, 0.5] }}
-                      transition={{ duration: 2, repeat: Infinity }}
+                      className="text-sm text-right font-mono text-primary/80 dark:text-primary/70"
+                      animate={{ opacity: [0.7, 1, 0.7] }}
+                      transition={{ duration: 1.8, repeat: Infinity }}
                     >
                       {progress}%
                     </motion.p>

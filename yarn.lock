@@ -3071,6 +3071,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"geist@npm:^1.4.2":
+  version: 1.4.2
+  resolution: "geist@npm:1.4.2"
+  peerDependencies:
+    next: ">=13.2.0"
+  checksum: 10c0/597fc5052fcf7f9ab37334cf1333e67d9e02b176bde5314d328e7fe318dd0a18a322885d999c45cc39bdd2d0b85884ac3ebf8442dabfb4cc8bde256d433696be
+  languageName: node
+  linkType: hard
+
 "gensync@npm:^1.0.0-beta.2":
   version: 1.0.0-beta.2
   resolution: "gensync@npm:1.0.0-beta.2"
@@ -3298,6 +3307,7 @@ __metadata:
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
     framer-motion: "npm:^12.23.0"
+    geist: "npm:^1.4.2"
     javascript-obfuscator: "npm:^4.1.1"
     lucide-react: "npm:^0.525.0"
     next: "npm:^15.3.5"
