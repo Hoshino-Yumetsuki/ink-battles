@@ -25,6 +25,7 @@ export interface WriterAnalysisResult {
   }[]
   strengths: string[]
   improvements: string[]
+  overview?: string
 }
 
 export default function WriterAnalysisPage() {

@@ -159,6 +159,10 @@ export async function POST(request: Request) {
         result.feedback = '无法生成详细的反馈意见。'
       }
 
+      if (!result.overview || typeof result.overview !== 'string') {
+        result.overview = '无法生成作品描述及总体评价。'
+      }
+
       const finalResult = {
         ...result,
         overallScore

@@ -86,6 +86,22 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
         </CardContent>
       </Card>
 
+      {result.overview && (
+        <Card>
+          <CardHeader>
+            <CardTitle>作品概述</CardTitle>
+            <CardDescription>作品描述及总体评价</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="prose prose-sm dark:prose-invert">
+              {result.overview.split('\n').map((paragraph, idx) => (
+                <p key={idx}>{paragraph}</p>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>优势亮点</CardTitle>
