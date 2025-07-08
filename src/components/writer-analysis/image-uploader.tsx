@@ -77,7 +77,9 @@ export default function ImageUploader({
     reader.readAsDataURL(file)
   }
 
-  const handleRemoveImage = () => {
+  const handleRemoveImage = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
     setPreviewUrl(null)
     setHasImage(false)
     setImageUrlAction(null)
@@ -148,7 +150,7 @@ export default function ImageUploader({
                 variant="outline"
                 size="sm"
                 className="absolute top-2 right-2 bg-white/80 dark:bg-black/70 rounded-full p-1 w-8 h-8 flex items-center justify-center"
-                onClick={handleRemoveImage}
+                onClick={(e) => handleRemoveImage(e)}
               >
                 ×
               </Button>
