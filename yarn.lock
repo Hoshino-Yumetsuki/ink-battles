@@ -3306,7 +3306,7 @@ __metadata:
     openai: "npm:^5.8.2"
     react: "npm:^19.1.0"
     react-dom: "npm:^19.1.0"
-    shadcn: "npm:^2.7.0"
+    shadcn: "npm:^2.8.0"
     sonner: "npm:^2.0.6"
     tailwind-merge: "npm:^3.3.1"
     tailwindcss: "npm:^4.1.11"
@@ -4813,9 +4813,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"shadcn@npm:^2.7.0":
-  version: 2.7.0
-  resolution: "shadcn@npm:2.7.0"
+"shadcn@npm:^2.8.0":
+  version: 2.8.0
+  resolution: "shadcn@npm:2.8.0"
   dependencies:
     "@antfu/ni": "npm:^23.2.0"
     "@babel/core": "npm:^7.22.1"
@@ -4844,7 +4844,7 @@ __metadata:
     zod-to-json-schema: "npm:^3.24.5"
   bin:
     shadcn: dist/index.js
-  checksum: 10c0/6cc0e1472ebd94ede55639577c274531332718f4eedc0ebbac349c135905e269df9b2959991c4f0adda1c836644bf4ce3474844c1ad77520b364694d2ad00ade
+  checksum: 10c0/2a93494824a6af069c19a0fd5e5f33f9f53935a6354d15979e118be5ae6a18e2ffc3f28329070e40081ca8b8320acda34ca9fc6588078ad35081abbbbe000d94
   languageName: node
   linkType: hard
 
