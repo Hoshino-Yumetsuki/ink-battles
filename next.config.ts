@@ -24,7 +24,8 @@ const obfuscatorOptions = {
   stringArrayWrappersType: 'function',
   stringArrayThreshold: 1,
   transformObjectKeys: true,
-  unicodeEscapeSequence: false
+  unicodeEscapeSequence: false,
+  SourceMapMode: false
 }
 
 const pluginOptions = {
