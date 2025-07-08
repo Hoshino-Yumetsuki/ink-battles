@@ -89,9 +89,9 @@ export default function ImageUploader({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 w-full">
       <label
-        className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-md p-6 flex flex-col items-center cursor-pointer"
+        className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-md p-6 flex flex-col items-center justify-center cursor-pointer w-full min-h-[240px]"
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
       >
@@ -103,40 +103,45 @@ export default function ImageUploader({
           onChange={handleFileChange}
         />
         {!previewUrl ? (
-          <div className="text-center">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 48 48"
-              aria-hidden="true"
-            >
-              <path
+          <div className="flex flex-col items-center justify-center w-full h-full text-center py-8">
+            <div className="mx-auto h-12 w-12 flex items-center justify-center text-gray-400">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 14l8-8 8 8m-16 0v18h16V14m-8-8v18"
-              />
-            </svg>
-            <div className="mt-4 flex flex-col items-center text-sm text-gray-600 dark:text-gray-400">
-              <p>拖拽图片至此，或者</p>
+                aria-label="上传图片图标"
+                role="img"
+              >
+                <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
+                <path d="M12 12v9"></path>
+                <path d="m16 16-4-4-4 4"></path>
+              </svg>
+            </div>
+            <div className="mt-4 flex flex-col items-center justify-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-center">拖拽图片至此，或者</p>
               <Button
                 variant="ghost"
                 onClick={() => fileInputRef.current?.click()}
-                className="mt-1"
+                className="my-2 px-4"
               >
                 点击浏览
               </Button>
-              <p className="mt-2 text-xs">
+              <p className="text-center text-xs">
                 支持JPG、PNG等图片格式，大小不超过10MB
               </p>
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-3 w-full">
+          <div className="flex flex-col items-center justify-center gap-3 w-full">
             <div className="relative w-full max-w-md mx-auto">
               {previewUrl && (
-                <div className="relative w-full h-[300px]">
+                <div className="relative w-full h-[300px] flex items-center justify-center">
                   <Image
                     src={previewUrl}
                     alt="预览图片"
@@ -195,7 +200,7 @@ export default function ImageUploader({
           </Button>
         </motion.div>
       </div>
-      <p className="text-xs text-muted-foreground mt-2">
+      <p className="text-xs text-muted-foreground mt-2 text-center">
         请上传一张要分析的图片，支持JPG、PNG等常见图片格式，大小不超过10MB
       </p>
     </div>
