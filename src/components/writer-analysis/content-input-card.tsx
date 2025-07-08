@@ -11,75 +11,108 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import ImageUploader from './image-uploader'
 
 interface ContentInputCardProps {
   content: string
   setContentAction: (content: string) => void
+  _imageUrl: string | null
+  setImageUrlAction: (url: string | null) => void
   isLoading: boolean
   onAnalyzeAction: () => void
+  analysisType: 'text' | 'image'
+  setAnalysisTypeAction: (type: 'text' | 'image') => void
 }
 
 export default function ContentInputCard({
   content,
   setContentAction,
+  setImageUrlAction,
   isLoading,
-  onAnalyzeAction
+  onAnalyzeAction,
+  analysisType,
+  setAnalysisTypeAction
 }: ContentInputCardProps) {
   return (
     <Card className="h-auto">
       <CardHeader>
         <CardTitle>作品输入</CardTitle>
-        <CardDescription>
-          请粘贴您要分析的作品内容，支持小说、散文、诗歌等多种文体
-        </CardDescription>
+        <CardDescription>请输入要分析的内容，支持文本或图片</CardDescription>
       </CardHeader>
       <CardContent>
-        <Textarea
-          placeholder="请在此处粘贴您的作品全文..."
-          className="min-h-[400px] resize-none"
-          value={content}
-          onChange={(e) => setContentAction(e.target.value)}
-          disabled={isLoading}
-        />
+        <Tabs
+          defaultValue="text"
+          value={analysisType}
+          onValueChange={(value) =>
+            setAnalysisTypeAction(value as 'text' | 'image')
+          }
+          className="w-full"
+        >
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="text">文本输入</TabsTrigger>
+            <TabsTrigger value="image">图片上传</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="text" className="mt-4">
+            <Textarea
+              placeholder="请在此处粘贴您的作品全文..."
+              className="min-h-[400px] resize-none"
+              value={content}
+              onChange={(e) => setContentAction(e.target.value)}
+              disabled={isLoading}
+            />
+            <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+              字数统计: {content.length} 字
+            </div>
+          </TabsContent>
+
+          <TabsContent value="image" className="mt-4">
+            <ImageUploader
+              setImageUrlAction={setImageUrlAction}
+              isLoading={isLoading}
+              onAnalyzeAction={onAnalyzeAction}
+            />
+          </TabsContent>
+        </Tabs>
       </CardContent>
-      <CardFooter className="flex justify-between">
-        <div className="text-sm text-gray-500 dark:text-gray-400">
-          字数统计: {content.length} 字
-        </div>
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <Button
-            onClick={onAnalyzeAction}
-            disabled={isLoading || !content.trim()}
-            className="relative overflow-hidden"
-          >
-            {isLoading ? (
-              <span className="flex items-center">
-                <motion.span
-                  animate={{ rotate: 360 }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: 'linear'
-                  }}
-                  className="inline-block mr-2"
-                >
-                  ⟳
-                </motion.span>
-                分析中...
-              </span>
-            ) : (
-              <>
-                <span>开始分析</span>
-                <motion.span
-                  className="absolute inset-0 bg-white/10"
-                  initial={{ x: '-100%' }}
-                  whileHover={{ x: '100%' }}
-                  transition={{ duration: 0.6 }}
-                />
-              </>
-            )}
-          </Button>
-        </motion.div>
+      <CardFooter className="flex justify-end">
+        {analysisType === 'text' && (
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              onClick={onAnalyzeAction}
+              disabled={isLoading || !content.trim()}
+              className="relative overflow-hidden"
+            >
+              {isLoading ? (
+                <span className="flex items-center">
+                  <motion.span
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                      ease: 'linear'
+                    }}
+                    className="inline-block mr-2"
+                  >
+                    ⟳
+                  </motion.span>
+                  分析中...
+                </span>
+              ) : (
+                <>
+                  <span>开始分析</span>
+                  <motion.span
+                    className="absolute inset-0 bg-white/10"
+                    initial={{ x: '-100%' }}
+                    whileHover={{ x: '100%' }}
+                    transition={{ duration: 0.6 }}
+                  />
+                </>
+              )}
+            </Button>
+          </motion.div>
+        )}
       </CardFooter>
     </Card>
   )

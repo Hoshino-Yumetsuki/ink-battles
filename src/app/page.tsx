@@ -29,6 +29,8 @@ export interface WriterAnalysisResult {
 
 export default function WriterAnalysisPage() {
   const [content, setContent] = useState<string>('')
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [analysisType, setAnalysisType] = useState<'text' | 'image'>('text')
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [progress, setProgress] = useState<number>(0)
   const [result, setResult] = useState<WriterAnalysisResult | null>(null)
@@ -53,8 +55,13 @@ export default function WriterAnalysisPage() {
   useEffect(() => {}, [])
 
   const handleAnalyze = async () => {
-    if (!content.trim()) {
+    if (analysisType === 'text' && !content.trim()) {
       toast.error('请输入作品内容再进行分析')
+      return
+    }
+
+    if (analysisType === 'image' && !imageUrl) {
+      toast.error('请先上传图片再进行分析')
       return
     }
 
@@ -87,7 +94,9 @@ export default function WriterAnalysisPage() {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            content,
+            content: analysisType === 'text' ? content : null,
+            imageUrl: analysisType === 'image' ? imageUrl : null,
+            analysisType,
             options: enabledOptions
           })
         })
@@ -140,8 +149,12 @@ export default function WriterAnalysisPage() {
           <ContentInputCard
             content={content}
             setContentAction={setContent}
+            _imageUrl={imageUrl}
+            setImageUrlAction={setImageUrl}
             isLoading={isLoading}
             onAnalyzeAction={handleAnalyze}
+            analysisType={analysisType}
+            setAnalysisTypeAction={setAnalysisType}
           />
         </motion.div>
 

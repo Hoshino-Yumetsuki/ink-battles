@@ -18,10 +18,14 @@ const openai = new OpenAI({
 
 export async function POST(request: Request) {
   try {
-    const { content, options } = await request.json()
+    const { content, imageUrl, analysisType, options } = await request.json()
 
-    if (!content || content.trim().length === 0) {
-      return NextResponse.json({ error: '内容不能为空' }, { status: 400 })
+    if (analysisType === 'text' && (!content || content.trim().length === 0)) {
+      return NextResponse.json({ error: '文本内容不能为空' }, { status: 400 })
+    }
+
+    if (analysisType === 'image' && !imageUrl) {
+      return NextResponse.json({ error: '图片URL不能为空' }, { status: 400 })
     }
 
     if (!isValidLlmApiConfig(apiConfig)) {
@@ -33,14 +37,67 @@ export async function POST(request: Request) {
 
     const systemPrompt = buildPrompt(options)
 
-    const response = await openai.chat.completions.create({
-      model: apiConfig.model || 'gpt-4o',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: content }
-      ],
-      response_format: { type: 'json_object' }
-    })
+    let response: OpenAI.Chat.Completions.ChatCompletion
+
+    if (analysisType === 'text') {
+      response = await openai.chat.completions.create({
+        model: apiConfig.model || 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: content }
+        ],
+        response_format: { type: 'json_object' }
+      })
+    } else {
+      try {
+        const fs = require('node:fs')
+        const path = require('node:path')
+
+        const imagePath = path.join(
+          process.cwd(),
+          'public',
+          imageUrl.replace(/^\//, '')
+        )
+
+        const imageBuffer = fs.readFileSync(imagePath)
+        const base64Image = imageBuffer.toString('base64')
+        const mimeType = imageUrl.toLowerCase().endsWith('.png')
+          ? 'image/png'
+          : imageUrl.toLowerCase().endsWith('.webp')
+            ? 'image/webp'
+            : imageUrl.toLowerCase().endsWith('.gif')
+              ? 'image/gif'
+              : 'image/jpeg'
+
+        const dataURI = `data:${mimeType};base64,${base64Image}`
+
+        response = await openai.chat.completions.create({
+          model: apiConfig.model || 'gpt-4o-vision',
+          messages: [
+            {
+              role: 'system',
+              content: `${systemPrompt}\n请分析用户上传的图片，提供详细评价。`
+            },
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: '请分析这张图片的内容和艺术性。' },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: dataURI
+                  }
+                }
+              ]
+            }
+          ],
+          response_format: { type: 'json_object' }
+        })
+      } catch (error: any) {
+        console.error('处理图片错误:', error)
+        throw new Error(`图片处理失败: ${error.message || error}`)
+      }
+    }
 
     if (
       !response.choices ||

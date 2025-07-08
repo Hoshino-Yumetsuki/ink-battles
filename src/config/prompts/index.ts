@@ -1,7 +1,3 @@
-/**
- * 提示词管理器
- * 用于根据用户选择的模式组合提示词
- */
 import { basePrompt } from './base'
 import { promptModes, type PromptMode } from './modes'
 
