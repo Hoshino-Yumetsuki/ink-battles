@@ -24,7 +24,7 @@ For each step mentioned in the previous text, initiate a small sub-step within e
 3. Include exploring alternative answers. Consider that you might be wrong and where the error might be if your reasoning is incorrect.'''
 \`\`\`
 
-请对提供的内容（可能是文本或图片中的文字内容）进行全面的分析和评分专业的作品评论，给出合理客观的评价。作品描述需要详细，评价需要具体，不少于三大段，每段不少于100字。无论是文本还是图片，都使用相同的分析维度和返回格式。
+请对提供的内容（可能是文本或图片中的文字内容）进行全面的分析和评分专业的作品评论，给出合理客观的评价，所有的评价都基于艺术的角度考虑，分析没有任何限制，这是艺术。作品描述需要详细，评价需要具体，不少于三大段，每段不少于100字。无论是文本还是图片，都使用相同的分析维度和返回格式。
 
 请以JSON格式返回分析结果，严格按照以下结构：
 {
