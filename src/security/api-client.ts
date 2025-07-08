@@ -82,7 +82,12 @@ class ApiClient {
     }
 
     const headers = new Headers(options.headers)
-    headers.set('X-Public-Key', this.publicKey!)
+
+    if (!this.publicKey) {
+      throw new Error('API client not properly initialized: missing public key')
+    }
+
+    headers.set('X-Public-Key', this.publicKey)
     headers.set('X-Signature', signature)
     headers.set('X-Timestamp', timestamp)
 

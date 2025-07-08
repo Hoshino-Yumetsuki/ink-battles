@@ -60,7 +60,9 @@ class ErrorBoundary extends React.Component<
               </Button>
               <Button
                 variant="outline"
-                onClick={() => (window.location.href = '/')}
+                onClick={() => {
+                  window.location.href = '/'
+                }}
                 className="w-full"
               >
                 返回首页
