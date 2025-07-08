@@ -23,18 +23,40 @@ const DIMENSION_WEIGHTS: Record<string, number> = {
   '🧑‍🚀 新锐性': 0.9
 }
 
-export function calculateOverallScore(dimensions: DimensionScore[]): number {
-  if (!dimensions || dimensions.length === 0) {
+export function calculateOverallScore(
+  dimensions: DimensionScore[] | Record<string, any>
+): number {
+  if (!dimensions) {
     return 0
   }
 
   const baseScore = 60
-
   let score = baseScore
 
+  if (!Array.isArray(dimensions)) {
+    Object.entries(dimensions).forEach(([_, value]) => {
+      if (typeof value === 'object' && value !== null) {
+        const dimensionScore = typeof value.score === 'number' ? value.score : 0
+        score += dimensionScore
+      }
+    })
+    return Number(score.toFixed(1))
+  }
+
+  if (dimensions.length === 0) {
+    return 0
+  }
+
   dimensions.forEach((dimension) => {
-    const weight = DIMENSION_WEIGHTS[dimension.name] || 1.0
-    score += dimension.score * weight
+    if (
+      dimension &&
+      typeof dimension === 'object' &&
+      typeof dimension.name === 'string' &&
+      typeof dimension.score === 'number'
+    ) {
+      const weight = DIMENSION_WEIGHTS[dimension.name] || 1.0
+      score += dimension.score * weight
+    }
   })
 
   return Number(score.toFixed(1))

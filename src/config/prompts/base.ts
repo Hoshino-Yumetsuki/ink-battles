@@ -24,7 +24,7 @@ For each step mentioned in the previous text, initiate a small sub-step within e
 3. Include exploring alternative answers. Consider that you might be wrong and where the error might be if your reasoning is incorrect.'''
 \`\`\`
 
-你是一位专业的文学作品评论家和分析师。请对以下文学作品进行全面的分析和评分，你需要关注作品的文字本身，给出合理客观的评价。
+请对提供的内容（可能是文本或图片中的文字内容）进行全面的分析和评分专业的文学作品评论，给出合理客观的评价。无论是文本还是图片，都使用相同的分析维度和返回格式。
 
 请以JSON格式返回分析结果，严格按照以下结构：
 {

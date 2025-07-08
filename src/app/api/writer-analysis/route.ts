@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     }
 
     if (analysisType === 'image' && !imageUrl) {
-      return NextResponse.json({ error: '图片URL不能为空' }, { status: 400 })
+      return NextResponse.json({ error: '图片数据不能为空' }, { status: 400 })
     }
 
     if (!isValidLlmApiConfig(apiConfig)) {
@@ -50,42 +50,32 @@ export async function POST(request: Request) {
       })
     } else {
       try {
-        const fs = require('node:fs')
-        const path = require('node:path')
-
-        const imagePath = path.join(
-          process.cwd(),
-          'public',
-          imageUrl.replace(/^\//, '')
-        )
-
-        const imageBuffer = fs.readFileSync(imagePath)
-        const base64Image = imageBuffer.toString('base64')
-        const mimeType = imageUrl.toLowerCase().endsWith('.png')
-          ? 'image/png'
-          : imageUrl.toLowerCase().endsWith('.webp')
-            ? 'image/webp'
-            : imageUrl.toLowerCase().endsWith('.gif')
-              ? 'image/gif'
-              : 'image/jpeg'
-
-        const dataURI = `data:${mimeType};base64,${base64Image}`
+        if (
+          !imageUrl ||
+          typeof imageUrl !== 'string' ||
+          !imageUrl.startsWith('data:image/')
+        ) {
+          throw new Error('无效的图片数据格式')
+        }
 
         response = await openai.chat.completions.create({
-          model: apiConfig.model || 'gpt-4o-vision',
+          model: apiConfig.model || 'gpt-4o',
           messages: [
             {
               role: 'system',
-              content: `${systemPrompt}\n请分析用户上传的图片，提供详细评价。`
+              content: systemPrompt
             },
             {
               role: 'user',
               content: [
-                { type: 'text', text: '请分析这张图片的内容和艺术性。' },
+                {
+                  type: 'text',
+                  text: '请分析这张图片中的文本内容'
+                },
                 {
                   type: 'image_url',
                   image_url: {
-                    url: dataURI
+                    url: imageUrl
                   }
                 }
               ]
@@ -135,15 +125,16 @@ export async function POST(request: Request) {
         )
       }
 
-      if (!result.dimensions || typeof result.dimensions !== 'object') {
-        console.error('AI响应缺少维度数据:', result)
-        result.dimensions = {
-          structure: { score: 3, feedback: '无法评估' },
-          content: { score: 3, feedback: '无法评估' },
-          language: { score: 3, feedback: '无法评估' },
-          creativity: { score: 3, feedback: '无法评估' },
-          coherence: { score: 3, feedback: '无法评估' }
-        }
+      if (!result.dimensions || !Array.isArray(result.dimensions)) {
+        console.error('AI响应缺少维度数据数组:', result)
+        result.dimensions = [
+          { name: '🎭 人物塑造力', score: 3, description: '无法评估' },
+          { name: '🧠 结构复杂度', score: 3, description: '无法评估' },
+          { name: '🔀 情节反转密度', score: 3, description: '无法评估' },
+          { name: '💔 情感穿透力', score: 3, description: '无法评估' },
+          { name: '🎨 文体魅力', score: 3, description: '无法评估' },
+          { name: '🌀 先锋性/实验性', score: 3, description: '无法评估' }
+        ]
       }
 
       const overallScore = calculateOverallScore(result.dimensions)
@@ -176,17 +167,26 @@ export async function POST(request: Request) {
       const responseData = JSON.stringify(finalResult)
       const { publicKey, signature } = await signResponseData(responseData)
 
-      const response = NextResponse.json(finalResult)
-      response.headers.set('X-Server-Public-Key', publicKey)
-      response.headers.set('X-Server-Signature', signature)
-
-      return response
-    } catch (_error) {
-      console.error('无法解析AI返回的JSON结果:', resultText)
-      return NextResponse.json({ error: '分析结果格式错误' }, { status: 500 })
+      return new Response(responseData, {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Signature': signature,
+          'X-Public-Key': publicKey
+        }
+      })
+    } catch (error: any) {
+      console.error('处理分析结果错误:', error)
+      return NextResponse.json(
+        { error: '处理分析结果时出错', details: error.message },
+        { status: 500 }
+      )
     }
-  } catch (error) {
-    console.error('分析处理错误:', error)
-    return NextResponse.json({ error: '服务器处理请求时出错' }, { status: 500 })
+  } catch (error: any) {
+    console.error('分析请求处理错误:', error)
+    return NextResponse.json(
+      { error: '处理请求时出错', details: error.message },
+      { status: 500 }
+    )
   }
 }
