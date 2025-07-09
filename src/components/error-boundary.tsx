@@ -26,7 +26,7 @@ class ErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error('前端渲染错误:', error, errorInfo)
+    console.error('Frontend rendering error:', error, errorInfo)
   }
 
   render(): React.ReactNode {

@@ -8,6 +8,7 @@ import {
 } from '@/utils/score-calculator'
 import { getLlmApiConfig, isValidLlmApiConfig } from '@/config/api'
 import { signResponseData } from '@/security/middleware'
+import { logger } from '@/utils/logger'
 
 const apiConfig = getLlmApiConfig()
 
@@ -84,7 +85,7 @@ export async function POST(request: Request) {
           response_format: { type: 'json_object' }
         })
       } catch (error: any) {
-        console.error('处理图片错误:', error)
+        logger.error('Error processing image', error)
         throw new Error(`图片处理失败: ${error.message || error}`)
       }
     }
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
       !Array.isArray(response.choices) ||
       response.choices.length === 0
     ) {
-      console.error('无效的AI响应结构:', JSON.stringify(response))
+      logger.error('Invalid AI response structure', response)
       return NextResponse.json(
         { error: '内容分析被拒绝或返回了空响应，请检查您的输入是否合规' },
         { status: 422 }
@@ -104,7 +105,7 @@ export async function POST(request: Request) {
     const resultText = response.choices[0]?.message?.content
 
     if (!resultText) {
-      console.error('AI响应中缺少内容:', JSON.stringify(response.choices[0]))
+      logger.error('Missing content in AI response', response.choices[0])
       return NextResponse.json(
         { error: '分析失败，未能获取有效结果' },
         { status: 500 }
@@ -115,7 +116,7 @@ export async function POST(request: Request) {
       const result = JSON.parse(resultText)
 
       if (!result || typeof result !== 'object') {
-        console.error('解析后AI响应不是有效对象:', resultText)
+        logger.error('Parsed AI response is not a valid object', { resultText })
         return NextResponse.json(
           {
             error: '服务器无法处理AI响应',
@@ -126,7 +127,7 @@ export async function POST(request: Request) {
       }
 
       if (!result.dimensions || !Array.isArray(result.dimensions)) {
-        console.error('AI响应缺少维度数据数组:', result)
+        logger.error('AI response missing dimensions data array', result)
         result.dimensions = [
           { name: '🎭 人物塑造力', score: 3, description: '无法评估' },
           { name: '🧠 结构复杂度', score: 3, description: '无法评估' },
@@ -180,14 +181,14 @@ export async function POST(request: Request) {
         }
       })
     } catch (error: any) {
-      console.error('处理分析结果错误:', error)
+      logger.error('Error processing analysis results', error)
       return NextResponse.json(
         { error: '处理分析结果时出错', details: error.message },
         { status: 500 }
       )
     }
   } catch (error: any) {
-    console.error('分析请求处理错误:', error)
+    logger.error('Error processing analysis request', error)
     return NextResponse.json(
       { error: '处理请求时出错', details: error.message },
       { status: 500 }

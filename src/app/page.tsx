@@ -124,11 +124,11 @@ export default function WriterAnalysisPage() {
         setProgress(100)
         setResult(safeData)
       } catch (error: any) {
-        console.error('分析数据错误:', error)
+        console.error('Analysis data error:', error)
         toast.error(`分析错误: ${error?.message || '未知错误'}`)
       }
     } catch (error: any) {
-      console.error('分析过程错误:', error)
+      console.error('Analysis process error:', error)
       toast.error(`分析失败: ${error?.message || '请检查您的网络并稍后重试'}`)
     } finally {
       setIsLoading(false)
