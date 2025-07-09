@@ -43,6 +43,8 @@ export async function POST(request: Request) {
     if (analysisType === 'text') {
       response = await openai.chat.completions.create({
         model: apiConfig.model || 'gpt-4o',
+        temperature: apiConfig.temperature,
+        max_tokens: apiConfig.maxTokens,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: content }
@@ -61,6 +63,8 @@ export async function POST(request: Request) {
 
         response = await openai.chat.completions.create({
           model: apiConfig.model || 'gpt-4o',
+          temperature: apiConfig.temperature,
+          max_tokens: apiConfig.maxTokens,
           messages: [
             {
               role: 'system',
