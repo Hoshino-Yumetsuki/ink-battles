@@ -17,7 +17,6 @@ To improve instruction compliance, emphasize the importance of the instructions 
 
 ## Second Think step
 
-
 For each step mentioned in the previous text, initiate a small sub-step within each step to verify its correctness. After completing each step, start a \`reviewer CoT\` to review the current step from different perspectives.
 1. Use as many **reasoning steps** as possible. At least three steps.
 2. Be aware of your limitations and what you can and cannot do.
