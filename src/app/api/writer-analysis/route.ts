@@ -49,7 +49,53 @@ export async function POST(request: Request) {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: content }
         ],
-        response_format: { type: 'json_object' }
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'writer_analysis_response',
+            strict: true,
+            schema: {
+              type: 'object',
+              properties: {
+                overallAssessment: { type: 'string' },
+                title: { type: 'string' },
+                ratingTag: { type: 'string' },
+                dimensions: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      name: { type: 'string' },
+                      score: { type: 'integer', minimum: 1, maximum: 5 },
+                      description: { type: 'string' }
+                    },
+                    required: ['name', 'score', 'description'],
+                    additionalProperties: false
+                  }
+                },
+                strengths: {
+                  type: 'array',
+                  items: { type: 'string' }
+                },
+                improvements: {
+                  type: 'array',
+                  items: { type: 'string' }
+                },
+                comments: { type: 'string' }
+              },
+              required: [
+                'overallAssessment',
+                'title',
+                'ratingTag',
+                'dimensions',
+                'strengths',
+                'improvements',
+                'comments'
+              ],
+              additionalProperties: false
+            }
+          }
+        }
       })
     } else {
       try {
@@ -86,7 +132,53 @@ export async function POST(request: Request) {
               ]
             }
           ],
-          response_format: { type: 'json_object' }
+          response_format: {
+            type: 'json_schema',
+            json_schema: {
+              name: 'writer_analysis_response',
+              strict: true,
+              schema: {
+                type: 'object',
+                properties: {
+                  overallAssessment: { type: 'string' },
+                  title: { type: 'string' },
+                  ratingTag: { type: 'string' },
+                  dimensions: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        name: { type: 'string' },
+                        score: { type: 'integer', minimum: 1, maximum: 5 },
+                        description: { type: 'string' }
+                      },
+                      required: ['name', 'score', 'description'],
+                      additionalProperties: false
+                    }
+                  },
+                  strengths: {
+                    type: 'array',
+                    items: { type: 'string' }
+                  },
+                  improvements: {
+                    type: 'array',
+                    items: { type: 'string' }
+                  },
+                  overview: { type: 'string' }
+                },
+                required: [
+                  'overallAssessment',
+                  'title',
+                  'ratingTag',
+                  'dimensions',
+                  'strengths',
+                  'improvements',
+                  'overview'
+                ],
+                additionalProperties: false
+              }
+            }
+          }
         })
       } catch (error: any) {
         logger.error('Error processing image', error)

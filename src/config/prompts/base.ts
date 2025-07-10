@@ -126,5 +126,5 @@ For each step mentioned in the previous text, initiate a small sub-step within e
   ],
   "strengths": ["优势1", "优势2", ...],
   "improvements": ["改进建议1", "改进建议2", ...],
-  "overview": "作品描述及总体评价"
+  "comment": "作品描述及总体评价"
 }`
