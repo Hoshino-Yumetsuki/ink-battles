@@ -81,7 +81,7 @@ export async function POST(request: Request) {
                   type: 'array',
                   items: { type: 'string' }
                 },
-                comments: { type: 'string' }
+                comment: { type: 'string' }
               },
               required: [
                 'overallAssessment',
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
                 'dimensions',
                 'strengths',
                 'improvements',
-                'comments'
+                'comment'
               ],
               additionalProperties: false
             }
@@ -164,7 +164,7 @@ export async function POST(request: Request) {
                     type: 'array',
                     items: { type: 'string' }
                   },
-                  overview: { type: 'string' }
+                  comment: { type: 'string' }
                 },
                 required: [
                   'overallAssessment',
@@ -173,7 +173,7 @@ export async function POST(request: Request) {
                   'dimensions',
                   'strengths',
                   'improvements',
-                  'overview'
+                  'comment'
                 ],
                 additionalProperties: false
               }
@@ -222,18 +222,6 @@ export async function POST(request: Request) {
         )
       }
 
-      if (!result.dimensions || !Array.isArray(result.dimensions)) {
-        logger.error('AI response missing dimensions data array', result)
-        result.dimensions = [
-          { name: '🎭 人物塑造力', score: 3, description: '无法评估' },
-          { name: '🧠 结构复杂度', score: 3, description: '无法评估' },
-          { name: '🔀 情节反转密度', score: 3, description: '无法评估' },
-          { name: '💔 情感穿透力', score: 3, description: '无法评估' },
-          { name: '🎨 文体魅力', score: 3, description: '无法评估' },
-          { name: '🌀 先锋性/实验性', score: 3, description: '无法评估' }
-        ]
-      }
-
       const overallScore = calculateOverallScore(result.dimensions)
 
       if (
@@ -250,14 +238,6 @@ export async function POST(request: Request) {
         typeof result.ratingTag !== 'string'
       ) {
         result.ratingTag = generateRatingTag(overallScore)
-      }
-
-      if (!result.feedback || typeof result.feedback !== 'string') {
-        result.feedback = '无法生成详细的反馈意见。'
-      }
-
-      if (!result.overview || typeof result.overview !== 'string') {
-        result.overview = '无法生成作品描述及总体评价。'
       }
 
       const finalResult = {

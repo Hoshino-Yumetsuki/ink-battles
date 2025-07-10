@@ -5,13 +5,12 @@ import { Toaster, toast } from 'sonner'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useApiSecurity } from '@/security/provider'
 
-// 导入组件
-import PageHeader from '@/components/writer-analysis/page-header'
-import ContentInputCard from '@/components/writer-analysis/content-input-card'
-import LoadingProgress from '@/components/writer-analysis/loading-progress'
-import AnalysisOptions from '@/components/writer-analysis/analysis-options'
-import WriterScoreResult from '@/components/writer-analysis/writer-score-result'
-import AnimatedBackground from '@/components/writer-analysis/animated-background'
+import PageHeader from '@/components/article-analysis/page-header'
+import ContentInputCard from '@/components/article-analysis/content-input-card'
+import LoadingProgress from '@/components/article-analysis/loading-progress'
+import AnalysisOptions from '@/components/article-analysis/analysis-options'
+import WriterScoreResult from '@/components/article-analysis/score-result'
+import AnimatedBackground from '@/components/article-analysis/animated-background'
 
 export interface WriterAnalysisResult {
   overallScore: number
@@ -25,7 +24,7 @@ export interface WriterAnalysisResult {
   }[]
   strengths: string[]
   improvements: string[]
-  overview?: string
+  comment?: string
 }
 
 export default function WriterAnalysisPage() {
@@ -89,7 +88,7 @@ export default function WriterAnalysisPage() {
       }, 500)
 
       try {
-        const data = await secureApiCall('/api/writer-analysis', {
+        const data = await secureApiCall('/api/article-analysis', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

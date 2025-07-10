@@ -86,7 +86,7 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
         </CardContent>
       </Card>
 
-      {result.overview && (
+      {result.comment && (
         <Card>
           <CardHeader>
             <CardTitle>作品概述</CardTitle>
@@ -94,7 +94,7 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
           </CardHeader>
           <CardContent>
             <div className="prose prose-sm dark:prose-invert">
-              {result.overview.split('\n').map((paragraph, idx) => (
+              {result.comment.split('\n').map((paragraph, idx) => (
                 <p key={idx}>{paragraph}</p>
               ))}
             </div>
