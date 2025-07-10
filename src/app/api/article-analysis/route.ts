@@ -40,65 +40,70 @@ export async function POST(request: Request) {
 
     let response: OpenAI.Chat.Completions.ChatCompletion
 
-    if (analysisType === 'text') {
-      response = await openai.chat.completions.create({
-        model: apiConfig.model || 'gpt-4o',
-        temperature: apiConfig.temperature,
-        max_tokens: apiConfig.maxTokens,
-        messages: [
+    const responseFormat = {
+      type: 'json_schema',
+      json_schema: {
+        name: 'analysis_response',
+        strict: true,
+        schema: {
+          type: 'object',
+          properties: {
+            overallAssessment: { type: 'string' },
+            title: { type: 'string' },
+            ratingTag: { type: 'string' },
+            dimensions: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  score: { type: 'integer', minimum: 1, maximum: 5 },
+                  description: { type: 'string' }
+                },
+                required: ['name', 'score', 'description'],
+                additionalProperties: false
+              }
+            },
+            strengths: {
+              type: 'array',
+              items: { type: 'string' }
+            },
+            improvements: {
+              type: 'array',
+              items: { type: 'string' }
+            },
+            comment: { type: 'string' }
+          },
+          required: [
+            'overallAssessment',
+            'title',
+            'ratingTag',
+            'dimensions',
+            'strengths',
+            'improvements',
+            'comment'
+          ],
+          additionalProperties: false
+        }
+      }
+    } as const
+
+    const requestConfig = {
+      model: apiConfig.model || 'gpt-4o',
+      temperature: apiConfig.temperature,
+      max_tokens: apiConfig.maxTokens,
+      response_format: responseFormat
+    }
+
+    try {
+      let messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[]
+
+      if (analysisType === 'text') {
+        messages = [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: content }
-        ],
-        response_format: {
-          type: 'json_schema',
-          json_schema: {
-            name: 'writer_analysis_response',
-            strict: true,
-            schema: {
-              type: 'object',
-              properties: {
-                overallAssessment: { type: 'string' },
-                title: { type: 'string' },
-                ratingTag: { type: 'string' },
-                dimensions: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      name: { type: 'string' },
-                      score: { type: 'integer', minimum: 1, maximum: 5 },
-                      description: { type: 'string' }
-                    },
-                    required: ['name', 'score', 'description'],
-                    additionalProperties: false
-                  }
-                },
-                strengths: {
-                  type: 'array',
-                  items: { type: 'string' }
-                },
-                improvements: {
-                  type: 'array',
-                  items: { type: 'string' }
-                },
-                comment: { type: 'string' }
-              },
-              required: [
-                'overallAssessment',
-                'title',
-                'ratingTag',
-                'dimensions',
-                'strengths',
-                'improvements',
-                'comment'
-              ],
-              additionalProperties: false
-            }
-          }
-        }
-      })
-    } else {
-      try {
+        ]
+      } else {
         if (
           !imageUrl ||
           typeof imageUrl !== 'string' ||
@@ -107,83 +112,38 @@ export async function POST(request: Request) {
           throw new Error('无效的图片数据格式')
         }
 
-        response = await openai.chat.completions.create({
-          model: apiConfig.model || 'gpt-4o',
-          temperature: apiConfig.temperature,
-          max_tokens: apiConfig.maxTokens,
-          messages: [
-            {
-              role: 'system',
-              content: systemPrompt
-            },
-            {
-              role: 'user',
-              content: [
-                {
-                  type: 'text',
-                  text: '请分析这张图片中的文本内容'
-                },
-                {
-                  type: 'image_url',
-                  image_url: {
-                    url: imageUrl
-                  }
+        messages = [
+          {
+            role: 'system',
+            content: systemPrompt
+          },
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: '请分析这张图片中的文本内容'
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: imageUrl
                 }
-              ]
-            }
-          ],
-          response_format: {
-            type: 'json_schema',
-            json_schema: {
-              name: 'writer_analysis_response',
-              strict: true,
-              schema: {
-                type: 'object',
-                properties: {
-                  overallAssessment: { type: 'string' },
-                  title: { type: 'string' },
-                  ratingTag: { type: 'string' },
-                  dimensions: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        name: { type: 'string' },
-                        score: { type: 'integer', minimum: 1, maximum: 5 },
-                        description: { type: 'string' }
-                      },
-                      required: ['name', 'score', 'description'],
-                      additionalProperties: false
-                    }
-                  },
-                  strengths: {
-                    type: 'array',
-                    items: { type: 'string' }
-                  },
-                  improvements: {
-                    type: 'array',
-                    items: { type: 'string' }
-                  },
-                  comment: { type: 'string' }
-                },
-                required: [
-                  'overallAssessment',
-                  'title',
-                  'ratingTag',
-                  'dimensions',
-                  'strengths',
-                  'improvements',
-                  'comment'
-                ],
-                additionalProperties: false
               }
-            }
+            ]
           }
-        })
-      } catch (error: any) {
-        logger.error('Error processing image', error)
-        throw new Error(`图片处理失败: ${error.message || error}`)
+        ]
       }
+
+      response = await openai.chat.completions.create({
+        ...requestConfig,
+        messages
+      })
+    } catch (error: any) {
+      logger.error(`Error processing ${analysisType} analysis`, error)
+      throw new Error(
+        `${analysisType === 'image' ? '图片' : '文本'}处理失败: ${error.message || error}`
+      )
     }
 
     if (

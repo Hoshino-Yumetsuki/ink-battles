@@ -60,10 +60,6 @@ export function ApiSecurityProvider({ children }: ApiSecurityProviderProps) {
       const apiClient = ApiClient.getInstance()
       const response = await apiClient.fetch<T>(url, options)
 
-      if (!response.isVerified && response.data) {
-        console.warn('Signature verification failed')
-      }
-
       const data = response.data as any
 
       if (data?.error) {
