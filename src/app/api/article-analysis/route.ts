@@ -10,13 +10,6 @@ import { getLlmApiConfig, isValidLlmApiConfig } from '@/config/api'
 import { signResponseData } from '@/security/middleware'
 import { logger } from '@/utils/logger'
 
-const apiConfig = getLlmApiConfig()
-
-const openai = new OpenAI({
-  apiKey: apiConfig.apiKey,
-  baseURL: apiConfig.baseUrl
-})
-
 export async function POST(request: Request) {
   try {
     const { content, imageUrl, analysisType, options } = await request.json()
@@ -29,12 +22,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '图片数据不能为空' }, { status: 400 })
     }
 
+    const apiConfig = getLlmApiConfig()
+
     if (!isValidLlmApiConfig(apiConfig)) {
       return NextResponse.json(
         { error: 'LLM API配置无效，请检查环境变量设置' },
         { status: 500 }
       )
     }
+
+    const openai = new OpenAI({
+      apiKey: apiConfig.apiKey,
+      baseURL: apiConfig.baseUrl
+    })
 
     const systemPrompt = buildPrompt(options)
 
