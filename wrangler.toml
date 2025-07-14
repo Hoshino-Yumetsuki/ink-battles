@@ -1,0 +1,7 @@
+main = ".open-next/worker.js"
+name = "ink-battles"
+compatibility_date = "2025-07-14"
+compatibility_flags = ["nodejs_compat"]
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
