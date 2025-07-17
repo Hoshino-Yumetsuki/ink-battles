@@ -188,12 +188,17 @@ export default function ImageUploader({
               </span>
             ) : (
               <>
-                <span>开始分析</span>
+                <motion.span
+                  whileHover={{ x: 2 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  开始分析
+                </motion.span>
                 <motion.span
                   className="absolute inset-0 bg-white/10"
                   initial={{ x: '-100%' }}
                   whileHover={{ x: '100%' }}
-                  transition={{ duration: 0.6 }}
+                  transition={{ duration: 0.5, ease: 'easeOut' }}
                 />
               </>
             )}

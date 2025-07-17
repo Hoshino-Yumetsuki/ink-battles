@@ -1,5 +1,7 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import {
   Card,
   CardContent,
@@ -15,6 +17,29 @@ interface WriterScoreResultProps {
 }
 
 export default function WriterScoreResult({ result }: WriterScoreResultProps) {
+  const [animatedScore, setAnimatedScore] = useState(0)
+  const [showDetails, setShowDetails] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      let current = 0
+      const target = result.overallScore
+      const increment = target / 30
+      const interval = setInterval(() => {
+        current += increment
+        if (current >= target) {
+          setAnimatedScore(target)
+          clearInterval(interval)
+          setShowDetails(true)
+        } else {
+          setAnimatedScore(current)
+        }
+      }, 50)
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [result.overallScore])
+
   const getColorByScore = (score: number) => {
     if (score >= 4.5) return 'bg-emerald-500'
     if (score >= 4) return 'bg-green-500'
@@ -39,102 +64,232 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
     return score.toFixed(1)
   }
 
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20, scale: 0.95 },
+    visible: { opacity: 1, y: 0, scale: 1 }
+  }
+
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>综合战力评分</CardTitle>
-          <CardDescription>基于多维度分析得出的总体评分和建议</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center mb-6">
-            <div className="text-6xl font-bold text-amber-500">
-              {result.overallScore}
-            </div>
-            <div className="mt-2 text-xl font-semibold">{result.title}</div>
-            <div className="mt-1 text-sm">{result.ratingTag}</div>
-            <div className="mt-3 text-xs text-gray-500">
-              （总评分基于各维度加权计算）
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <h3 className="font-semibold">各维度评分</h3>
-
-            {result.dimensions.map((dimension, index) => (
-              <div key={index} className="space-y-1">
-                <div className="flex justify-between items-center">
-                  <span>{dimension.name}</span>
-                  <span
-                    className={`px-2 py-0.5 rounded text-white text-sm ${getColorByScore(dimension.score)}`}
-                  >
-                    {formatScore(dimension.score)}/5
-                  </span>
-                </div>
-                <Progress
-                  value={(dimension.score / 5) * 100}
-                  className={`h-2 ${getProgressColor(dimension.score)}`}
-                />
-                {dimension.description && (
-                  <p className="text-sm text-gray-500 mt-1">
-                    {dimension.description}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {result.comment && (
-        <Card>
+      <motion.div
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        transition={{
+          delay: 0,
+          duration: 0.5,
+          ease: 'easeOut'
+        }}
+      >
+        <Card className="overflow-hidden">
           <CardHeader>
-            <CardTitle>作品概述</CardTitle>
-            <CardDescription>作品描述及总体评价</CardDescription>
+            <CardTitle>综合战力评分</CardTitle>
+            <CardDescription>
+              基于多维度分析得出的总体评分和建议
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="prose prose-sm dark:prose-invert">
-              {result.comment.split('\n').map((paragraph, idx) => (
-                <p key={idx}>{paragraph}</p>
-              ))}
+            <div className="flex flex-col items-center justify-center mb-6">
+              <motion.div
+                className="text-6xl font-bold text-amber-500 tabular-nums"
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 200,
+                  damping: 20,
+                  delay: 0.2
+                }}
+              >
+                {animatedScore.toFixed(1)}
+              </motion.div>
+              <motion.div
+                className="mt-2 text-xl font-semibold"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.3 }}
+              >
+                {result.title}
+              </motion.div>
+              <motion.div
+                className="mt-1 text-sm"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.3 }}
+              >
+                {result.ratingTag}
+              </motion.div>
+              <motion.div
+                className="mt-3 text-xs text-gray-500"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6, duration: 0.3 }}
+              >
+                （总评分基于各维度加权计算）
+              </motion.div>
             </div>
+
+            <motion.div
+              className="space-y-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: showDetails ? 1 : 0 }}
+              transition={{ duration: 0.4, delay: 0.7 }}
+            >
+              <h3 className="font-semibold">各维度评分</h3>
+
+              {result.dimensions.map((dimension, index) => (
+                <motion.div
+                  key={index}
+                  className="space-y-1"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{
+                    delay: 0.8 + index * 0.1,
+                    duration: 0.4,
+                    ease: 'easeOut'
+                  }}
+                >
+                  <div className="flex justify-between items-center">
+                    <span>{dimension.name}</span>
+                    <motion.span
+                      className={`px-2 py-0.5 rounded text-white text-sm ${getColorByScore(dimension.score)}`}
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: 0.9 + index * 0.1, duration: 0.3 }}
+                    >
+                      {formatScore(dimension.score)}/5
+                    </motion.span>
+                  </div>
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: '100%' }}
+                    transition={{ delay: 1.0 + index * 0.1, duration: 0.6 }}
+                  >
+                    <Progress
+                      value={(dimension.score / 5) * 100}
+                      className={`h-2 ${getProgressColor(dimension.score)}`}
+                    />
+                  </motion.div>
+                  {dimension.description && (
+                    <motion.p
+                      className="text-sm text-gray-500 mt-1"
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 1.1 + index * 0.1, duration: 0.3 }}
+                    >
+                      {dimension.description}
+                    </motion.p>
+                  )}
+                </motion.div>
+              ))}
+            </motion.div>
           </CardContent>
         </Card>
+      </motion.div>
+
+      {result.comment && (
+        <motion.div
+          variants={cardVariants}
+          initial="hidden"
+          animate="visible"
+          transition={{
+            delay: 0.1,
+            duration: 0.5,
+            ease: 'easeOut'
+          }}
+        >
+          <Card className="overflow-hidden">
+            <CardHeader>
+              <CardTitle>作品概述</CardTitle>
+              <CardDescription>作品描述及总体评价</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="prose prose-sm dark:prose-invert">
+                {result.comment.split('\n').map((paragraph, idx) => (
+                  <motion.p
+                    key={idx}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 + idx * 0.05, duration: 0.3 }}
+                  >
+                    {paragraph}
+                  </motion.p>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>优势亮点</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="list-disc pl-5 space-y-2">
-            {result.strengths.length > 0 ? (
-              result.strengths.map((strength, index) => (
-                <li key={index}>{strength}</li>
-              ))
-            ) : (
-              <li className="text-gray-500">暂无亮点分析</li>
-            )}
-          </ul>
-        </CardContent>
-      </Card>
+      <motion.div
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        transition={{
+          delay: result.comment ? 0.2 : 0.1,
+          duration: 0.5,
+          ease: 'easeOut'
+        }}
+      >
+        <Card className="overflow-hidden">
+          <CardHeader>
+            <CardTitle>优势亮点</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="list-disc pl-5 space-y-2">
+              {result.strengths.length > 0 ? (
+                result.strengths.map((strength, index) => (
+                  <motion.li
+                    key={index}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 + index * 0.05, duration: 0.3 }}
+                  >
+                    {strength}
+                  </motion.li>
+                ))
+              ) : (
+                <li className="text-gray-500">暂无亮点分析</li>
+              )}
+            </ul>
+          </CardContent>
+        </Card>
+      </motion.div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>改进建议</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="list-disc pl-5 space-y-2">
-            {result.improvements.length > 0 ? (
-              result.improvements.map((improvement, index) => (
-                <li key={index}>{improvement}</li>
-              ))
-            ) : (
-              <li className="text-gray-500">暂无改进建议</li>
-            )}
-          </ul>
-        </CardContent>
-      </Card>
+      <motion.div
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        transition={{
+          delay: result.comment ? 0.3 : 0.2,
+          duration: 0.5,
+          ease: 'easeOut'
+        }}
+      >
+        <Card className="overflow-hidden">
+          <CardHeader>
+            <CardTitle>改进建议</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="list-disc pl-5 space-y-2">
+              {result.improvements.length > 0 ? (
+                result.improvements.map((improvement, index) => (
+                  <motion.li
+                    key={index}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 + index * 0.05, duration: 0.3 }}
+                  >
+                    {improvement}
+                  </motion.li>
+                ))
+              ) : (
+                <li className="text-gray-500">暂无改进建议</li>
+              )}
+            </ul>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   )
 }

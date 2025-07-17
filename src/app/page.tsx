@@ -142,9 +142,15 @@ export default function WriterAnalysisPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 align-start">
         <motion.div
           className="content-start"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
+          initial={{ opacity: 0, x: -30, y: 20 }}
+          animate={{ opacity: 1, x: 0, y: 0 }}
+          transition={{
+            duration: 0.7,
+            ease: [0.23, 1, 0.32, 1],
+            type: 'spring',
+            stiffness: 100,
+            damping: 15
+          }}
         >
           <ContentInputCard
             content={content}
@@ -160,24 +166,55 @@ export default function WriterAnalysisPage() {
 
         <motion.div
           className="space-y-6 content-start"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
+          initial={{ opacity: 0, x: 30, y: 20 }}
+          animate={{ opacity: 1, x: 0, y: 0 }}
+          transition={{
+            duration: 0.7,
+            ease: [0.23, 1, 0.32, 1],
+            delay: 0.15,
+            type: 'spring',
+            stiffness: 100,
+            damping: 15
+          }}
         >
-          <AnalysisOptions
-            options={enabledOptions}
-            onChange={handleOptionChange}
-            disabled={isLoading}
-          />
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
+          >
+            <AnalysisOptions
+              options={enabledOptions}
+              onChange={handleOptionChange}
+              disabled={isLoading}
+            />
+          </motion.div>
 
           <AnimatePresence mode="wait">
             {isLoading && (
               <motion.div
                 key="loading"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.4 }}
+                initial={{
+                  opacity: 0,
+                  scale: 0.9,
+                  y: 20,
+                  filter: 'blur(4px)'
+                }}
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                  y: 0,
+                  filter: 'blur(0px)'
+                }}
+                exit={{
+                  opacity: 0,
+                  scale: 0.9,
+                  y: -10,
+                  filter: 'blur(4px)'
+                }}
+                transition={{
+                  duration: 0.5,
+                  ease: [0.23, 1, 0.32, 1]
+                }}
               >
                 <LoadingProgress progress={progress} />
               </motion.div>
@@ -188,12 +225,24 @@ export default function WriterAnalysisPage() {
             {result && (
               <motion.div
                 key="result"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{
+                  opacity: 0,
+                  y: 30,
+                  scale: 0.95,
+                  filter: 'blur(4px)'
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                  scale: 1,
+                  filter: 'blur(0px)'
+                }}
                 transition={{
                   duration: 0.6,
+                  ease: [0.23, 1, 0.32, 1],
                   type: 'spring',
-                  stiffness: 100
+                  stiffness: 120,
+                  damping: 20
                 }}
               >
                 <WriterScoreResult result={result} />

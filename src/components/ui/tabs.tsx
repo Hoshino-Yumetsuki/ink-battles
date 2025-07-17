@@ -2,13 +2,14 @@
 
 import * as React from 'react'
 import * as TabsPrimitive from '@radix-ui/react-tabs'
+import { motion, AnimatePresence } from 'framer-motion'
 
 import { cn } from '@/utils/utils'
 
 const Tabs = TabsPrimitive.Root
 
 const TabsList = React.forwardRef<
-  React.ElementRef<typeof TabsPrimitive.List>,
+  React.ComponentRef<typeof TabsPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
 >(({ className, ...props }, ref) => (
   <TabsPrimitive.List
@@ -23,7 +24,7 @@ const TabsList = React.forwardRef<
 TabsList.displayName = TabsPrimitive.List.displayName
 
 const TabsTrigger = React.forwardRef<
-  React.ElementRef<typeof TabsPrimitive.Trigger>,
+  React.ComponentRef<typeof TabsPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
 >(({ className, ...props }, ref) => (
   <TabsPrimitive.Trigger
@@ -38,7 +39,7 @@ const TabsTrigger = React.forwardRef<
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName
 
 const TabsContent = React.forwardRef<
-  React.ElementRef<typeof TabsPrimitive.Content>,
+  React.ComponentRef<typeof TabsPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
 >(({ className, ...props }, ref) => (
   <TabsPrimitive.Content
@@ -50,6 +51,53 @@ const TabsContent = React.forwardRef<
     {...props}
   />
 ))
+
+const AnimatedTabsContent = React.forwardRef<
+  React.ComponentRef<typeof TabsPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content> & {
+    value: string
+    activeValue?: string
+  }
+>(({ className, value, activeValue, children, ...props }, ref) => (
+  <TabsPrimitive.Content
+    ref={ref}
+    className={cn(
+      'mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+      className
+    )}
+    value={value}
+    {...props}
+  >
+    <AnimatePresence mode="wait">
+      {value === activeValue && (
+        <motion.div
+          key={value}
+          initial={{ opacity: 0, y: 10, scale: 0.98 }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            transition: {
+              duration: 0.3,
+              ease: [0.23, 1, 0.32, 1]
+            }
+          }}
+          exit={{
+            opacity: 0,
+            y: -5,
+            scale: 0.98,
+            transition: {
+              duration: 0.2,
+              ease: [0.23, 1, 0.32, 1]
+            }
+          }}
+        >
+          {children}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </TabsPrimitive.Content>
+))
 TabsContent.displayName = TabsPrimitive.Content.displayName
 
-export { Tabs, TabsList, TabsTrigger, TabsContent }
+export { Tabs, TabsList, TabsTrigger, TabsContent, AnimatedTabsContent }

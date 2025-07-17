@@ -78,7 +78,6 @@ export function useAuth() {
         const serverSignature = response.headers.get('X-Server-Signature')
 
         if (serverPublicKey && serverSignature) {
-          // 在此处可以实现响应验证
         }
 
         return {

@@ -11,7 +11,12 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  AnimatedTabsContent
+} from '@/components/ui/tabs'
 import ImageUploader from './image-uploader'
 
 interface ContentInputCardProps {
@@ -54,31 +59,65 @@ export default function ContentInputCard({
             <TabsTrigger value="image">图片上传</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="text" className="mt-4">
-            <Textarea
-              placeholder="请在此处粘贴您的作品全文..."
-              className="min-h-[400px] resize-none"
-              value={content}
-              onChange={(e) => setContentAction(e.target.value)}
-              disabled={isLoading}
-            />
-            <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-              字数统计: {content.length} 字
-            </div>
-          </TabsContent>
+          <AnimatedTabsContent
+            value="text"
+            activeValue={analysisType}
+            className="mt-4"
+          >
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2, delay: 0.1 }}
+            >
+              <Textarea
+                placeholder="请在此处粘贴您的作品全文..."
+                className="min-h-[400px] resize-none transition-all duration-300"
+                value={content}
+                onChange={(e) => setContentAction(e.target.value)}
+                disabled={isLoading}
+              />
+              <motion.div
+                className="text-sm text-gray-500 dark:text-gray-400 mt-2"
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: 0.2 }}
+              >
+                字数统计: {content.length} 字
+              </motion.div>
+            </motion.div>
+          </AnimatedTabsContent>
 
-          <TabsContent value="image" className="mt-4">
-            <ImageUploader
-              setImageUrlAction={setImageUrlAction}
-              isLoading={isLoading}
-              onAnalyzeAction={onAnalyzeAction}
-            />
-          </TabsContent>
+          <AnimatedTabsContent
+            value="image"
+            activeValue={analysisType}
+            className="mt-4"
+          >
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2, delay: 0.1 }}
+            >
+              <ImageUploader
+                setImageUrlAction={setImageUrlAction}
+                isLoading={isLoading}
+                onAnalyzeAction={onAnalyzeAction}
+              />
+            </motion.div>
+          </AnimatedTabsContent>
         </Tabs>
       </CardContent>
       <CardFooter className="flex justify-end">
         {analysisType === 'text' && (
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <motion.div
+            whileHover={{
+              scale: 1.02,
+              transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] }
+            }}
+            whileTap={{
+              scale: 0.98,
+              transition: { duration: 0.1 }
+            }}
+          >
             <Button
               onClick={onAnalyzeAction}
               disabled={isLoading || !content.trim()}
@@ -89,7 +128,7 @@ export default function ContentInputCard({
                   <motion.span
                     animate={{ rotate: 360 }}
                     transition={{
-                      duration: 1.5,
+                      duration: 1.2,
                       repeat: Infinity,
                       ease: 'linear'
                     }}
@@ -97,16 +136,27 @@ export default function ContentInputCard({
                   >
                     ⟳
                   </motion.span>
-                  分析中...
+                  <motion.span
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    分析中...
+                  </motion.span>
                 </span>
               ) : (
                 <>
-                  <span>开始分析</span>
+                  <motion.span
+                    whileHover={{ x: 2 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    开始分析
+                  </motion.span>
                   <motion.span
                     className="absolute inset-0 bg-white/10"
                     initial={{ x: '-100%' }}
                     whileHover={{ x: '100%' }}
-                    transition={{ duration: 0.6 }}
+                    transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
                   />
                 </>
               )}
