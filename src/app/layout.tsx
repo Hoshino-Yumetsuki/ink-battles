@@ -3,7 +3,6 @@ import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 import Navbar from '@/components/navbar'
-import { ApiSecurityProvider } from '@/security/provider'
 import { ThemeProvider } from '@/components/theme-provider'
 import ErrorBoundary from '@/components/error-boundary'
 
@@ -29,10 +28,8 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ErrorBoundary>
-            <ApiSecurityProvider>
-              <Navbar />
-              <main className="flex-1">{children}</main>
-            </ApiSecurityProvider>
+            <Navbar />
+            <main className="flex-1">{children}</main>
           </ErrorBoundary>
         </ThemeProvider>
       </body>

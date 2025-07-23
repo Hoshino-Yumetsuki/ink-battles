@@ -7,11 +7,39 @@ import {
   generateRatingTag
 } from '@/utils/score-calculator'
 import { getLlmApiConfig, isValidLlmApiConfig } from '@/config/api'
-import { signResponseData } from '@/security/middleware'
+import { verifyTurnstileToken, getClientIP } from '@/utils/turnstile'
 import { logger } from '@/utils/logger'
 
 export async function POST(request: Request) {
   try {
+    const turnstileToken = request.headers.get('X-Turnstile-Token')
+
+    if (!turnstileToken) {
+      return NextResponse.json({ error: '缺少人机验证令牌' }, { status: 401 })
+    }
+
+    const isTurnstileEnabled =
+      process.env.NEXT_PUBLIC_ENABLE_TURNSTILE === 'true'
+
+    if (turnstileToken === 'turnstile-disabled' && !isTurnstileEnabled) {
+      logger.info(
+        'Turnstile verification disabled, skipping human verification'
+      )
+    } else {
+      const clientIP = getClientIP(request)
+      const verificationResult = await verifyTurnstileToken(
+        turnstileToken,
+        clientIP
+      )
+
+      if (!verificationResult.success) {
+        return NextResponse.json(
+          { error: '人机验证失败，请重新验证' },
+          { status: 401 }
+        )
+      }
+    }
+
     const { content, imageUrl, analysisType, options } = await request.json()
 
     if (analysisType === 'text' && (!content || content.trim().length === 0)) {
@@ -205,17 +233,7 @@ export async function POST(request: Request) {
         overallScore
       }
 
-      const responseData = JSON.stringify(finalResult)
-      const { publicKey, signature } = await signResponseData(responseData)
-
-      return new Response(responseData, {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Signature': signature,
-          'X-Public-Key': publicKey
-        }
-      })
+      return NextResponse.json(finalResult)
     } catch (error: any) {
       logger.error('Error processing analysis results', error)
       return NextResponse.json(

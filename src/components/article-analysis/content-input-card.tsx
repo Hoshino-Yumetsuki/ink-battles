@@ -18,6 +18,7 @@ import {
   AnimatedTabsContent
 } from '@/components/ui/tabs'
 import ImageUploader from './image-uploader'
+import TurnstileComponent from '@/components/security/Turnstile'
 
 interface ContentInputCardProps {
   content: string
@@ -28,6 +29,11 @@ interface ContentInputCardProps {
   onAnalyzeAction: () => void
   analysisType: 'text' | 'image'
   setAnalysisTypeAction: (type: 'text' | 'image') => void
+  // Turnstile 相关属性
+  isVerified: boolean
+  onTurnstileVerifyAction: (token: string) => void
+  onTurnstileErrorAction?: (error: string) => void
+  onTurnstileExpireAction?: () => void
 }
 
 export default function ContentInputCard({
@@ -37,7 +43,11 @@ export default function ContentInputCard({
   isLoading,
   onAnalyzeAction,
   analysisType,
-  setAnalysisTypeAction
+  setAnalysisTypeAction,
+  isVerified,
+  onTurnstileVerifyAction,
+  onTurnstileErrorAction,
+  onTurnstileExpireAction
 }: ContentInputCardProps) {
   return (
     <Card className="h-auto">
@@ -106,63 +116,88 @@ export default function ContentInputCard({
           </AnimatedTabsContent>
         </Tabs>
       </CardContent>
-      <CardFooter className="flex justify-end">
-        {analysisType === 'text' && (
-          <motion.div
-            whileHover={{
-              scale: 1.02,
-              transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] }
-            }}
-            whileTap={{
-              scale: 0.98,
-              transition: { duration: 0.1 }
-            }}
-          >
-            <Button
-              onClick={onAnalyzeAction}
-              disabled={isLoading || !content.trim()}
-              className="relative overflow-hidden"
-            >
-              {isLoading ? (
-                <span className="flex items-center">
-                  <motion.span
-                    animate={{ rotate: 360 }}
-                    transition={{
-                      duration: 1.2,
-                      repeat: Infinity,
-                      ease: 'linear'
-                    }}
-                    className="inline-block mr-2"
-                  >
-                    ⟳
-                  </motion.span>
-                  <motion.span
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    分析中...
-                  </motion.span>
-                </span>
-              ) : (
-                <>
-                  <motion.span
-                    whileHover={{ x: 2 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    开始分析
-                  </motion.span>
-                  <motion.span
-                    className="absolute inset-0 bg-white/10"
-                    initial={{ x: '-100%' }}
-                    whileHover={{ x: '100%' }}
-                    transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-                  />
-                </>
-              )}
-            </Button>
-          </motion.div>
+      <CardFooter className="flex items-center justify-between">
+        {/* Turnstile 组件 - 仅在启用时显示 */}
+        {process.env.NEXT_PUBLIC_ENABLE_TURNSTILE === 'true' && (
+          <div className="flex-1">
+            <TurnstileComponent
+              onVerifyAction={onTurnstileVerifyAction}
+              onErrorAction={onTurnstileErrorAction}
+              onExpireAction={onTurnstileExpireAction}
+              className=""
+            />
+          </div>
         )}
+
+        <div
+          className={
+            process.env.NEXT_PUBLIC_ENABLE_TURNSTILE === 'true'
+              ? ''
+              : 'w-full flex justify-end'
+          }
+        >
+          {analysisType === 'text' && (
+            <motion.div
+              whileHover={{
+                scale: 1.02,
+                transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] }
+              }}
+              whileTap={{
+                scale: 0.98,
+                transition: { duration: 0.1 }
+              }}
+            >
+              <Button
+                onClick={onAnalyzeAction}
+                disabled={
+                  isLoading ||
+                  !content.trim() ||
+                  (process.env.NEXT_PUBLIC_ENABLE_TURNSTILE === 'true' &&
+                    !isVerified)
+                }
+                className="relative overflow-hidden"
+              >
+                {isLoading ? (
+                  <span className="flex items-center">
+                    <motion.span
+                      animate={{ rotate: 360 }}
+                      transition={{
+                        duration: 1.2,
+                        repeat: Infinity,
+                        ease: 'linear'
+                      }}
+                      className="inline-block mr-2"
+                    >
+                      ⟳
+                    </motion.span>
+                    <motion.span
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      分析中...
+                    </motion.span>
+                  </span>
+                ) : (
+                  <>
+                    <motion.span
+                      whileHover={{ x: 2 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      开始分析
+                    </motion.span>
+                    <motion.span
+                      className="absolute inset-0 bg-white/10"
+                      initial={{ x: '-100%' }}
+                      whileHover={{ x: '100%' }}
+                      transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+                    />
+                  </>
+                )}
+              </Button>
+            </motion.div>
+          )}
+        </div>
       </CardFooter>
     </Card>
   )

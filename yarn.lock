@@ -2717,6 +2717,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@marsidev/react-turnstile@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "@marsidev/react-turnstile@npm:1.1.0"
+  peerDependencies:
+    react: ^17.0.2 || ^18.0.0 || ^19.0
+    react-dom: ^17.0.2 || ^18.0.0 || ^19.0
+  checksum: 10c0/58d599bcc8bb8f01b90c166e13394d2890f0a75eb7cc354fb4187b36a53976c31495a50e87ecd3ae5bcbf5b63a0585f11064dd83bb908faa5b13d5f200ad397a
+  languageName: node
+  linkType: hard
+
 "@modelcontextprotocol/sdk@npm:^1.10.2":
   version: 1.15.0
   resolution: "@modelcontextprotocol/sdk@npm:1.15.0"
@@ -7059,6 +7069,7 @@ __metadata:
   resolution: "ink-battles@workspace:."
   dependencies:
     "@biomejs/biome": "npm:^2.1.1"
+    "@marsidev/react-turnstile": "npm:^1.1.0"
     "@opennextjs/cloudflare": "npm:^1.5.1"
     "@radix-ui/react-accordion": "npm:^1.2.11"
     "@radix-ui/react-dialog": "npm:^1.1.14"

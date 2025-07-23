@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { Toaster, toast } from 'sonner'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useApiSecurity } from '@/security/provider'
 
 import PageHeader from '@/components/article-analysis/page-header'
 import ContentInputCard from '@/components/article-analysis/content-input-card'
@@ -45,12 +44,29 @@ export default function WriterAnalysisPage() {
     antiCapitalism: false,
     speedReview: false
   })
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const [isVerified, setIsVerified] = useState<boolean>(false)
 
   const handleOptionChange = (key: string, value: boolean) => {
     setEnabledOptions({ ...enabledOptions, [key]: value })
   }
 
-  const { isInitialized, secureApiCall } = useApiSecurity()
+  const handleTurnstileVerify = (token: string) => {
+    setTurnstileToken(token)
+    setIsVerified(true)
+  }
+
+  const handleTurnstileError = (error: string) => {
+    setTurnstileToken(null)
+    setIsVerified(false)
+    toast.error(`验证失败: ${error}`)
+  }
+
+  const handleTurnstileExpire = () => {
+    setTurnstileToken(null)
+    setIsVerified(false)
+    toast.warning('验证已过期，请重新验证')
+  }
 
   useEffect(() => {}, [])
 
@@ -65,8 +81,8 @@ export default function WriterAnalysisPage() {
       return
     }
 
-    if (!isInitialized) {
-      toast.error('API Security not initialized')
+    if (!isVerified || !turnstileToken) {
+      toast.error('请先完成人机验证')
       return
     }
 
@@ -88,10 +104,11 @@ export default function WriterAnalysisPage() {
       }, 500)
 
       try {
-        const data = await secureApiCall('/api/article-analysis', {
+        const response = await fetch('/api/article-analysis', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-Turnstile-Token': turnstileToken
           },
           body: JSON.stringify({
             content: analysisType === 'text' ? content : null,
@@ -101,6 +118,14 @@ export default function WriterAnalysisPage() {
           })
         })
 
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(
+            errorData.error || `HTTP ${response.status}: ${response.statusText}`
+          )
+        }
+
+        const data = await response.json()
         if (!data || typeof data !== 'object') {
           throw new Error('返回的分析结果格式无效')
         }
@@ -109,10 +134,12 @@ export default function WriterAnalysisPage() {
           data.dimensions = data.dimensions || []
         }
 
-        const defaultResult = {
+        const defaultResult: WriterAnalysisResult = {
           overallScore: 0,
+          overallAssessment: '暂无整体评估',
           title: '分析结果',
           ratingTag: '未知',
+          dimensions: [],
           strengths: [],
           improvements: []
         }
@@ -161,6 +188,10 @@ export default function WriterAnalysisPage() {
             onAnalyzeAction={handleAnalyze}
             analysisType={analysisType}
             setAnalysisTypeAction={setAnalysisType}
+            isVerified={isVerified}
+            onTurnstileVerifyAction={handleTurnstileVerify}
+            onTurnstileErrorAction={handleTurnstileError}
+            onTurnstileExpireAction={handleTurnstileExpire}
           />
         </motion.div>
 
