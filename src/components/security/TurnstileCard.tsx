@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import TurnstileComponent from './Turnstile'
 
@@ -17,6 +16,7 @@ export default function TurnstileCard({
 }: TurnstileCardProps) {
   const [_turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [_isVerified, setIsVerified] = useState<boolean>(false)
+  const [turnstileKey, setTurnstileKey] = useState<number>(0)
 
   const isTurnstileEnabled = process.env.NEXT_PUBLIC_ENABLE_TURNSTILE === 'true'
 
@@ -26,18 +26,20 @@ export default function TurnstileCard({
     onVerificationChangeAction(true, token)
   }
 
-  const handleTurnstileError = (error: string) => {
+  const handleTurnstileError = (_error: string) => {
     setTurnstileToken(null)
     setIsVerified(false)
     onVerificationChangeAction(false, null)
-    toast.error(`验证失败: ${error}`)
+
+    setTimeout(() => {
+      setTurnstileKey((prev) => prev + 1)
+    }, 1000)
   }
 
   const handleTurnstileExpire = () => {
     setTurnstileToken(null)
     setIsVerified(false)
     onVerificationChangeAction(false, null)
-    toast.warning('验证已过期，请重新验证')
   }
 
   useEffect(() => {
@@ -60,6 +62,7 @@ export default function TurnstileCard({
       <CardContent>
         <div className="flex justify-center">
           <TurnstileComponent
+            key={turnstileKey}
             onVerifyAction={handleTurnstileVerify}
             onErrorAction={handleTurnstileError}
             onExpireAction={handleTurnstileExpire}

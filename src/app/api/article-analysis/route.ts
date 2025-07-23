@@ -30,10 +30,7 @@ export async function POST(request: Request) {
       )
 
       if (!verificationResult.success) {
-        return NextResponse.json(
-          { error: 'Turnstile verification failed' },
-          { status: 401 }
-        )
+        return NextResponse.json({ status: 401 })
       }
     }
 
