@@ -31,12 +31,12 @@ const OPTIONAL_DIMENSIONS = new Set([
 
 const SCORE_CONFIG = {
   MIN_SCORE: 0,
-  MIN_BASE_SCORE: 10,
-  MAX_BASE_SCORE: 85,
+  MIN_BASE_SCORE: 15,
+  MAX_BASE_SCORE: 110,
   EXCELLENCE_THRESHOLD: 4,
   SYNERGY_FACTOR: 0.6,
   BALANCE_BONUS: 0.8,
-  BREAKTHROUGH_THRESHOLD: 80,
+  BREAKTHROUGH_THRESHOLD: 85,
   MAX_REASONABLE_SCORE: 120
 }
 
@@ -141,8 +141,20 @@ function calculateBaseScore(dimensions: DimensionScore[]): number {
     totalQualityScore += dimension.score
     dimensionCount++
 
-    const logScore = Math.log(Math.max(1, dimension.score) + 1) * 8.0
-    const cappedScore = Math.min(22, logScore)
+    const baseScore = dimension.score
+    let scaledScore: number
+
+    if (baseScore >= 4.0) {
+      scaledScore = 18 + (baseScore - 4.0) * 8
+    } else if (baseScore >= 3.5) {
+      scaledScore = 14 + (baseScore - 3.5) * 8
+    } else if (baseScore >= 2.5) {
+      scaledScore = 9 + (baseScore - 2.5) * 5
+    } else {
+      scaledScore = Math.log(Math.max(1, baseScore) + 1) * 5
+    }
+
+    const cappedScore = Math.min(28, scaledScore)
 
     let adjustedWeight = weight
     if (isOptional && dimension.score > 0) {
@@ -159,15 +171,15 @@ function calculateBaseScore(dimensions: DimensionScore[]): number {
   const averageScore = weightedSum / totalWeight
 
   const avgQuality = totalQualityScore / dimensionCount
-  const qualityRatio = Math.max(0, Math.min(1, (avgQuality - 1) / 4))
+  const qualityRatio = Math.max(0, Math.min(1, (avgQuality - 1) / 3.5))
   const dynamicBaseScore =
     SCORE_CONFIG.MIN_BASE_SCORE +
     (SCORE_CONFIG.MAX_BASE_SCORE - SCORE_CONFIG.MIN_BASE_SCORE) * qualityRatio
 
   const coreRatio = corePresent / (dimensions.length - optionalPresent + 0.1)
-  const baseMultiplier = Math.min(1.5, 0.8 + coreRatio * 0.7)
+  const baseMultiplier = Math.min(2.0, 1.0 + coreRatio * 1.0)
 
-  return dynamicBaseScore + averageScore * baseMultiplier * 1.3
+  return dynamicBaseScore + averageScore * baseMultiplier * 1.5
 }
 
 function calculateSynergyBonus(dimensions: DimensionScore[]): number {
@@ -265,7 +277,7 @@ function calculateBalanceAdjustment(dimensions: DimensionScore[]): number {
   const maxCoreScore = Math.max(...coreScores)
   const minCoreScore = Math.min(...coreScores)
   const extremeGap = maxCoreScore - minCoreScore
-  const extremePenalty = extremeGap > 6 ? -(extremeGap - 6) * 0.6 : 0
+  const extremePenalty = extremeGap > 8 ? -(extremeGap - 8) * 0.3 : 0
 
   const totalAdjustment = coreBalanceBonus + optionalBonus + extremePenalty
   return Math.max(-8, Math.min(totalAdjustment, 8))
@@ -275,25 +287,42 @@ function calculateQualityPenalty(dimensions: DimensionScore[]): number {
   const avgScore =
     dimensions.reduce((sum, dim) => sum + dim.score, 0) / dimensions.length
 
+  const highScoreDimensions = dimensions.filter(
+    (dim) => dim.score >= 4.0
+  ).length
+  const excellentDimensions = dimensions.filter(
+    (dim) => dim.score >= 4.5
+  ).length
+
   const veryLowScoreDimensions = dimensions.filter(
     (dim) => dim.score <= 1.5
   ).length
   const veryLowScoreRatio = veryLowScoreDimensions / dimensions.length
 
-  const lowScoreDimensions = dimensions.filter((dim) => dim.score <= 2).length
+  const lowScoreDimensions = dimensions.filter((dim) => dim.score <= 2.5).length
   const lowScoreRatio = lowScoreDimensions / dimensions.length
 
-  if (avgScore <= 1.2 && veryLowScoreRatio >= 0.9) {
-    return -35
-  } else if (avgScore <= 1.8 && veryLowScoreRatio >= 0.7) {
-    return -20
-  } else if (avgScore <= 2.2 && lowScoreRatio >= 0.8) {
-    return -10
-  } else if (avgScore <= 2.5 && lowScoreRatio >= 0.7) {
-    return -3
+  let penaltyReduction = 0
+  if (highScoreDimensions >= 4) {
+    penaltyReduction = 0.8
+  } else if (highScoreDimensions >= 2) {
+    penaltyReduction = 0.5
+  } else if (excellentDimensions >= 1) {
+    penaltyReduction = 0.3
   }
 
-  return 0
+  let basePenalty = 0
+  if (avgScore <= 1.2 && veryLowScoreRatio >= 0.9) {
+    basePenalty = -15
+  } else if (avgScore <= 1.5 && veryLowScoreRatio >= 0.8) {
+    basePenalty = -8
+  } else if (avgScore <= 2.0 && lowScoreRatio >= 0.8) {
+    basePenalty = -4
+  } else if (avgScore <= 2.5 && lowScoreRatio >= 0.6) {
+    basePenalty = -1
+  }
+
+  return basePenalty * (1 - penaltyReduction)
 }
 
 function applyBreakthroughConstraint(
