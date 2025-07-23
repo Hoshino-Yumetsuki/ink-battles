@@ -1,3 +1,5 @@
-const nextConfig: import('next').NextConfig = {}
+const nextConfig: import('next').NextConfig = {
+  trailingSlash: true
+}
 
 export default nextConfig

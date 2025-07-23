@@ -15,16 +15,13 @@ export async function POST(request: Request) {
     const turnstileToken = request.headers.get('X-Turnstile-Token')
 
     if (!turnstileToken) {
-      return NextResponse.json({ error: '缺少人机验证令牌' }, { status: 401 })
+      return NextResponse.json({ error: '缺少验证令牌' }, { status: 401 })
     }
 
     const isTurnstileEnabled =
       process.env.NEXT_PUBLIC_ENABLE_TURNSTILE === 'true'
 
     if (turnstileToken === 'turnstile-disabled' && !isTurnstileEnabled) {
-      logger.info(
-        'Turnstile verification disabled, skipping human verification'
-      )
     } else {
       const clientIP = getClientIP(request)
       const verificationResult = await verifyTurnstileToken(
@@ -34,7 +31,7 @@ export async function POST(request: Request) {
 
       if (!verificationResult.success) {
         return NextResponse.json(
-          { error: '人机验证失败，请重新验证' },
+          { error: 'Turnstile verification failed' },
           { status: 401 }
         )
       }
