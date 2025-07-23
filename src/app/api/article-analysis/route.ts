@@ -51,7 +51,7 @@ export async function POST(request: Request) {
 
     if (!isValidLlmApiConfig(apiConfig)) {
       return NextResponse.json(
-        { error: 'LLM API配置无效，请检查环境变量设置' },
+        { error: 'LLM API 配置无效，请检查环境变量设置' },
         { status: 500 }
       )
     }
@@ -200,7 +200,7 @@ export async function POST(request: Request) {
         logger.error('Parsed AI response is not a valid object', { resultText })
         return NextResponse.json(
           {
-            error: '服务器无法处理AI响应',
+            error: '服务器无法处理 AI 响应',
             fallback: { title: '分析失败', feedback: '服务器无法处理响应' }
           },
           { status: 500 }

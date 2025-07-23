@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     if (token === 'turnstile-disabled' && !isTurnstileEnabled) {
       return NextResponse.json({
         success: true,
-        message: 'Turnstile验证已禁用'
+        message: 'Turnstile 验证已禁用'
       })
     }
 
