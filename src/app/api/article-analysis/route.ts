@@ -7,36 +7,11 @@ import {
   generateRatingTag
 } from '@/utils/score-calculator'
 import { getLlmApiConfig, isValidLlmApiConfig } from '@/config/api'
-import { verifyTurnstileToken, getClientIP } from '@/utils/turnstile'
+
 import { logger } from '@/utils/logger'
 
 export async function POST(request: Request) {
   try {
-    const turnstileToken = request.headers.get('X-Turnstile-Token')
-
-    if (!turnstileToken) {
-      return NextResponse.json({ error: '缺少验证令牌' }, { status: 401 })
-    }
-
-    const isTurnstileEnabled =
-      process.env.NEXT_PUBLIC_ENABLE_TURNSTILE === 'true'
-
-    if (turnstileToken === 'turnstile-disabled' && !isTurnstileEnabled) {
-    } else {
-      const clientIP = getClientIP(request)
-      const verificationResult = await verifyTurnstileToken(
-        turnstileToken,
-        clientIP
-      )
-
-      if (!verificationResult.success) {
-        return NextResponse.json(
-          { error: 'Turnstile verification failed' },
-          { status: 401 }
-        )
-      }
-    }
-
     const { content, imageUrl, analysisType, options } = await request.json()
 
     if (analysisType === 'text' && (!content || content.trim().length === 0)) {

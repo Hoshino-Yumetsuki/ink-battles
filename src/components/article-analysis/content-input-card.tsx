@@ -28,7 +28,6 @@ interface ContentInputCardProps {
   onAnalyzeAction: () => void
   analysisType: 'text' | 'image'
   setAnalysisTypeAction: (type: 'text' | 'image') => void
-  isVerified: boolean
 }
 
 export default function ContentInputCard({
@@ -38,8 +37,7 @@ export default function ContentInputCard({
   isLoading,
   onAnalyzeAction,
   analysisType,
-  setAnalysisTypeAction,
-  isVerified
+  setAnalysisTypeAction
 }: ContentInputCardProps) {
   return (
     <Card className="h-auto">
@@ -122,12 +120,7 @@ export default function ContentInputCard({
           >
             <Button
               onClick={onAnalyzeAction}
-              disabled={
-                isLoading ||
-                !content.trim() ||
-                (process.env.NEXT_PUBLIC_ENABLE_TURNSTILE === 'true' &&
-                  !isVerified)
-              }
+              disabled={isLoading || !content.trim()}
               className="relative overflow-hidden"
             >
               {isLoading ? (

@@ -10,7 +10,6 @@ import LoadingProgress from '@/components/article-analysis/loading-progress'
 import AnalysisOptions from '@/components/article-analysis/analysis-options'
 import WriterScoreResult from '@/components/article-analysis/score-result'
 import AnimatedBackground from '@/components/article-analysis/animated-background'
-import TurnstileCard from '@/components/security/TurnstileCard'
 
 export interface WriterAnalysisResult {
   overallScore: number
@@ -45,19 +44,9 @@ export default function WriterAnalysisPage() {
     antiCapitalism: false,
     speedReview: false
   })
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
-  const [isVerified, setIsVerified] = useState<boolean>(false)
 
   const handleOptionChange = (key: string, value: boolean) => {
     setEnabledOptions({ ...enabledOptions, [key]: value })
-  }
-
-  const handleVerificationChangeAction = (
-    verified: boolean,
-    token: string | null
-  ) => {
-    setIsVerified(verified)
-    setTurnstileToken(token)
   }
 
   useEffect(() => {}, [])
@@ -70,11 +59,6 @@ export default function WriterAnalysisPage() {
 
     if (analysisType === 'image' && !imageUrl) {
       toast.error('请先上传图片再进行分析')
-      return
-    }
-
-    if (!isVerified || !turnstileToken) {
-      toast.error('请先完成验证')
       return
     }
 
@@ -99,8 +83,7 @@ export default function WriterAnalysisPage() {
         const response = await fetch('/api/article-analysis', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'X-Turnstile-Token': turnstileToken
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             content: analysisType === 'text' ? content : null,
@@ -112,12 +95,6 @@ export default function WriterAnalysisPage() {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
-
-          if (response.status === 401) {
-            setIsVerified(false)
-            setTurnstileToken(null)
-            throw new Error('Turnstile verification failed')
-          }
 
           throw new Error(
             errorData.error || `HTTP ${response.status}: ${response.statusText}`
@@ -187,11 +164,6 @@ export default function WriterAnalysisPage() {
             onAnalyzeAction={handleAnalyze}
             analysisType={analysisType}
             setAnalysisTypeAction={setAnalysisType}
-            isVerified={isVerified}
-          />
-
-          <TurnstileCard
-            onVerificationChangeAction={handleVerificationChangeAction}
           />
         </motion.div>
 
