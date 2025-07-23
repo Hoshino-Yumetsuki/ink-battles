@@ -113,11 +113,6 @@ For each step mentioned in the previous text, initiate a small sub-step within e
       "description": "简短说明"
     },
     {
-      "name": "🛠️ 作者产出速度",
-      "score": 评分（1-5分）,
-      "description": "简短说明"
-    },
-    {
       "name": "📚 引用张力（互文性）",
       "score": 评分（1-5分）,
       "description": "简短说明"
