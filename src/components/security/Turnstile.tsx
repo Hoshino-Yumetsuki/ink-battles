@@ -1,7 +1,14 @@
 'use client'
 
 import { Turnstile } from '@marsidev/react-turnstile'
-import { useState, useEffect, useCallback } from 'react'
+import {
+  useState,
+  useEffect,
+  useCallback,
+  forwardRef,
+  useImperativeHandle,
+  useRef
+} from 'react'
 
 interface TurnstileComponentProps {
   onVerifyAction: (token: string) => void
@@ -10,14 +17,13 @@ interface TurnstileComponentProps {
   className?: string
 }
 
-export default function TurnstileComponent({
-  onVerifyAction,
-  onErrorAction,
-  onExpireAction,
-  className = ''
-}: TurnstileComponentProps) {
+const TurnstileComponent = forwardRef<
+  { reset: () => void },
+  TurnstileComponentProps
+>(({ onVerifyAction, onErrorAction, onExpireAction, className = '' }, ref) => {
   const [_isVerified, setIsVerified] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const turnstileRef = useRef<any>(null)
 
   const isTurnstileEnabled = process.env.NEXT_PUBLIC_ENABLE_TURNSTILE === 'true'
 
@@ -49,6 +55,18 @@ export default function TurnstileComponent({
     setIsLoading(false)
   }
 
+  useImperativeHandle(ref, () => ({
+    reset: () => {
+      if (turnstileRef.current) {
+        try {
+          turnstileRef.current.reset()
+        } catch (error) {
+          console.warn('Turnstile reset failed:', error)
+        }
+      }
+    }
+  }))
+
   useEffect(() => {
     if (!isTurnstileEnabled) {
       handleVerify('turnstile-disabled')
@@ -62,6 +80,7 @@ export default function TurnstileComponent({
   return (
     <div className={`turnstile-container ${className}`}>
       <Turnstile
+        ref={turnstileRef}
         siteKey={
           process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY ||
           '1x00000000000000000000AA'
@@ -83,4 +102,8 @@ export default function TurnstileComponent({
       )}
     </div>
   )
-}
+})
+
+TurnstileComponent.displayName = 'TurnstileComponent'
+
+export default TurnstileComponent

@@ -112,6 +112,13 @@ export default function WriterAnalysisPage() {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
+
+          if (response.status === 401) {
+            setIsVerified(false)
+            setTurnstileToken(null)
+            throw new Error('Turnstile verification failed')
+          }
+
           throw new Error(
             errorData.error || `HTTP ${response.status}: ${response.statusText}`
           )
