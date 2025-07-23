@@ -56,28 +56,7 @@ export default function TurnstileComponent({
   }, [isTurnstileEnabled, handleVerify])
 
   if (!isTurnstileEnabled) {
-    return (
-      <div className={`turnstile-container ${className}`}>
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="text-sm text-green-700 flex items-center justify-center">
-            <svg
-              className="w-5 h-5 mr-2 text-green-600"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-              role="img"
-              aria-label="验证已跳过图标"
-            >
-              <path
-                fillRule="evenodd"
-                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                clipRule="evenodd"
-              />
-            </svg>
-            人机验证已禁用
-          </div>
-        </div>
-      </div>
-    )
+    return null
   }
 
   return (
@@ -93,7 +72,7 @@ export default function TurnstileComponent({
         onBeforeInteractive={handleBeforeInteractive}
         onAfterInteractive={handleAfterInteractive}
         options={{
-          theme: 'light',
+          theme: 'auto',
           size: 'normal',
           retry: 'auto'
         }}

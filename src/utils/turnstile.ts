@@ -1,7 +1,3 @@
-/**
- * Cloudflare Turnstile server-side verification
- */
-
 interface TurnstileVerificationResult {
   success: boolean
   errorCodes?: string[]
@@ -20,12 +16,6 @@ interface TurnstileVerificationResponse {
   cdata?: string
 }
 
-/**
- * Verify Turnstile token
- * @param token - Turnstile token
- * @param remoteip - Client IP address
- * @returns Promise<TurnstileVerificationResult>
- */
 export async function verifyTurnstileToken(
   token: string,
   remoteip?: string
@@ -78,7 +68,6 @@ export async function verifyTurnstileToken(
 
     const result: TurnstileVerificationResponse = await response.json()
 
-    // Convert response format
     return {
       success: result.success,
       errorCodes: result['error-codes'],
@@ -96,13 +85,9 @@ export async function verifyTurnstileToken(
   }
 }
 
-/**
- * Get client IP address
- */
 export function getClientIP(request: Request): string | undefined {
-  // Check various possible IP headers
   const headers = [
-    'CF-Connecting-IP', // Cloudflare
+    'CF-Connecting-IP',
     'X-Forwarded-For',
     'X-Real-IP',
     'X-Client-IP'
@@ -111,7 +96,6 @@ export function getClientIP(request: Request): string | undefined {
   for (const header of headers) {
     const ip = request.headers.get(header)
     if (ip) {
-      // X-Forwarded-For may contain multiple IPs, take the first one
       return ip.split(',')[0].trim()
     }
   }

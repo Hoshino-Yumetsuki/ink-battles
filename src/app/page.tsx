@@ -10,6 +10,7 @@ import LoadingProgress from '@/components/article-analysis/loading-progress'
 import AnalysisOptions from '@/components/article-analysis/analysis-options'
 import WriterScoreResult from '@/components/article-analysis/score-result'
 import AnimatedBackground from '@/components/article-analysis/animated-background'
+import TurnstileCard from '@/components/security/TurnstileCard'
 
 export interface WriterAnalysisResult {
   overallScore: number
@@ -51,21 +52,12 @@ export default function WriterAnalysisPage() {
     setEnabledOptions({ ...enabledOptions, [key]: value })
   }
 
-  const handleTurnstileVerify = (token: string) => {
+  const handleVerificationChangeAction = (
+    verified: boolean,
+    token: string | null
+  ) => {
+    setIsVerified(verified)
     setTurnstileToken(token)
-    setIsVerified(true)
-  }
-
-  const handleTurnstileError = (error: string) => {
-    setTurnstileToken(null)
-    setIsVerified(false)
-    toast.error(`验证失败: ${error}`)
-  }
-
-  const handleTurnstileExpire = () => {
-    setTurnstileToken(null)
-    setIsVerified(false)
-    toast.warning('验证已过期，请重新验证')
   }
 
   useEffect(() => {}, [])
@@ -82,7 +74,7 @@ export default function WriterAnalysisPage() {
     }
 
     if (!isVerified || !turnstileToken) {
-      toast.error('请先完成人机验证')
+      toast.error('请先完成验证')
       return
     }
 
@@ -168,7 +160,7 @@ export default function WriterAnalysisPage() {
       &nbsp;
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 align-start">
         <motion.div
-          className="content-start"
+          className="content-start space-y-4"
           initial={{ opacity: 0, x: -30, y: 20 }}
           animate={{ opacity: 1, x: 0, y: 0 }}
           transition={{
@@ -189,9 +181,10 @@ export default function WriterAnalysisPage() {
             analysisType={analysisType}
             setAnalysisTypeAction={setAnalysisType}
             isVerified={isVerified}
-            onTurnstileVerifyAction={handleTurnstileVerify}
-            onTurnstileErrorAction={handleTurnstileError}
-            onTurnstileExpireAction={handleTurnstileExpire}
+          />
+
+          <TurnstileCard
+            onVerificationChangeAction={handleVerificationChangeAction}
           />
         </motion.div>
 
