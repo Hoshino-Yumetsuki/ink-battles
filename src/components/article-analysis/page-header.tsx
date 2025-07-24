@@ -45,6 +45,12 @@ export default function PageHeader() {
             点击前往
           </a>
         </p>
+        <p className="text-xs text-gray-500 text-center">
+          友链：
+          <a href="https://ink-battles.rikki.top/" style={{ color: 'blue' }}>
+            iykrzu 的作家战力分析
+          </a>
+        </p>
       </motion.div>
     </>
   )
