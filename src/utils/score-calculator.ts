@@ -2,6 +2,22 @@ interface DimensionScore {
   name: string
   score: number
   description: string
+  confidence?: number
+  variance?: number
+}
+
+interface QualityMetrics {
+  consistency: number
+  reliability: number
+  objectivity: number
+  completeness: number
+}
+
+interface AdvancedScoreResult {
+  finalScore: number
+  baseScore: number
+  adjustments: Record<string, number>
+  qualityMetrics: QualityMetrics
 }
 
 const DIMENSION_WEIGHTS: Record<string, number> = {
@@ -36,7 +52,18 @@ const SCORE_CONFIG = {
   EXCELLENCE_THRESHOLD: 4.0,
   SYNERGY_FACTOR: 0.5,
   BALANCE_BONUS: 0.7,
-  BREAKTHROUGH_THRESHOLD: 85
+  BREAKTHROUGH_THRESHOLD: 85,
+  CONSISTENCY_THRESHOLD: 0.7,
+  RELIABILITY_THRESHOLD: 0.8,
+  OBJECTIVITY_WEIGHT: 0.15,
+  VARIANCE_PENALTY_FACTOR: 0.1,
+  CONFIDENCE_BOOST_FACTOR: 0.05
+}
+
+const DYNAMIC_WEIGHT_CONFIG = {
+  QUALITY_BASED_ADJUSTMENT: 0.2,
+  CORRELATION_THRESHOLD: 0.6,
+  ADAPTIVE_FACTOR: 0.1
 }
 
 const SYNERGY_GROUPS: Record<string, string[]> = {
@@ -52,55 +79,102 @@ const SYNERGY_GROUPS: Record<string, string[]> = {
 export function calculateOverallScore(
   dimensions: DimensionScore[] | Record<string, any>
 ): number {
+  const result = calculateAdvancedScore(dimensions)
+  return result.finalScore
+}
+
+export function calculateDetailedScore(
+  dimensions: DimensionScore[] | Record<string, any>
+): AdvancedScoreResult {
+  return calculateAdvancedScore(dimensions)
+}
+
+export function calculateAdvancedScore(
+  dimensions: DimensionScore[] | Record<string, any>
+): AdvancedScoreResult {
   if (!dimensions) {
-    return SCORE_CONFIG.MIN_SCORE
+    return createEmptyResult()
   }
 
+  let dimensionArray: DimensionScore[]
   if (!Array.isArray(dimensions)) {
-    const dimensionArray: DimensionScore[] = []
+    dimensionArray = []
     Object.entries(dimensions).forEach(([key, value]) => {
       if (typeof value === 'object' && value !== null) {
         const dimensionScore = typeof value.score === 'number' ? value.score : 0
         dimensionArray.push({
           name: key,
           score: dimensionScore,
-          description: value.description || ''
+          description: value.description || '',
+          confidence: value.confidence || 0.8,
+          variance: value.variance || 0.1
         })
       }
     })
-    return calculateComplexScore(dimensionArray)
+  } else {
+    dimensionArray = dimensions.map((dim) => ({
+      ...dim,
+      confidence: dim.confidence || 0.8,
+      variance: dim.variance || 0.1
+    }))
   }
 
-  if (dimensions.length === 0) {
-    return SCORE_CONFIG.MIN_SCORE
+  if (dimensionArray.length === 0) {
+    return createEmptyResult()
   }
 
-  return calculateComplexScore(dimensions)
+  return calculateAdvancedComplexScore(dimensionArray)
 }
 
-function calculateComplexScore(dimensions: DimensionScore[]): number {
+function createEmptyResult(): AdvancedScoreResult {
+  return {
+    finalScore: SCORE_CONFIG.MIN_SCORE,
+    baseScore: SCORE_CONFIG.MIN_SCORE,
+    adjustments: {},
+    qualityMetrics: {
+      consistency: 0,
+      reliability: 0,
+      objectivity: 0,
+      completeness: 0
+    }
+  }
+}
+
+function calculateAdvancedComplexScore(
+  dimensions: DimensionScore[]
+): AdvancedScoreResult {
   const validDimensions = filterValidDimensions(dimensions)
 
   if (validDimensions.length === 0) {
-    return SCORE_CONFIG.MIN_SCORE
+    return createEmptyResult()
   }
 
-  const baseScore = calculateBaseScore(validDimensions)
+  const qualityMetrics = calculateQualityMetrics(validDimensions)
 
-  const synergyBonus = calculateSynergyBonus(validDimensions)
+  const adjustedWeights = calculateDynamicWeights(
+    validDimensions,
+    qualityMetrics
+  )
 
-  const excellenceBonus = calculateExcellenceBonus(validDimensions)
+  const baseScore = calculateAdvancedBaseScore(validDimensions, adjustedWeights)
 
-  const balanceAdjustment = calculateBalanceAdjustment(validDimensions)
+  const adjustments: Record<string, number> = {}
 
-  const qualityPenalty = calculateQualityPenalty(validDimensions)
+  adjustments.synergyBonus = calculateSynergyBonus(validDimensions)
+  adjustments.excellenceBonus = calculateExcellenceBonus(validDimensions)
+  adjustments.balanceAdjustment = calculateBalanceAdjustment(validDimensions)
+  adjustments.qualityPenalty = calculateQualityPenalty(validDimensions)
+  adjustments.consistencyAdjustment = calculateConsistencyAdjustment(
+    validDimensions,
+    qualityMetrics
+  )
+  adjustments.objectivityBonus = calculateObjectivityBonus(
+    validDimensions,
+    qualityMetrics
+  )
 
   let totalScore =
-    baseScore +
-    synergyBonus +
-    excellenceBonus +
-    balanceAdjustment +
-    qualityPenalty
+    baseScore + Object.values(adjustments).reduce((sum, adj) => sum + adj, 0)
 
   if (totalScore > SCORE_CONFIG.BREAKTHROUGH_THRESHOLD) {
     totalScore = applyBreakthroughConstraint(totalScore, validDimensions)
@@ -108,7 +182,12 @@ function calculateComplexScore(dimensions: DimensionScore[]): number {
 
   totalScore = Math.max(totalScore, SCORE_CONFIG.MIN_SCORE)
 
-  return Number(totalScore.toFixed(1))
+  return {
+    finalScore: Number(totalScore.toFixed(1)),
+    baseScore: Number(baseScore.toFixed(1)),
+    adjustments,
+    qualityMetrics
+  }
 }
 
 function filterValidDimensions(dimensions: DimensionScore[]): DimensionScore[] {
@@ -121,65 +200,6 @@ function filterValidDimensions(dimensions: DimensionScore[]): DimensionScore[] {
       !Number.isNaN(dimension.score) &&
       dimension.score >= 0
   )
-}
-
-function calculateBaseScore(dimensions: DimensionScore[]): number {
-  let weightedSum = 0
-  let totalWeight = 0
-  let corePresent = 0
-  let optionalPresent = 0
-
-  let totalQualityScore = 0
-  let dimensionCount = 0
-
-  dimensions.forEach((dimension) => {
-    const weight = DIMENSION_WEIGHTS[dimension.name] || 1.0
-    const isOptional = OPTIONAL_DIMENSIONS.has(dimension.name)
-
-    totalQualityScore += dimension.score
-    dimensionCount++
-
-    const baseScore = dimension.score
-    let scaledScore: number
-
-    if (baseScore >= 4.5) {
-      scaledScore = 18 + (baseScore - 4.5) * 6
-    } else if (baseScore >= 4.0) {
-      scaledScore = 15 + (baseScore - 4.0) * 6
-    } else if (baseScore >= 3.5) {
-      scaledScore = 11 + (baseScore - 3.5) * 8
-    } else if (baseScore >= 2.5) {
-      scaledScore = 7 + (baseScore - 2.5) * 4
-    } else {
-      scaledScore = Math.log(Math.max(1, baseScore) + 1) * 4
-    }
-
-    const cappedScore = Math.min(24, scaledScore)
-
-    let adjustedWeight = weight
-    if (isOptional && dimension.score > 0) {
-      adjustedWeight *= 1.1
-      optionalPresent++
-    } else if (!isOptional) {
-      corePresent++
-    }
-
-    weightedSum += cappedScore * adjustedWeight
-    totalWeight += adjustedWeight
-  })
-
-  const averageScore = weightedSum / totalWeight
-
-  const avgQuality = totalQualityScore / dimensionCount
-  const qualityRatio = Math.max(0, Math.min(1, (avgQuality - 1) / 3.5))
-  const dynamicBaseScore =
-    SCORE_CONFIG.MIN_BASE_SCORE +
-    (SCORE_CONFIG.MAX_BASE_SCORE - SCORE_CONFIG.MIN_BASE_SCORE) * qualityRatio
-
-  const coreRatio = corePresent / (dimensions.length - optionalPresent + 0.1)
-  const baseMultiplier = Math.min(1.8, 1.0 + coreRatio * 0.8)
-
-  return dynamicBaseScore + averageScore * baseMultiplier * 1.3
 }
 
 function calculateSynergyBonus(dimensions: DimensionScore[]): number {
@@ -346,6 +366,219 @@ function applyBreakthroughConstraint(
     return SCORE_CONFIG.BREAKTHROUGH_THRESHOLD + excess * 0.7
   } else {
     return Math.min(score, SCORE_CONFIG.BREAKTHROUGH_THRESHOLD)
+  }
+}
+
+function calculateQualityMetrics(dimensions: DimensionScore[]): QualityMetrics {
+  const scores = dimensions.map((d) => d.score)
+  const confidences = dimensions.map((d) => d.confidence || 0.8)
+  const variances = dimensions.map((d) => d.variance || 0.1)
+
+  const scoreMean = scores.reduce((sum, s) => sum + s, 0) / scores.length
+  const scoreVariance =
+    scores.reduce((sum, s) => sum + (s - scoreMean) ** 2, 0) / scores.length
+  const consistency =
+    Math.max(0, 1 - scoreVariance / 4) * 0.7 +
+    (confidences.reduce((sum, c) => sum + c, 0) / confidences.length) * 0.3
+
+  const avgConfidence =
+    confidences.reduce((sum, c) => sum + c, 0) / confidences.length
+  const completenessRatio =
+    dimensions.length / Object.keys(DIMENSION_WEIGHTS).length
+  const reliability = avgConfidence * 0.6 + completenessRatio * 0.4
+
+  const avgVariance =
+    variances.reduce((sum, v) => sum + v, 0) / variances.length
+  const scoreDistribution = calculateScoreDistribution(scores)
+  const objectivity =
+    Math.max(0, 1 - avgVariance) * 0.5 + scoreDistribution * 0.5
+
+  const corePresent = dimensions.filter(
+    (d) => !OPTIONAL_DIMENSIONS.has(d.name)
+  ).length
+  const totalCore =
+    Object.keys(DIMENSION_WEIGHTS).length - OPTIONAL_DIMENSIONS.size
+  const completeness =
+    Math.min(1, corePresent / totalCore) * 0.8 + completenessRatio * 0.2
+
+  return {
+    consistency: Number(consistency.toFixed(3)),
+    reliability: Number(reliability.toFixed(3)),
+    objectivity: Number(objectivity.toFixed(3)),
+    completeness: Number(completeness.toFixed(3))
+  }
+}
+
+function calculateScoreDistribution(scores: number[]): number {
+  const bins = [0, 1, 2, 3, 4, 5]
+  const distribution = new Array(bins.length - 1).fill(0)
+
+  scores.forEach((score) => {
+    for (let i = 0; i < bins.length - 1; i++) {
+      if (score >= bins[i] && score < bins[i + 1]) {
+        distribution[i]++
+        break
+      }
+    }
+  })
+
+  const total = scores.length
+  let entropy = 0
+  distribution.forEach((count) => {
+    if (count > 0) {
+      const p = count / total
+      entropy -= p * Math.log2(p)
+    }
+  })
+
+  const maxEntropy = Math.log2(distribution.length)
+  return entropy / maxEntropy
+}
+
+function calculateDynamicWeights(
+  dimensions: DimensionScore[],
+  qualityMetrics: QualityMetrics
+): Record<string, number> {
+  const adjustedWeights: Record<string, number> = { ...DIMENSION_WEIGHTS }
+
+  dimensions.forEach((dimension) => {
+    const baseName = dimension.name
+    const baseWeight = DIMENSION_WEIGHTS[baseName] || 1.0
+
+    let qualityAdjustment = 1.0
+
+    if (dimension.score >= 4.5) {
+      qualityAdjustment += DYNAMIC_WEIGHT_CONFIG.QUALITY_BASED_ADJUSTMENT
+    } else if (dimension.score <= 2.0) {
+      qualityAdjustment -= DYNAMIC_WEIGHT_CONFIG.QUALITY_BASED_ADJUSTMENT * 0.5
+    }
+
+    const confidenceAdjustment = (dimension.confidence || 0.8) * 0.2 + 0.8
+
+    const consistencyAdjustment = qualityMetrics.consistency * 0.1 + 0.9
+
+    adjustedWeights[baseName] =
+      baseWeight *
+      qualityAdjustment *
+      confidenceAdjustment *
+      consistencyAdjustment
+  })
+
+  return adjustedWeights
+}
+
+function calculateAdvancedBaseScore(
+  dimensions: DimensionScore[],
+  adjustedWeights: Record<string, number>
+): number {
+  let weightedSum = 0
+  let totalWeight = 0
+  let totalQualityScore = 0
+  let dimensionCount = 0
+
+  dimensions.forEach((dimension) => {
+    const weight = adjustedWeights[dimension.name] || 1.0
+    const confidence = dimension.confidence || 0.8
+
+    totalQualityScore += dimension.score
+    dimensionCount++
+
+    let scaledScore = mapScoreNonLinear(dimension.score)
+
+    scaledScore *= 0.7 + confidence * 0.3
+
+    const cappedScore = Math.min(24, scaledScore)
+
+    weightedSum += cappedScore * weight
+    totalWeight += weight
+  })
+
+  const averageScore = weightedSum / totalWeight
+  const avgQuality = totalQualityScore / dimensionCount
+
+  const qualityRatio = Math.max(0, Math.min(1, (avgQuality - 1) / 4))
+  const dynamicBaseScore =
+    SCORE_CONFIG.MIN_BASE_SCORE +
+    (SCORE_CONFIG.MAX_BASE_SCORE - SCORE_CONFIG.MIN_BASE_SCORE) * qualityRatio
+
+  return dynamicBaseScore + averageScore * 1.2
+}
+
+function mapScoreNonLinear(score: number): number {
+  if (score >= 4.5) {
+    return 18 + (score - 4.5) * 8
+  } else if (score >= 4.0) {
+    return 15 + (score - 4.0) * 6
+  } else if (score >= 3.0) {
+    return 9 + (score - 3.0) * 6
+  } else if (score >= 2.0) {
+    return 5 + (score - 2.0) * 4
+  } else {
+    return Math.log(Math.max(0.1, score) + 1) * 3
+  }
+}
+
+function calculateConsistencyAdjustment(
+  _dimensions: DimensionScore[],
+  qualityMetrics: QualityMetrics
+): number {
+  const consistencyScore = qualityMetrics.consistency
+
+  if (consistencyScore >= SCORE_CONFIG.CONSISTENCY_THRESHOLD) {
+    return (consistencyScore - SCORE_CONFIG.CONSISTENCY_THRESHOLD) * 8
+  } else {
+    return (consistencyScore - SCORE_CONFIG.CONSISTENCY_THRESHOLD) * 12
+  }
+}
+
+function calculateObjectivityBonus(
+  _dimensions: DimensionScore[],
+  qualityMetrics: QualityMetrics
+): number {
+  const objectivityScore = qualityMetrics.objectivity
+  const reliabilityScore = qualityMetrics.reliability
+
+  if (reliabilityScore >= SCORE_CONFIG.RELIABILITY_THRESHOLD) {
+    return objectivityScore * SCORE_CONFIG.OBJECTIVITY_WEIGHT * 15
+  }
+
+  return 0
+}
+
+export function convertToLegacyFormat(
+  advancedResult: AdvancedScoreResult,
+  dimensions: DimensionScore[]
+): {
+  overallScore: number
+  overallAssessment: string
+  title: string
+  ratingTag: string
+  dimensions: { name: string; score: number; description: string }[]
+  strengths: string[]
+  improvements: string[]
+  qualityMetrics?: QualityMetrics
+  adjustments?: Record<string, number>
+  recommendations?: string[]
+} {
+  const { finalScore, qualityMetrics, adjustments } = advancedResult
+
+  const strengths: string[] = []
+  const improvements: string[] = []
+
+  return {
+    overallScore: finalScore,
+    title: generateTitleByScore(finalScore),
+    ratingTag: generateRatingTag(finalScore),
+    dimensions: dimensions.map((dim) => ({
+      name: dim.name,
+      score: dim.score,
+      description: dim.description
+    })),
+    strengths,
+    improvements,
+    qualityMetrics,
+    adjustments,
+    overallAssessment: ''
   }
 }
 
