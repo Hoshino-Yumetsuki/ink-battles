@@ -40,7 +40,7 @@ export default function AnalysisOptions({
     },
     hotTopic: {
       title: '热血刺激',
-      description: '允许用户在特殊感受情境下获得文学作品的评分刺激。'
+      description: '允许用户在特殊感受情境下获得作品的评分刺激。'
     },
     antiCapitalism: {
       title: '反现代主义者',

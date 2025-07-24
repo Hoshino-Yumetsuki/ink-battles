@@ -31,11 +31,11 @@ const OPTIONAL_DIMENSIONS = new Set([
 
 const SCORE_CONFIG = {
   MIN_SCORE: 0,
-  MIN_BASE_SCORE: 15,
-  MAX_BASE_SCORE: 110,
-  EXCELLENCE_THRESHOLD: 4,
-  SYNERGY_FACTOR: 0.6,
-  BALANCE_BONUS: 0.8,
+  MIN_BASE_SCORE: 12,
+  MAX_BASE_SCORE: 95,
+  EXCELLENCE_THRESHOLD: 4.0,
+  SYNERGY_FACTOR: 0.5,
+  BALANCE_BONUS: 0.7,
   BREAKTHROUGH_THRESHOLD: 85
 }
 
@@ -142,17 +142,19 @@ function calculateBaseScore(dimensions: DimensionScore[]): number {
     const baseScore = dimension.score
     let scaledScore: number
 
-    if (baseScore >= 4.0) {
-      scaledScore = 18 + (baseScore - 4.0) * 8
+    if (baseScore >= 4.5) {
+      scaledScore = 18 + (baseScore - 4.5) * 6
+    } else if (baseScore >= 4.0) {
+      scaledScore = 15 + (baseScore - 4.0) * 6
     } else if (baseScore >= 3.5) {
-      scaledScore = 14 + (baseScore - 3.5) * 8
+      scaledScore = 11 + (baseScore - 3.5) * 8
     } else if (baseScore >= 2.5) {
-      scaledScore = 9 + (baseScore - 2.5) * 5
+      scaledScore = 7 + (baseScore - 2.5) * 4
     } else {
-      scaledScore = Math.log(Math.max(1, baseScore) + 1) * 5
+      scaledScore = Math.log(Math.max(1, baseScore) + 1) * 4
     }
 
-    const cappedScore = Math.min(28, scaledScore)
+    const cappedScore = Math.min(24, scaledScore)
 
     let adjustedWeight = weight
     if (isOptional && dimension.score > 0) {
@@ -175,9 +177,9 @@ function calculateBaseScore(dimensions: DimensionScore[]): number {
     (SCORE_CONFIG.MAX_BASE_SCORE - SCORE_CONFIG.MIN_BASE_SCORE) * qualityRatio
 
   const coreRatio = corePresent / (dimensions.length - optionalPresent + 0.1)
-  const baseMultiplier = Math.min(2.0, 1.0 + coreRatio * 1.0)
+  const baseMultiplier = Math.min(1.8, 1.0 + coreRatio * 0.8)
 
-  return dynamicBaseScore + averageScore * baseMultiplier * 1.5
+  return dynamicBaseScore + averageScore * baseMultiplier * 1.3
 }
 
 function calculateSynergyBonus(dimensions: DimensionScore[]): number {
@@ -210,7 +212,7 @@ function calculateSynergyBonus(dimensions: DimensionScore[]): number {
       const participationRatio = groupScores.length / totalDimensionsInGroup
       const synergyMultiplier = 0.7 + participationRatio * 0.3
 
-      if (geometricMean > 6) {
+      if (geometricMean > 7) {
         const synergyContribution =
           (geometricMean - 6) *
           SCORE_CONFIG.SYNERGY_FACTOR *
@@ -221,7 +223,7 @@ function calculateSynergyBonus(dimensions: DimensionScore[]): number {
     }
   })
 
-  return Math.min(totalSynergy, 12)
+  return Math.min(totalSynergy, 10)
 }
 
 function calculateExcellenceBonus(dimensions: DimensionScore[]): number {
@@ -239,11 +241,11 @@ function calculateExcellenceBonus(dimensions: DimensionScore[]): number {
     excellenceCount
 
   const bonus =
-    (excellenceCount / dimensions.length) ** 1.5 *
+    (excellenceCount / dimensions.length) ** 1.4 *
     (avgExcellenceScore - SCORE_CONFIG.EXCELLENCE_THRESHOLD) *
-    2
+    1.8
 
-  return Math.min(bonus, 15)
+  return Math.min(bonus, 12)
 }
 function calculateBalanceAdjustment(dimensions: DimensionScore[]): number {
   const coreScores = dimensions
@@ -266,11 +268,11 @@ function calculateBalanceAdjustment(dimensions: DimensionScore[]): number {
 
   const coreBalanceBonus = Math.max(
     0,
-    (3 - coreStdDev) * SCORE_CONFIG.BALANCE_BONUS * coreMean * 0.12
+    (3 - coreStdDev) * SCORE_CONFIG.BALANCE_BONUS * coreMean * 0.1
   )
 
   const optionalBonus =
-    optionalScores.length > 0 ? Math.min(2, optionalScores.length * 0.8) : 0
+    optionalScores.length > 0 ? Math.min(1.8, optionalScores.length * 0.6) : 0
 
   const maxCoreScore = Math.max(...coreScores)
   const minCoreScore = Math.min(...coreScores)
@@ -335,13 +337,13 @@ function applyBreakthroughConstraint(
 
   if (highScoreDimensions >= 8 || excellentDimensions >= 2) {
     const excess = score - SCORE_CONFIG.BREAKTHROUGH_THRESHOLD
-    return SCORE_CONFIG.BREAKTHROUGH_THRESHOLD + excess * 1.5
+    return SCORE_CONFIG.BREAKTHROUGH_THRESHOLD + excess * 0.9
   } else if (highScoreDimensions >= 6 || veryHighScoreDimensions >= 2) {
     const excess = score - SCORE_CONFIG.BREAKTHROUGH_THRESHOLD
-    return SCORE_CONFIG.BREAKTHROUGH_THRESHOLD + excess * 1.3
+    return SCORE_CONFIG.BREAKTHROUGH_THRESHOLD + excess * 0.8
   } else if (highScoreDimensions >= 4) {
     const excess = score - SCORE_CONFIG.BREAKTHROUGH_THRESHOLD
-    return SCORE_CONFIG.BREAKTHROUGH_THRESHOLD + excess * 1.1
+    return SCORE_CONFIG.BREAKTHROUGH_THRESHOLD + excess * 0.7
   } else {
     return Math.min(score, SCORE_CONFIG.BREAKTHROUGH_THRESHOLD)
   }
@@ -349,7 +351,7 @@ function applyBreakthroughConstraint(
 
 export function generateTitleByScore(score: number): string {
   if (score >= 100) return '🏆 国际大师'
-  if (score >= 95) return '🌟 文学泽芸家'
+  if (score >= 95) return '🌟 作品泽芸家'
   if (score >= 90) return '👑 文协级名家'
   if (score >= 85) return '✨ 资深作家'
   if (score >= 80) return '💫 优秀作家'

@@ -37,9 +37,9 @@ export const promptModes: Record<string, PromptMode> = {
   hotTopic: {
     key: 'hotTopic',
     title: '热血刺激',
-    description: '允许用户在特殊感受情境下获得文学作品的评分刺激。',
+    description: '允许用户在特殊感受情境下获得作品作品的评分刺激。',
     prompt:
-      '关注作品在当前文学环境中的情感共鸣和热点话题的处理。评估作品对读者情感的刺激程度和对当下社会话题的回应。'
+      '关注作品在当前作品环境中的情感共鸣和热点话题的处理。评估作品对读者情感的刺激程度和对当下社会话题的回应。'
   },
   antiCapitalism: {
     key: 'antiCapitalism',
