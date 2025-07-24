@@ -36,8 +36,7 @@ const SCORE_CONFIG = {
   EXCELLENCE_THRESHOLD: 4,
   SYNERGY_FACTOR: 0.6,
   BALANCE_BONUS: 0.8,
-  BREAKTHROUGH_THRESHOLD: 85,
-  MAX_REASONABLE_SCORE: 120
+  BREAKTHROUGH_THRESHOLD: 85
 }
 
 const SYNERGY_GROUPS: Record<string, string[]> = {
@@ -107,7 +106,6 @@ function calculateComplexScore(dimensions: DimensionScore[]): number {
     totalScore = applyBreakthroughConstraint(totalScore, validDimensions)
   }
 
-  totalScore = Math.min(totalScore, SCORE_CONFIG.MAX_REASONABLE_SCORE)
   totalScore = Math.max(totalScore, SCORE_CONFIG.MIN_SCORE)
 
   return Number(totalScore.toFixed(1))
