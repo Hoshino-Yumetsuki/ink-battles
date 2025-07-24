@@ -47,17 +47,17 @@ const OPTIONAL_DIMENSIONS = new Set([
 
 const SCORE_CONFIG = {
   MIN_SCORE: 0,
-  MIN_BASE_SCORE: 12,
-  MAX_BASE_SCORE: 95,
+  MIN_BASE_SCORE: 15,
+  MAX_BASE_SCORE: 120,
   EXCELLENCE_THRESHOLD: 4.0,
-  SYNERGY_FACTOR: 0.5,
-  BALANCE_BONUS: 0.7,
-  BREAKTHROUGH_THRESHOLD: 85,
+  SYNERGY_FACTOR: 0.7,
+  BALANCE_BONUS: 1.0,
+  BREAKTHROUGH_THRESHOLD: 110,
   CONSISTENCY_THRESHOLD: 0.7,
   RELIABILITY_THRESHOLD: 0.8,
   OBJECTIVITY_WEIGHT: 0.15,
-  VARIANCE_PENALTY_FACTOR: 0.1,
-  CONFIDENCE_BOOST_FACTOR: 0.05
+  VARIANCE_PENALTY_FACTOR: 0.08,
+  CONFIDENCE_BOOST_FACTOR: 0.07
 }
 
 const DYNAMIC_WEIGHT_CONFIG = {
@@ -243,7 +243,7 @@ function calculateSynergyBonus(dimensions: DimensionScore[]): number {
     }
   })
 
-  return Math.min(totalSynergy, 10)
+  return Math.min(totalSynergy, 15)
 }
 
 function calculateExcellenceBonus(dimensions: DimensionScore[]): number {
@@ -261,11 +261,11 @@ function calculateExcellenceBonus(dimensions: DimensionScore[]): number {
     excellenceCount
 
   const bonus =
-    (excellenceCount / dimensions.length) ** 1.4 *
+    (excellenceCount / dimensions.length) ** 1.3 *
     (avgExcellenceScore - SCORE_CONFIG.EXCELLENCE_THRESHOLD) *
-    1.8
+    2.2
 
-  return Math.min(bonus, 12)
+  return Math.min(bonus, 18)
 }
 function calculateBalanceAdjustment(dimensions: DimensionScore[]): number {
   const coreScores = dimensions
@@ -300,7 +300,7 @@ function calculateBalanceAdjustment(dimensions: DimensionScore[]): number {
   const extremePenalty = extremeGap > 8 ? -(extremeGap - 8) * 0.3 : 0
 
   const totalAdjustment = coreBalanceBonus + optionalBonus + extremePenalty
-  return Math.max(-8, Math.min(totalAdjustment, 8))
+  return Math.max(-10, Math.min(totalAdjustment, 12))
 }
 
 function calculateQualityPenalty(dimensions: DimensionScore[]): number {
@@ -355,15 +355,18 @@ function applyBreakthroughConstraint(
   ).length
   const excellentDimensions = dimensions.filter((dim) => dim.score >= 5).length
 
-  if (highScoreDimensions >= 8 || excellentDimensions >= 2) {
+  if (highScoreDimensions >= 10 || excellentDimensions >= 3) {
+    const excess = score - SCORE_CONFIG.BREAKTHROUGH_THRESHOLD
+    return SCORE_CONFIG.BREAKTHROUGH_THRESHOLD + excess * 0.95
+  } else if (highScoreDimensions >= 8 || veryHighScoreDimensions >= 3) {
     const excess = score - SCORE_CONFIG.BREAKTHROUGH_THRESHOLD
     return SCORE_CONFIG.BREAKTHROUGH_THRESHOLD + excess * 0.9
-  } else if (highScoreDimensions >= 6 || veryHighScoreDimensions >= 2) {
+  } else if (highScoreDimensions >= 6 || excellentDimensions >= 2) {
     const excess = score - SCORE_CONFIG.BREAKTHROUGH_THRESHOLD
-    return SCORE_CONFIG.BREAKTHROUGH_THRESHOLD + excess * 0.8
+    return SCORE_CONFIG.BREAKTHROUGH_THRESHOLD + excess * 0.85
   } else if (highScoreDimensions >= 4) {
     const excess = score - SCORE_CONFIG.BREAKTHROUGH_THRESHOLD
-    return SCORE_CONFIG.BREAKTHROUGH_THRESHOLD + excess * 0.7
+    return SCORE_CONFIG.BREAKTHROUGH_THRESHOLD + excess * 0.8
   } else {
     return Math.min(score, SCORE_CONFIG.BREAKTHROUGH_THRESHOLD)
   }
@@ -487,7 +490,7 @@ function calculateAdvancedBaseScore(
 
     scaledScore *= 0.7 + confidence * 0.3
 
-    const cappedScore = Math.min(24, scaledScore)
+    const cappedScore = Math.min(32, scaledScore)
 
     weightedSum += cappedScore * weight
     totalWeight += weight
@@ -501,20 +504,20 @@ function calculateAdvancedBaseScore(
     SCORE_CONFIG.MIN_BASE_SCORE +
     (SCORE_CONFIG.MAX_BASE_SCORE - SCORE_CONFIG.MIN_BASE_SCORE) * qualityRatio
 
-  return dynamicBaseScore + averageScore * 1.2
+  return dynamicBaseScore + averageScore * 1.5
 }
 
 function mapScoreNonLinear(score: number): number {
   if (score >= 4.5) {
-    return 18 + (score - 4.5) * 8
+    return 22 + (score - 4.5) * 12
   } else if (score >= 4.0) {
-    return 15 + (score - 4.0) * 6
+    return 18 + (score - 4.0) * 8
   } else if (score >= 3.0) {
-    return 9 + (score - 3.0) * 6
+    return 11 + (score - 3.0) * 7
   } else if (score >= 2.0) {
-    return 5 + (score - 2.0) * 4
+    return 6 + (score - 2.0) * 5
   } else {
-    return Math.log(Math.max(0.1, score) + 1) * 3
+    return Math.log(Math.max(0.1, score) + 1) * 4
   }
 }
 
@@ -583,30 +586,35 @@ export function convertToLegacyFormat(
 }
 
 export function generateTitleByScore(score: number): string {
-  if (score >= 100) return '🏆 国际大师'
-  if (score >= 95) return '🌟 作品泽芸家'
-  if (score >= 90) return '👑 文协级名家'
-  if (score >= 85) return '✨ 资深作家'
-  if (score >= 80) return '💫 优秀作家'
-  if (score >= 75) return '🔥 热门写手'
-  if (score >= 70) return '📝 可靠创作者'
-  if (score >= 65) return '🌈 有潜力创作者'
-  if (score >= 60) return '🌱 写作新锐'
-  if (score >= 55) return '📚 习作作者'
-  if (score >= 50) return '🏫 写作学徒'
+  if (score >= 140) return '🌌 传世经典'
+  if (score >= 130) return '🏆 文学巨匠'
+  if (score >= 120) return '👑 大师级作家'
+  if (score >= 110) return '🌟 杰出作家'
+  if (score >= 100) return '💎 优秀作家'
+  if (score >= 90) return '✨ 资深作家'
+  if (score >= 80) return '💫 成熟作家'
+  if (score >= 70) return '🔥 热门写手'
+  if (score >= 60) return '📝 可靠创作者'
+  if (score >= 50) return '🌈 有潜力创作者'
+  if (score >= 40) return '🌱 写作新锐'
+  if (score >= 30) return '📚 习作作者'
+  if (score >= 20) return '🏫 写作学徒'
   return '🌱 写作新人'
 }
 
 export function generateRatingTag(score: number): string {
-  if (score >= 100) return '🎯 天才之作 / 经典级作品'
-  if (score >= 95) return '🔮 非凡之作 / 现象级作品'
-  if (score >= 90) return '🚀 🔥 市场热门 / 惩眼新秀'
-  if (score >= 85) return '💎 优秀作品'
-  if (score >= 80) return '🌟 好作品 / 值得一读'
-  if (score >= 75) return '📈 不错之作 / 引人入胜'
-  if (score >= 70) return '🌊 有潜力 / 有亮点'
-  if (score >= 65) return '🌄 及格之作 / 需要打磨'
-  if (score >= 60) return '🌩️ 粗糙之作 / 需要改进'
-  if (score >= 50) return '🥱 平庸之作 / 初级模仿者'
-  return '🐣 入门级作品 / 需要学习'
+  if (score >= 140) return '🌌 传世经典 / 不朽之作'
+  if (score >= 130) return '🏆 文学巨作 / 历史级作品'
+  if (score >= 120) return '👑 大师之作 / 顶尖作品'
+  if (score >= 110) return '🌟 杰出之作 / 现象级作品'
+  if (score >= 100) return '💎 优秀作品 / 市场热门'
+  if (score >= 90) return '✨ 资深作品 / 值得收藏'
+  if (score >= 80) return '💫 成熟作品 / 值得一读'
+  if (score >= 70) return '🔥 热门作品 / 引人入胜'
+  if (score >= 60) return '📝 可靠作品 / 有亮点'
+  if (score >= 50) return '🌈 有潜力 / 需要打磨'
+  if (score >= 40) return '🌱 新锐作品 / 有可能性'
+  if (score >= 30) return '📚 习作作品 / 需要改进'
+  if (score >= 20) return '🏫 学徒作品 / 初级模仿'
+  return '🌱 入门作品 / 需要学习'
 }
