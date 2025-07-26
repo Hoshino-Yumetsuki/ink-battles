@@ -1,11 +1,7 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { buildPrompt } from '@/config/prompts'
-import {
-  calculateOverallScore,
-  generateTitleByScore,
-  generateRatingTag
-} from '@/utils/score-calculator'
+import { calculateOverallScore } from '@/utils/score-calculator'
 import { getLlmApiConfig, isValidLlmApiConfig } from '@/config/api'
 
 import { logger } from '@/utils/logger'
@@ -184,21 +180,13 @@ export async function POST(request: Request) {
 
       const overallScore = calculateOverallScore(result.dimensions)
 
-      if (
-        !result.title ||
+      !result.title ||
         result.title.includes('基于评分的标题') ||
         typeof result.title !== 'string'
-      ) {
-        result.title = generateTitleByScore(overallScore)
-      }
 
-      if (
-        !result.ratingTag ||
+      !result.ratingTag ||
         result.ratingTag.includes('评价标签') ||
         typeof result.ratingTag !== 'string'
-      ) {
-        result.ratingTag = generateRatingTag(overallScore)
-      }
 
       const finalResult = {
         ...result,

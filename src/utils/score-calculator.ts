@@ -554,8 +554,6 @@ export function convertToLegacyFormat(
 ): {
   overallScore: number
   overallAssessment: string
-  title: string
-  ratingTag: string
   dimensions: { name: string; score: number; description: string }[]
   strengths: string[]
   improvements: string[]
@@ -570,8 +568,6 @@ export function convertToLegacyFormat(
 
   return {
     overallScore: finalScore,
-    title: generateTitleByScore(finalScore),
-    ratingTag: generateRatingTag(finalScore),
     dimensions: dimensions.map((dim) => ({
       name: dim.name,
       score: dim.score,
@@ -583,38 +579,4 @@ export function convertToLegacyFormat(
     adjustments,
     overallAssessment: ''
   }
-}
-
-export function generateTitleByScore(score: number): string {
-  if (score >= 140) return '🌌 传世经典'
-  if (score >= 130) return '🏆 文学巨匠'
-  if (score >= 120) return '👑 大师级作家'
-  if (score >= 110) return '🌟 杰出作家'
-  if (score >= 100) return '💎 优秀作家'
-  if (score >= 90) return '✨ 资深作家'
-  if (score >= 80) return '💫 成熟作家'
-  if (score >= 70) return '🔥 热门写手'
-  if (score >= 60) return '📝 可靠创作者'
-  if (score >= 50) return '🌈 有潜力创作者'
-  if (score >= 40) return '🌱 写作新锐'
-  if (score >= 30) return '📚 习作作者'
-  if (score >= 20) return '🏫 写作学徒'
-  return '🌱 写作新人'
-}
-
-export function generateRatingTag(score: number): string {
-  if (score >= 140) return '🌌 传世经典 / 不朽之作'
-  if (score >= 130) return '🏆 文学巨作 / 历史级作品'
-  if (score >= 120) return '👑 大师之作 / 顶尖作品'
-  if (score >= 110) return '🌟 杰出之作 / 现象级作品'
-  if (score >= 100) return '💎 优秀作品 / 市场热门'
-  if (score >= 90) return '✨ 资深作品 / 值得收藏'
-  if (score >= 80) return '💫 成熟作品 / 值得一读'
-  if (score >= 70) return '🔥 热门作品 / 引人入胜'
-  if (score >= 60) return '📝 可靠作品 / 有亮点'
-  if (score >= 50) return '🌈 有潜力 / 需要打磨'
-  if (score >= 40) return '🌱 新锐作品 / 有可能性'
-  if (score >= 30) return '📚 习作作品 / 需要改进'
-  if (score >= 20) return '🏫 学徒作品 / 初级模仿'
-  return '🌱 入门作品 / 需要学习'
 }
