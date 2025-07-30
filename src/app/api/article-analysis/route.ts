@@ -3,8 +3,34 @@ import OpenAI from 'openai'
 import { buildPrompt } from '@/config/prompts'
 import { calculateOverallScore } from '@/utils/score-calculator'
 import { getLlmApiConfig, isValidLlmApiConfig } from '@/config/api'
-
 import { logger } from '@/utils/logger'
+
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3
+): Promise<T> {
+  let lastError: Error | null = null
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn()
+    } catch (error: any) {
+      lastError = error
+
+      if (attempt === maxRetries) {
+        logger.error(`Failed after ${maxRetries} attempts`, error)
+        throw error
+      }
+
+      logger.warn(
+        `Attempt ${attempt + 1}/${maxRetries + 1} failed, retrying immediately`,
+        { error: error.message || error }
+      )
+    }
+  }
+
+  throw lastError || new Error('Unknown error occurred during retry')
+}
 
 export async function POST(request: Request) {
   try {
@@ -131,10 +157,12 @@ export async function POST(request: Request) {
         ]
       }
 
-      response = await openai.chat.completions.create({
-        ...requestConfig,
-        messages
-      })
+      response = await withRetry(() =>
+        openai.chat.completions.create({
+          ...requestConfig,
+          messages
+        })
+      )
     } catch (error: any) {
       logger.error(`Error processing ${analysisType} analysis`, error)
       throw new Error(
