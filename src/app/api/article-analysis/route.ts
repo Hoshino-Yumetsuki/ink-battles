@@ -160,7 +160,7 @@ export async function POST(request: Request) {
             content: [
               {
                 type: 'text',
-                text: '请分析这张图片中的文本内容'
+                text: '请分析这张图片中的内容'
               },
               {
                 type: 'image_url',
