@@ -51,6 +51,12 @@ export default function PageHeader() {
             iykrzu 的作家战力分析
           </a>
         </p>
+        <p className="text-xs text-gray-500 text-center">
+          支持我们：
+          <a href="https://afdian.com/a/q78kg" style={{ color: 'blue' }}>
+            爱发电
+          </a>
+        </p>
       </motion.div>
     </>
   )
