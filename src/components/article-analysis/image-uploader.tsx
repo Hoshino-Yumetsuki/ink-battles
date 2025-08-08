@@ -26,9 +26,9 @@ export default function ImageUploader({
     const file = event.target.files?.[0]
     if (!file) return
 
-    const maxSize = 10 * 1024 * 1024 // 10MB
+    const maxSize = 15 * 1024 * 1024 // 10MB
     if (file.size > maxSize) {
-      toast.error('文件过大，请上传小于 10MB 的图片')
+      toast.error('文件过大，请上传小于 15MB 的图片')
       return
     }
 
@@ -55,9 +55,9 @@ export default function ImageUploader({
     const file = e.dataTransfer.files?.[0]
     if (!file) return
 
-    const maxSize = 10 * 1024 * 1024 // 10MB
+    const maxSize = 15 * 1024 * 1024 // 10MB
     if (file.size > maxSize) {
-      toast.error('文件过大，请上传小于 10MB 的图片')
+      toast.error('文件过大，请上传小于 15MB 的图片')
       return
     }
 
@@ -206,7 +206,7 @@ export default function ImageUploader({
         </motion.div>
       </div>
       <p className="text-xs text-muted-foreground mt-2 text-center">
-        请上传一张要分析的图片，支持JPG、PNG等常见图片格式，大小不超过 10MB
+        请上传一张要分析的图片，支持JPG、PNG等常见图片格式，大小不超过 15MB
       </p>
     </div>
   )
