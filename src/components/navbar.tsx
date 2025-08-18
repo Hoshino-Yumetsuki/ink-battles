@@ -4,13 +4,14 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ThemeSwitcher } from './theme-switcher'
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 
 export default function Navbar() {
   const pathname = usePathname()
   const { scrollY } = useScroll()
   const [hidden, setHidden] = useState(false)
   const [lastScrollY, setLastScrollY] = useState(0)
+  const logoTitleId = useId()
 
   const navItems = [{ label: '首页', path: '/' }]
 
@@ -27,7 +28,7 @@ export default function Navbar() {
 
   return (
     <motion.header
-      className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+      className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60"
       variants={{
         visible: { y: 0 },
         hidden: { y: '-100%' }
@@ -49,9 +50,9 @@ export default function Navbar() {
             strokeLinejoin="round"
             className="text-blue-600"
             role="img"
-            aria-labelledby="logoTitle"
+            aria-labelledby={logoTitleId}
           >
-            <title id="logoTitle">Ink Battles Logo</title>
+            <title id={logoTitleId}>Ink Battles Logo</title>
             <path d="m18 7 4 2v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9l4-2" />
             <path d="M14 22v-4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v4" />
             <path d="M18 22V5l-6-3-6 3v17" />

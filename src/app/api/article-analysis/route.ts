@@ -37,10 +37,9 @@ async function withRetry<T>(
         throw error
       }
 
-      logger.warn(
-        `Attempt ${attempt + 1}/${maxRetries + 1} failed`,
-        { error: error.message || error }
-      )
+      logger.warn(`Attempt ${attempt + 1}/${maxRetries + 1} failed`, {
+        error: error.message || error
+      })
       await new Promise((resolve) => setTimeout(resolve, 0))
     }
   }

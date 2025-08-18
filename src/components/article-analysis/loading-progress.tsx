@@ -29,7 +29,7 @@ export default function LoadingProgress({ progress }: LoadingProgressProps) {
             style={{ width: `${progress}%` }}
           />
           <motion.div
-            className="absolute top-0 h-full w-1/3 bg-gradient-to-r from-transparent via-primary/30 to-transparent"
+            className="absolute top-0 h-full w-1/3 bg-linear-to-r from-transparent via-primary/30 to-transparent"
             animate={{
               x: ['-100%', '400%']
             }}
