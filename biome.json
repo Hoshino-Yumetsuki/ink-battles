@@ -41,7 +41,8 @@
         "noExplicitAny": "off",
         "noPrototypeBuiltins": "off",
         "noRedeclare": "off",
-        "noVar": "warn"
+        "noVar": "warn",
+        "noUnknownAtRules": "off"
       },
       "correctness": {
         "noUnusedImports": "on"
