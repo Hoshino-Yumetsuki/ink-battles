@@ -1711,18 +1711,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@biomejs/biome@npm:^2.2.0":
-  version: 2.2.0
-  resolution: "@biomejs/biome@npm:2.2.0"
+"@biomejs/biome@npm:^2.2.2":
+  version: 2.2.2
+  resolution: "@biomejs/biome@npm:2.2.2"
   dependencies:
-    "@biomejs/cli-darwin-arm64": "npm:2.2.0"
-    "@biomejs/cli-darwin-x64": "npm:2.2.0"
-    "@biomejs/cli-linux-arm64": "npm:2.2.0"
-    "@biomejs/cli-linux-arm64-musl": "npm:2.2.0"
-    "@biomejs/cli-linux-x64": "npm:2.2.0"
-    "@biomejs/cli-linux-x64-musl": "npm:2.2.0"
-    "@biomejs/cli-win32-arm64": "npm:2.2.0"
-    "@biomejs/cli-win32-x64": "npm:2.2.0"
+    "@biomejs/cli-darwin-arm64": "npm:2.2.2"
+    "@biomejs/cli-darwin-x64": "npm:2.2.2"
+    "@biomejs/cli-linux-arm64": "npm:2.2.2"
+    "@biomejs/cli-linux-arm64-musl": "npm:2.2.2"
+    "@biomejs/cli-linux-x64": "npm:2.2.2"
+    "@biomejs/cli-linux-x64-musl": "npm:2.2.2"
+    "@biomejs/cli-win32-arm64": "npm:2.2.2"
+    "@biomejs/cli-win32-x64": "npm:2.2.2"
   dependenciesMeta:
     "@biomejs/cli-darwin-arm64":
       optional: true
@@ -1742,62 +1742,62 @@ __metadata:
       optional: true
   bin:
     biome: bin/biome
-  checksum: 10c0/092ee79cad7f253427499aa193374e4c1fe5935be916d426f96fd1b8864b9c95f623d447c096894a4f864a15618c965f71863987c7afdcf77e5cdb79ec28fecd
+  checksum: 10c0/108690efd8c3a5fcee9faf89371319b2d066208e8adbb05855650032a1cc9afc98ec4206b73b0be2c49cdf64ef765cf5a24785456b814d5846ab65b293791daf
   languageName: node
   linkType: hard
 
-"@biomejs/cli-darwin-arm64@npm:2.2.0":
-  version: 2.2.0
-  resolution: "@biomejs/cli-darwin-arm64@npm:2.2.0"
+"@biomejs/cli-darwin-arm64@npm:2.2.2":
+  version: 2.2.2
+  resolution: "@biomejs/cli-darwin-arm64@npm:2.2.2"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@biomejs/cli-darwin-x64@npm:2.2.0":
-  version: 2.2.0
-  resolution: "@biomejs/cli-darwin-x64@npm:2.2.0"
+"@biomejs/cli-darwin-x64@npm:2.2.2":
+  version: 2.2.2
+  resolution: "@biomejs/cli-darwin-x64@npm:2.2.2"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@biomejs/cli-linux-arm64-musl@npm:2.2.0":
-  version: 2.2.0
-  resolution: "@biomejs/cli-linux-arm64-musl@npm:2.2.0"
+"@biomejs/cli-linux-arm64-musl@npm:2.2.2":
+  version: 2.2.2
+  resolution: "@biomejs/cli-linux-arm64-musl@npm:2.2.2"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@biomejs/cli-linux-arm64@npm:2.2.0":
-  version: 2.2.0
-  resolution: "@biomejs/cli-linux-arm64@npm:2.2.0"
+"@biomejs/cli-linux-arm64@npm:2.2.2":
+  version: 2.2.2
+  resolution: "@biomejs/cli-linux-arm64@npm:2.2.2"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@biomejs/cli-linux-x64-musl@npm:2.2.0":
-  version: 2.2.0
-  resolution: "@biomejs/cli-linux-x64-musl@npm:2.2.0"
+"@biomejs/cli-linux-x64-musl@npm:2.2.2":
+  version: 2.2.2
+  resolution: "@biomejs/cli-linux-x64-musl@npm:2.2.2"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@biomejs/cli-linux-x64@npm:2.2.0":
-  version: 2.2.0
-  resolution: "@biomejs/cli-linux-x64@npm:2.2.0"
+"@biomejs/cli-linux-x64@npm:2.2.2":
+  version: 2.2.2
+  resolution: "@biomejs/cli-linux-x64@npm:2.2.2"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@biomejs/cli-win32-arm64@npm:2.2.0":
-  version: 2.2.0
-  resolution: "@biomejs/cli-win32-arm64@npm:2.2.0"
+"@biomejs/cli-win32-arm64@npm:2.2.2":
+  version: 2.2.2
+  resolution: "@biomejs/cli-win32-arm64@npm:2.2.2"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@biomejs/cli-win32-x64@npm:2.2.0":
-  version: 2.2.0
-  resolution: "@biomejs/cli-win32-x64@npm:2.2.0"
+"@biomejs/cli-win32-x64@npm:2.2.2":
+  version: 2.2.2
+  resolution: "@biomejs/cli-win32-x64@npm:2.2.2"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
@@ -1839,50 +1839,50 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cloudflare/unenv-preset@npm:2.6.1":
-  version: 2.6.1
-  resolution: "@cloudflare/unenv-preset@npm:2.6.1"
+"@cloudflare/unenv-preset@npm:2.6.2":
+  version: 2.6.2
+  resolution: "@cloudflare/unenv-preset@npm:2.6.2"
   peerDependencies:
     unenv: 2.0.0-rc.19
     workerd: ^1.20250802.0
   peerDependenciesMeta:
     workerd:
       optional: true
-  checksum: 10c0/d1d87dc0470d4da13f12c571717df0bd8ff308c288a60b210c7a2af8dfc9abe53681e1c828ba3a6d53d6a244e67955fa6763633ec4a2726c6b53ef0b67a81c06
+  checksum: 10c0/d9230c241551f09abf25c61205ad300da7f834c16b431f69facae34e52ca66a46f7844b3d32bfff799c93337b3ab612eeb35841f1836f94bc747f17c0947cd44
   languageName: node
   linkType: hard
 
-"@cloudflare/workerd-darwin-64@npm:1.20250813.0":
-  version: 1.20250813.0
-  resolution: "@cloudflare/workerd-darwin-64@npm:1.20250813.0"
+"@cloudflare/workerd-darwin-64@npm:1.20250816.0":
+  version: 1.20250816.0
+  resolution: "@cloudflare/workerd-darwin-64@npm:1.20250816.0"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@cloudflare/workerd-darwin-arm64@npm:1.20250813.0":
-  version: 1.20250813.0
-  resolution: "@cloudflare/workerd-darwin-arm64@npm:1.20250813.0"
+"@cloudflare/workerd-darwin-arm64@npm:1.20250816.0":
+  version: 1.20250816.0
+  resolution: "@cloudflare/workerd-darwin-arm64@npm:1.20250816.0"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@cloudflare/workerd-linux-64@npm:1.20250813.0":
-  version: 1.20250813.0
-  resolution: "@cloudflare/workerd-linux-64@npm:1.20250813.0"
+"@cloudflare/workerd-linux-64@npm:1.20250816.0":
+  version: 1.20250816.0
+  resolution: "@cloudflare/workerd-linux-64@npm:1.20250816.0"
   conditions: os=linux & cpu=x64
   languageName: node
   linkType: hard
 
-"@cloudflare/workerd-linux-arm64@npm:1.20250813.0":
-  version: 1.20250813.0
-  resolution: "@cloudflare/workerd-linux-arm64@npm:1.20250813.0"
+"@cloudflare/workerd-linux-arm64@npm:1.20250816.0":
+  version: 1.20250816.0
+  resolution: "@cloudflare/workerd-linux-arm64@npm:1.20250816.0"
   conditions: os=linux & cpu=arm64
   languageName: node
   linkType: hard
 
-"@cloudflare/workerd-windows-64@npm:1.20250813.0":
-  version: 1.20250813.0
-  resolution: "@cloudflare/workerd-windows-64@npm:1.20250813.0"
+"@cloudflare/workerd-windows-64@npm:1.20250816.0":
+  version: 1.20250816.0
+  resolution: "@cloudflare/workerd-windows-64@npm:1.20250816.0"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
@@ -2782,65 +2782,65 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@next/env@npm:15.4.6":
-  version: 15.4.6
-  resolution: "@next/env@npm:15.4.6"
-  checksum: 10c0/039a757f5e083f44bd71268d804e86064233b023c72930ab45a3a46ba651c5bd474096550ca140b9ec00338c4013afbba7972c09eba23082005d7e9086a4eb67
+"@next/env@npm:15.5.0":
+  version: 15.5.0
+  resolution: "@next/env@npm:15.5.0"
+  checksum: 10c0/13ed931688c26b764499840022c9855763fb583e728cf30933b2ff71d3ca681eb71611ec4d7580ecb45197c18a1a4498ba5a61cb60edc6e18966103620d11bad
   languageName: node
   linkType: hard
 
-"@next/swc-darwin-arm64@npm:15.4.6":
-  version: 15.4.6
-  resolution: "@next/swc-darwin-arm64@npm:15.4.6"
+"@next/swc-darwin-arm64@npm:15.5.0":
+  version: 15.5.0
+  resolution: "@next/swc-darwin-arm64@npm:15.5.0"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@next/swc-darwin-x64@npm:15.4.6":
-  version: 15.4.6
-  resolution: "@next/swc-darwin-x64@npm:15.4.6"
+"@next/swc-darwin-x64@npm:15.5.0":
+  version: 15.5.0
+  resolution: "@next/swc-darwin-x64@npm:15.5.0"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@next/swc-linux-arm64-gnu@npm:15.4.6":
-  version: 15.4.6
-  resolution: "@next/swc-linux-arm64-gnu@npm:15.4.6"
+"@next/swc-linux-arm64-gnu@npm:15.5.0":
+  version: 15.5.0
+  resolution: "@next/swc-linux-arm64-gnu@npm:15.5.0"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@next/swc-linux-arm64-musl@npm:15.4.6":
-  version: 15.4.6
-  resolution: "@next/swc-linux-arm64-musl@npm:15.4.6"
+"@next/swc-linux-arm64-musl@npm:15.5.0":
+  version: 15.5.0
+  resolution: "@next/swc-linux-arm64-musl@npm:15.5.0"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@next/swc-linux-x64-gnu@npm:15.4.6":
-  version: 15.4.6
-  resolution: "@next/swc-linux-x64-gnu@npm:15.4.6"
+"@next/swc-linux-x64-gnu@npm:15.5.0":
+  version: 15.5.0
+  resolution: "@next/swc-linux-x64-gnu@npm:15.5.0"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@next/swc-linux-x64-musl@npm:15.4.6":
-  version: 15.4.6
-  resolution: "@next/swc-linux-x64-musl@npm:15.4.6"
+"@next/swc-linux-x64-musl@npm:15.5.0":
+  version: 15.5.0
+  resolution: "@next/swc-linux-x64-musl@npm:15.5.0"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@next/swc-win32-arm64-msvc@npm:15.4.6":
-  version: 15.4.6
-  resolution: "@next/swc-win32-arm64-msvc@npm:15.4.6"
+"@next/swc-win32-arm64-msvc@npm:15.5.0":
+  version: 15.5.0
+  resolution: "@next/swc-win32-arm64-msvc@npm:15.5.0"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@next/swc-win32-x64-msvc@npm:15.4.6":
-  version: 15.4.6
-  resolution: "@next/swc-win32-x64-msvc@npm:15.4.6"
+"@next/swc-win32-x64-msvc@npm:15.5.0":
+  version: 15.5.0
+  resolution: "@next/swc-win32-x64-msvc@npm:15.5.0"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
@@ -5069,12 +5069,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:^19.1.10":
-  version: 19.1.10
-  resolution: "@types/react@npm:19.1.10"
+"@types/react@npm:^19.1.11":
+  version: 19.1.11
+  resolution: "@types/react@npm:19.1.11"
   dependencies:
     csstype: "npm:^3.0.2"
-  checksum: 10c0/fb583deacd0a815e2775dc1b9f764532d8cacb748ddd2c2914805a46c257ce6c237b4078f44009692074db212ab61a390301c6470f07f5aa5bfdeb78a2acfda1
+  checksum: 10c0/639b225c2bbcd4b8a30e1ea7a73aec81ae5b952a4c432460b48c9881c9d12e76645c9032d24f15eefae9985a12d5cb26557fe10e9850b2da0fabfb0a1e2d16bd
   languageName: node
   linkType: hard
 
@@ -6823,7 +6823,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "ink-battles@workspace:."
   dependencies:
-    "@biomejs/biome": "npm:^2.2.0"
+    "@biomejs/biome": "npm:^2.2.2"
     "@opennextjs/cloudflare": "npm:^1.6.5"
     "@radix-ui/react-accordion": "npm:^1.2.12"
     "@radix-ui/react-dialog": "npm:^1.1.15"
@@ -6838,16 +6838,16 @@ __metadata:
     "@radix-ui/react-tooltip": "npm:^1.2.8"
     "@tailwindcss/postcss": "npm:^4.1.12"
     "@types/node": "npm:^24.3.0"
-    "@types/react": "npm:^19.1.10"
+    "@types/react": "npm:^19.1.11"
     "@types/react-dom": "npm:^19.1.7"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
     framer-motion: "npm:^12.23.12"
     geist: "npm:^1.4.2"
-    lucide-react: "npm:^0.539.0"
-    next: "npm:^15.4.6"
+    lucide-react: "npm:^0.541.0"
+    next: "npm:^15.5.0"
     next-themes: "npm:^0.4.6"
-    openai: "npm:^5.12.2"
+    openai: "npm:^5.15.0"
     react: "npm:^19.1.1"
     react-dom: "npm:^19.1.1"
     shadcn: "npm:^2.10.0"
@@ -6857,7 +6857,7 @@ __metadata:
     tailwindcss-animate: "npm:^1.0.7"
     tw-animate-css: "npm:^1.3.7"
     typescript: "npm:^5.9.2"
-    wrangler: "npm:^4.30.0"
+    wrangler: "npm:^4.32.0"
   languageName: unknown
   linkType: soft
 
@@ -7257,12 +7257,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lucide-react@npm:^0.539.0":
-  version: 0.539.0
-  resolution: "lucide-react@npm:0.539.0"
+"lucide-react@npm:^0.541.0":
+  version: 0.541.0
+  resolution: "lucide-react@npm:0.541.0"
   peerDependencies:
     react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10c0/ae85244dc23a78c51cc5f829ee09321cf68201333ab3d5614ed73cda77a4cd12284d3630a5a2167a39e31e02811056336de76a597c6874b28bb9984baf876494
+  checksum: 10c0/ffa23a9c9ead0832c7e0bb1eb7ed44e9f38bbf083d94b4d36a66eb23fa2099d4a52e1677c91eb7e8ea922621fa98e730f5d513bc56b3111b14b835bd8ab823ab
   languageName: node
   linkType: hard
 
@@ -7401,9 +7401,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"miniflare@npm:4.20250813.1":
-  version: 4.20250813.1
-  resolution: "miniflare@npm:4.20250813.1"
+"miniflare@npm:4.20250816.1":
+  version: 4.20250816.1
+  resolution: "miniflare@npm:4.20250816.1"
   dependencies:
     "@cspotcode/source-map-support": "npm:0.8.1"
     acorn: "npm:8.14.0"
@@ -7413,13 +7413,13 @@ __metadata:
     sharp: "npm:^0.33.5"
     stoppable: "npm:1.1.0"
     undici: "npm:^7.10.0"
-    workerd: "npm:1.20250813.0"
+    workerd: "npm:1.20250816.0"
     ws: "npm:8.18.0"
     youch: "npm:4.1.0-beta.10"
     zod: "npm:3.22.3"
   bin:
     miniflare: bootstrap.js
-  checksum: 10c0/88bb12508968bfd1fe4a392f2073bc778ac0be9e706e52b2b6ed62e5db9ef9a9534c29b5236f0f19b64cc867f0935498156aec10b28087d025699093aecb15b4
+  checksum: 10c0/342a02c6fb8cded476b197fd1dd51579ad5ff7d77108df09f38ebd80903d9e2d7faf8e81c991c25165bdae94464ed40af21b91da86cebdb76d13136aa1e3ee63
   languageName: node
   linkType: hard
 
@@ -7681,19 +7681,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"next@npm:^15.4.6":
-  version: 15.4.6
-  resolution: "next@npm:15.4.6"
+"next@npm:^15.5.0":
+  version: 15.5.0
+  resolution: "next@npm:15.5.0"
   dependencies:
-    "@next/env": "npm:15.4.6"
-    "@next/swc-darwin-arm64": "npm:15.4.6"
-    "@next/swc-darwin-x64": "npm:15.4.6"
-    "@next/swc-linux-arm64-gnu": "npm:15.4.6"
-    "@next/swc-linux-arm64-musl": "npm:15.4.6"
-    "@next/swc-linux-x64-gnu": "npm:15.4.6"
-    "@next/swc-linux-x64-musl": "npm:15.4.6"
-    "@next/swc-win32-arm64-msvc": "npm:15.4.6"
-    "@next/swc-win32-x64-msvc": "npm:15.4.6"
+    "@next/env": "npm:15.5.0"
+    "@next/swc-darwin-arm64": "npm:15.5.0"
+    "@next/swc-darwin-x64": "npm:15.5.0"
+    "@next/swc-linux-arm64-gnu": "npm:15.5.0"
+    "@next/swc-linux-arm64-musl": "npm:15.5.0"
+    "@next/swc-linux-x64-gnu": "npm:15.5.0"
+    "@next/swc-linux-x64-musl": "npm:15.5.0"
+    "@next/swc-win32-arm64-msvc": "npm:15.5.0"
+    "@next/swc-win32-x64-msvc": "npm:15.5.0"
     "@swc/helpers": "npm:0.5.15"
     caniuse-lite: "npm:^1.0.30001579"
     postcss: "npm:8.4.31"
@@ -7736,7 +7736,7 @@ __metadata:
       optional: true
   bin:
     next: dist/bin/next
-  checksum: 10c0/d0cf35100cb0903e6828f9279d5d0ac637e181427845dd2afa224b42db09f3de805522c2b9bbc3b0f630d60e4c26c79b4c1a99d434500968591b864bf341b1d5
+  checksum: 10c0/8691787562666713e9ee8bc3edad646328d9cea85d5c4c10bd05a978afa25bc9927bbfd50acc69ceb268296741b5f71e78fa0213fe65b731a55e73b0f5807c24
   languageName: node
   linkType: hard
 
@@ -7899,9 +7899,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"openai@npm:^5.12.2":
-  version: 5.12.2
-  resolution: "openai@npm:5.12.2"
+"openai@npm:^5.15.0":
+  version: 5.15.0
+  resolution: "openai@npm:5.15.0"
   peerDependencies:
     ws: ^8.18.0
     zod: ^3.23.8
@@ -7912,7 +7912,7 @@ __metadata:
       optional: true
   bin:
     openai: bin/cli
-  checksum: 10c0/7737b9b24edc81fcf9e6dcfb18a196cc0f8e29b6e839adf06a2538558c03908e3aa4cd94901b1a7f4a9dd62676fe9e34d6202281b2395090d998618ea1614c0c
+  checksum: 10c0/c78bdea36983f1327fb52107ab8c0a7ef5058f0bc7f83324ce94d2fdb1e43fa4e6bd30c3d68f985ff3b287a6f2d3734959d45005014d388b90d5801016dccd7b
   languageName: node
   linkType: hard
 
@@ -9427,15 +9427,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"workerd@npm:1.20250813.0":
-  version: 1.20250813.0
-  resolution: "workerd@npm:1.20250813.0"
+"workerd@npm:1.20250816.0":
+  version: 1.20250816.0
+  resolution: "workerd@npm:1.20250816.0"
   dependencies:
-    "@cloudflare/workerd-darwin-64": "npm:1.20250813.0"
-    "@cloudflare/workerd-darwin-arm64": "npm:1.20250813.0"
-    "@cloudflare/workerd-linux-64": "npm:1.20250813.0"
-    "@cloudflare/workerd-linux-arm64": "npm:1.20250813.0"
-    "@cloudflare/workerd-windows-64": "npm:1.20250813.0"
+    "@cloudflare/workerd-darwin-64": "npm:1.20250816.0"
+    "@cloudflare/workerd-darwin-arm64": "npm:1.20250816.0"
+    "@cloudflare/workerd-linux-64": "npm:1.20250816.0"
+    "@cloudflare/workerd-linux-arm64": "npm:1.20250816.0"
+    "@cloudflare/workerd-windows-64": "npm:1.20250816.0"
   dependenciesMeta:
     "@cloudflare/workerd-darwin-64":
       optional: true
@@ -9449,25 +9449,25 @@ __metadata:
       optional: true
   bin:
     workerd: bin/workerd
-  checksum: 10c0/153368e3672eba9f2423cf8666fd5781d7b71d3439eb2a94a355a8f1e1fbb0bbab609314bfacfe983d0dfec7532c88a2e09d5ab4113e5a516360c85343801536
+  checksum: 10c0/ddb41844507a41bb7a8a315681947bc301d10c0bfe27b7bac6457148abf1af27df0a7a9ac840a5e049232c2760710dab4e62b4d36d3d07cbddafb05360b1014c
   languageName: node
   linkType: hard
 
-"wrangler@npm:^4.30.0":
-  version: 4.30.0
-  resolution: "wrangler@npm:4.30.0"
+"wrangler@npm:^4.32.0":
+  version: 4.32.0
+  resolution: "wrangler@npm:4.32.0"
   dependencies:
     "@cloudflare/kv-asset-handler": "npm:0.4.0"
-    "@cloudflare/unenv-preset": "npm:2.6.1"
+    "@cloudflare/unenv-preset": "npm:2.6.2"
     blake3-wasm: "npm:2.1.5"
     esbuild: "npm:0.25.4"
     fsevents: "npm:~2.3.2"
-    miniflare: "npm:4.20250813.1"
+    miniflare: "npm:4.20250816.1"
     path-to-regexp: "npm:6.3.0"
     unenv: "npm:2.0.0-rc.19"
-    workerd: "npm:1.20250813.0"
+    workerd: "npm:1.20250816.0"
   peerDependencies:
-    "@cloudflare/workers-types": ^4.20250813.0
+    "@cloudflare/workers-types": ^4.20250816.0
   dependenciesMeta:
     fsevents:
       optional: true
@@ -9477,7 +9477,7 @@ __metadata:
   bin:
     wrangler: bin/wrangler.js
     wrangler2: bin/wrangler.js
-  checksum: 10c0/c2b1a2f307fb64596ae6426e86aeb5ace55091d263ca9187aef8530193f2fc00a2f35fdd1f45dcf1131bb9488df3325dacbf23455ca2d81dc863e0e050b07721
+  checksum: 10c0/8ef1410a513a0a82169e8d71e4a6195761dad1c0c620012d70530923aca2c6e106305e9675d8800899139c6f81a46c7d97046961bdca3c52b30decf5c0961b82
   languageName: node
   linkType: hard
 
