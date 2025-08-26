@@ -5,48 +5,6 @@ import { calculateOverallScore } from '@/utils/score-calculator'
 import { getLlmApiConfig, isValidLlmApiConfig } from '@/config/api'
 import { logger } from '@/utils/logger'
 
-async function withRetry<T>(
-  fn: () => Promise<T>,
-  maxRetries: number = 3,
-  shouldRetry?: (error: any, result?: T) => boolean
-): Promise<T> {
-  let lastError: Error | null = null
-
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      const result = await fn()
-      if (shouldRetry?.(null, result)) {
-        if (attempt === maxRetries) {
-          logger.error(
-            `Failed after ${maxRetries} attempts - custom retry condition not met`
-          )
-          return result
-        }
-        logger.warn(
-          `Attempt ${attempt + 1}/${maxRetries + 1} - custom retry condition triggered`
-        )
-        await new Promise((resolve) => setTimeout(resolve, 0))
-        continue
-      }
-      return result
-    } catch (error: any) {
-      lastError = error
-      const shouldRetryError = !shouldRetry || shouldRetry(error)
-      if (attempt === maxRetries || !shouldRetryError) {
-        logger.error(`Failed after ${maxRetries} attempts`, error)
-        throw error
-      }
-
-      logger.warn(`Attempt ${attempt + 1}/${maxRetries + 1} failed`, {
-        error: error.message || error
-      })
-      await new Promise((resolve) => setTimeout(resolve, 0))
-    }
-  }
-
-  throw lastError || new Error('Unknown error occurred during retry')
-}
-
 export async function POST(request: Request) {
   try {
     const { content, imageUrl, analysisType, options } = await request.json()
@@ -172,62 +130,10 @@ export async function POST(request: Request) {
         ]
       }
 
-      response = await withRetry(
-        () =>
-          openai.chat.completions.create({
-            ...requestConfig,
-            messages
-          }),
-        3,
-        (error: any, result?: OpenAI.Chat.Completions.ChatCompletion) => {
-          if (error) {
-            if (error.status) {
-              const status = error.status
-              if (status === 429 || status >= 500 || status !== 200) {
-                logger.warn(`HTTP status ${status}, will retry`, {
-                  error: error.message,
-                  status: status
-                })
-                return true
-              }
-
-              if (status >= 400 && status < 500 && status !== 429) {
-                logger.error(`Client error ${status}, will not retry`, {
-                  error: error.message
-                })
-                return false
-              }
-            }
-
-            if (
-              error.code === 'ECONNRESET' ||
-              error.code === 'ETIMEDOUT' ||
-              error.code === 'ENOTFOUND' ||
-              error.code === 'ECONNREFUSED' ||
-              error.message?.includes('fetch failed') ||
-              error.message?.includes('network') ||
-              error.message?.includes('timeout') ||
-              error.message?.includes('connection') ||
-              error.message?.includes('ENOTFOUND') ||
-              error.message?.includes('ECONNRESET')
-            ) {
-              logger.warn(`Network error, will retry`, {
-                error: error.message,
-                code: error.code
-              })
-              return true
-            }
-
-            logger.error(`Non-retryable error`, { error: error.message })
-            return false
-          }
-          if (result) {
-            return false
-          }
-
-          return false
-        }
-      )
+      response = await openai.chat.completions.create({
+        ...requestConfig,
+        messages
+      })
     } catch (error: any) {
       logger.error(`Error processing ${analysisType} analysis`, error)
       throw new Error(

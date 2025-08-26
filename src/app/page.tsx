@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react'
 import { Toaster, toast } from 'sonner'
 import { AnimatePresence, motion } from 'framer-motion'
 
-import PageHeader from '@/components/article-analysis/page-header'
-import ContentInputCard from '@/components/article-analysis/content-input-card'
-import LoadingProgress from '@/components/article-analysis/loading-progress'
-import AnalysisOptions from '@/components/article-analysis/analysis-options'
-import WriterScoreResult from '@/components/article-analysis/score-result'
-import AnimatedBackground from '@/components/article-analysis/animated-background'
+import PageHeader from '@/components/page-header'
+import ContentInputCard from '@/components/content-input-card'
+import LoadingProgress from '@/components/loading-progress'
+import AnalysisOptions from '@/components/analysis-options'
+import WriterScoreResult from '@/components/score-result'
+import AnimatedBackground from '@/components/animated-background'
 
 export interface WriterAnalysisResult {
   overallScore: number
@@ -80,7 +80,7 @@ export default function WriterAnalysisPage() {
       }, 500)
 
       try {
-        const response = await fetch('/api/article-analysis', {
+        const response = await fetch('/api/analysis', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
