@@ -4,8 +4,6 @@ import { buildPrompt } from '@/config/prompts'
 import { calculateOverallScore } from '@/utils/score-calculator'
 import { getLlmApiConfig, isValidLlmApiConfig } from '@/config/api'
 import { logger } from '@/utils/logger'
-import chardet from 'chardet'
-import iconv from 'iconv-lite'
 
 export async function POST(request: Request) {
   try {
@@ -125,29 +123,12 @@ export async function POST(request: Request) {
           const extractTextFromDataUrl = async (
             dataUrl: string
           ): Promise<string> => {
-            const match = dataUrl.match(/^data:([^;,]+)?(;base64)?,([\s\S]*)$/)
-            if (!match) return ''
-            const mime = match[1] || 'application/octet-stream'
-            const isB64 = !!match[2]
-            const dataPart = match[3]
-
-            let buf: Buffer
-            try {
-              buf = isB64
-                ? Buffer.from(dataPart, 'base64')
-                : Buffer.from(decodeURIComponent(dataPart), 'utf8')
-            } catch {
-              buf = Buffer.alloc(0)
-            }
-
+            const resp = await fetch(dataUrl)
             try {
               const anyMark: any = await import('markitdown-ts')
               const MarkCtor = anyMark.Markitdown || anyMark.default
               if (MarkCtor) {
                 const md = new MarkCtor()
-                const resp = new Response(buf, {
-                  headers: { 'Content-Type': mime }
-                })
                 const ext = (
                   fileMeta?.name?.split('.').pop() || ''
                 ).toLowerCase()
@@ -164,15 +145,7 @@ export async function POST(request: Request) {
                 }
               }
             } catch {}
-
-            try {
-              const detected = chardet.detect(buf) as string | null
-              const enc = (detected || 'utf-8').toLowerCase()
-              const decoded = iconv.decode(buf, enc)
-              return decoded.replace(/^\uFEFF/, '')
-            } catch {
-              return buf.toString('utf8')
-            }
+            throw new Error('无法从文件中提取文本')
           }
 
           const textContent = await extractTextFromDataUrl(fileDataUrl)
