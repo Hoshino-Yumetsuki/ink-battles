@@ -4,6 +4,8 @@ import { buildPrompt } from '@/config/prompts'
 import { calculateOverallScore } from '@/utils/score-calculator'
 import { getLlmApiConfig, isValidLlmApiConfig } from '@/config/api'
 import { logger } from '@/utils/logger'
+import chardet from 'chardet'
+import iconv from 'iconv-lite'
 
 export async function POST(request: Request) {
   try {
@@ -163,7 +165,14 @@ export async function POST(request: Request) {
               }
             } catch {}
 
-            return buf.toString('utf8')
+            try {
+              const detected = chardet.detect(buf) as string | null
+              const enc = (detected || 'utf-8').toLowerCase()
+              const decoded = iconv.decode(buf, enc)
+              return decoded.replace(/^\uFEFF/, '')
+            } catch {
+              return buf.toString('utf8')
+            }
           }
 
           const textContent = await extractTextFromDataUrl(fileDataUrl)
