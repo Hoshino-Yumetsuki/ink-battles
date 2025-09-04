@@ -44,6 +44,14 @@ export default function FileUploader({
       return
     }
 
+    const isImage = file.type.startsWith('image/')
+    const isText =
+      file.type === 'text/plain' || file.name.toLowerCase().endsWith('.txt')
+    if (!isImage && !isText) {
+      toast.error('仅支持图片或 .txt 文本文件')
+      return
+    }
+
     const reader = new FileReader()
     reader.onload = (e) => {
       if (e.target && typeof e.target.result === 'string') {
@@ -97,7 +105,7 @@ export default function FileUploader({
           type="file"
           ref={fileInputRef}
           className="hidden"
-          accept="*/*"
+          accept="image/*,.txt,text/plain"
           onChange={handleFileChange}
         />
         {!previewUrl ? (
@@ -131,7 +139,7 @@ export default function FileUploader({
                 点击浏览
               </Button>
               <p className="text-center text-xs">
-                支持常见 txt 文件与图片格式，大小不超过 15MB
+                支持 .txt 文本文件与图片格式，大小不超过 15MB
               </p>
             </div>
             {selectedFile && (
