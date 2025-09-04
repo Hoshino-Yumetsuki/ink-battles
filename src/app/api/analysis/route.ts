@@ -7,14 +7,18 @@ import { logger } from '@/utils/logger'
 
 export async function POST(request: Request) {
   try {
-    const { content, imageUrl, analysisType, options } = await request.json()
+    const { content, fileDataUrl, analysisType, options, fileMeta } =
+      await request.json()
 
     if (analysisType === 'text' && (!content || content.trim().length === 0)) {
       return NextResponse.json({ error: '文本内容不能为空' }, { status: 400 })
     }
 
-    if (analysisType === 'image' && !imageUrl) {
-      return NextResponse.json({ error: '图片数据不能为空' }, { status: 400 })
+    if (analysisType === 'file' && !fileDataUrl) {
+      return NextResponse.json(
+        { error: '文件/图片数据不能为空' },
+        { status: 400 }
+      )
     }
 
     const apiConfig = getLlmApiConfig()
@@ -95,38 +99,87 @@ export async function POST(request: Request) {
         ]
       } else {
         if (
-          !imageUrl ||
-          typeof imageUrl !== 'string' ||
-          !imageUrl.startsWith('data:image/')
+          !fileDataUrl ||
+          typeof fileDataUrl !== 'string' ||
+          !fileDataUrl.startsWith('data:')
         ) {
-          throw new Error('无效的图片数据格式')
+          throw new Error('Invalid file data URL')
         }
 
-        messages = [
-          {
-            role: 'system',
-            content: systemPrompt
-          },
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: '请分析这张图片中的内容'
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: imageUrl
+        const isImage = fileDataUrl.startsWith('data:image/')
+
+        if (isImage) {
+          messages = [
+            { role: 'system', content: systemPrompt },
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: '请分析此图片中的内容' },
+                { type: 'image_url', image_url: { url: fileDataUrl } }
+              ]
+            }
+          ]
+        } else {
+          const extractTextFromDataUrl = async (
+            dataUrl: string
+          ): Promise<string> => {
+            const match = dataUrl.match(/^data:([^;,]+)?(;base64)?,([\s\S]*)$/)
+            if (!match) return ''
+            const mime = match[1] || 'application/octet-stream'
+            const isB64 = !!match[2]
+            const dataPart = match[3]
+
+            let buf: Buffer
+            try {
+              buf = isB64
+                ? Buffer.from(dataPart, 'base64')
+                : Buffer.from(decodeURIComponent(dataPart), 'utf8')
+            } catch {
+              buf = Buffer.alloc(0)
+            }
+
+            try {
+              const anyMark: any = await import('markitdown-ts')
+              const MarkCtor = anyMark.Markitdown || anyMark.default
+              if (MarkCtor) {
+                const md = new MarkCtor()
+                const resp = new Response(buf, {
+                  headers: { 'Content-Type': mime }
+                })
+                const ext = (
+                  fileMeta?.name?.split('.').pop() || ''
+                ).toLowerCase()
+                const conv = await md.convert(resp, {
+                  file_extension: ext ? `.${ext}` : undefined,
+                  llmModel: (getLlmApiConfig().model || 'gpt-4o') as string
+                })
+                if (
+                  conv &&
+                  typeof conv === 'object' &&
+                  typeof conv.text_content === 'string'
+                ) {
+                  return conv.text_content
                 }
               }
-            ]
+            } catch {}
+
+            return buf.toString('utf8')
           }
-        ]
+
+          const textContent = await extractTextFromDataUrl(fileDataUrl)
+          if (!textContent || !textContent.trim()) {
+            throw new Error('无法从文件中提取文本')
+          }
+
+          messages = [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: textContent }
+          ]
+        }
       }
 
       const { text } = await generateText({
-        apiKey: apiConfig.apiKey!,
+        apiKey: apiConfig.apiKey,
         baseURL: apiConfig.baseUrl || 'https://api.openai.com/v1/',
         ...requestConfig,
         messages
@@ -136,7 +189,7 @@ export async function POST(request: Request) {
     } catch (error: any) {
       logger.error(`Error processing ${analysisType} analysis`, error)
       throw new Error(
-        `${analysisType === 'image' ? '图片' : '文本'}处理失败: ${error.message || error}`
+        `${analysisType === 'file' ? '文件' : '文本'}处理失败: ${error.message || error}`
       )
     }
 

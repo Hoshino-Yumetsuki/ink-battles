@@ -7,45 +7,61 @@ import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 
-interface ImageUploaderProps {
-  setImageUrlAction: (url: string | null) => void
+interface FileUploaderProps {
+  setFileDataUrlAction: (url: string | null) => void
   isLoading: boolean
   onAnalyzeAction: () => void
+  setFileMetaAction?: (
+    meta: { name: string; type: string; size: number } | null
+  ) => void
 }
 
-export default function ImageUploader({
-  setImageUrlAction,
+export default function FileUploader({
+  setFileDataUrlAction,
   isLoading,
-  onAnalyzeAction
-}: ImageUploaderProps) {
-  const [hasImage, setHasImage] = useState(false)
+  onAnalyzeAction,
+  setFileMetaAction
+}: FileUploaderProps) {
+  const [hasFile, setHasFile] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [selectedFile, setSelectedFile] = useState<{
+    name: string
+    type: string
+    size: number
+  } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+  const toReadableSize = (size: number) => {
+    if (size < 1024) return `${size}B`
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)}KB`
+    return `${(size / (1024 * 1024)).toFixed(1)}MB`
+  }
 
-    const maxSize = 15 * 1024 * 1024 // 10MB
+  const processFile = (file: File) => {
+    const maxSize = 15 * 1024 * 1024 // 15MB
     if (file.size > maxSize) {
-      toast.error('文件过大，请上传小于 15MB 的图片')
-      return
-    }
-
-    if (!file.type.startsWith('image/')) {
-      toast.error('请上传有效的图片文件')
+      toast.error('文件过大，请上传小于 15MB 的文件')
       return
     }
 
     const reader = new FileReader()
     reader.onload = (e) => {
       if (e.target && typeof e.target.result === 'string') {
-        setPreviewUrl(e.target.result)
-        setImageUrlAction(e.target.result)
-        setHasImage(true)
+        setFileDataUrlAction(e.target.result)
+        setPreviewUrl(file.type.startsWith('image/') ? e.target.result : null)
+        const meta = { name: file.name, type: file.type, size: file.size }
+        setSelectedFile(meta)
+        setFileMetaAction?.(meta)
+        setHasFile(true)
       }
     }
     reader.readAsDataURL(file)
+  }
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    processFile(file)
   }
 
   const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -54,35 +70,17 @@ export default function ImageUploader({
 
     const file = e.dataTransfer.files?.[0]
     if (!file) return
-
-    const maxSize = 15 * 1024 * 1024 // 10MB
-    if (file.size > maxSize) {
-      toast.error('文件过大，请上传小于 15MB 的图片')
-      return
-    }
-
-    if (!file.type.startsWith('image/')) {
-      toast.error('请上传有效的图片文件')
-      return
-    }
-
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      if (e.target && typeof e.target.result === 'string') {
-        setPreviewUrl(e.target.result)
-        setImageUrlAction(e.target.result)
-        setHasImage(true)
-      }
-    }
-    reader.readAsDataURL(file)
+    processFile(file)
   }
 
-  const handleRemoveImage = (e: React.MouseEvent) => {
+  const handleRemoveFile = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     setPreviewUrl(null)
-    setHasImage(false)
-    setImageUrlAction(null)
+    setHasFile(false)
+    setSelectedFile(null)
+    setFileMetaAction?.(null)
+    setFileDataUrlAction(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -99,7 +97,7 @@ export default function ImageUploader({
           type="file"
           ref={fileInputRef}
           className="hidden"
-          accept="image/*"
+          accept="*/*"
           onChange={handleFileChange}
         />
         {!previewUrl ? (
@@ -115,7 +113,7 @@ export default function ImageUploader({
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                aria-label="上传图片图标"
+                aria-label="上传文件图标"
                 role="img"
               >
                 <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
@@ -124,7 +122,7 @@ export default function ImageUploader({
               </svg>
             </div>
             <div className="mt-4 flex flex-col items-center justify-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <p className="text-center">拖拽图片至此，或者</p>
+              <p className="text-center">拖拽文件或图片至此，或者</p>
               <Button
                 variant="ghost"
                 onClick={() => fileInputRef.current?.click()}
@@ -133,9 +131,15 @@ export default function ImageUploader({
                 点击浏览
               </Button>
               <p className="text-center text-xs">
-                支持JPG、PNG等图片格式，大小不超过 10MB
+                支持常见文件与图片格式，大小不超过 15MB
               </p>
             </div>
+            {selectedFile && (
+              <div className="mt-2 text-xs text-muted-foreground">
+                已选择：{selectedFile.name}（{toReadableSize(selectedFile.size)}
+                ）
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center gap-3 w-full">
@@ -155,11 +159,17 @@ export default function ImageUploader({
                 variant="outline"
                 size="sm"
                 className="absolute top-2 right-2 bg-white/80 dark:bg-black/70 rounded-full p-1 w-8 h-8 flex items-center justify-center"
-                onClick={(e) => handleRemoveImage(e)}
+                onClick={(e) => handleRemoveFile(e)}
               >
                 ×
               </Button>
             </div>
+            {!previewUrl && selectedFile && (
+              <div className="text-xs text-muted-foreground">
+                已选择文件：{selectedFile.name}（
+                {toReadableSize(selectedFile.size)}）
+              </div>
+            )}
           </div>
         )}
       </label>
@@ -168,7 +178,7 @@ export default function ImageUploader({
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
             onClick={onAnalyzeAction}
-            disabled={isLoading || !hasImage}
+            disabled={isLoading || !hasFile}
             className="relative overflow-hidden"
           >
             {isLoading ? (
@@ -205,9 +215,6 @@ export default function ImageUploader({
           </Button>
         </motion.div>
       </div>
-      <p className="text-xs text-muted-foreground mt-2 text-center">
-        请上传一张要分析的图片，支持JPG、PNG等常见图片格式，大小不超过 15MB
-      </p>
     </div>
   )
 }

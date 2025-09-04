@@ -17,23 +17,26 @@ import {
   TabsTrigger,
   AnimatedTabsContent
 } from '@/components/ui/tabs'
-import ImageUploader from './file-uploader'
+import FileUploader from './file-uploader'
 
 interface ContentInputCardProps {
   content: string
   setContentAction: (content: string) => void
-  _imageUrl: string | null
-  setImageUrlAction: (url: string | null) => void
+  setFileDataUrlAction: (url: string | null) => void
+  setFileMetaAction?: (
+    meta: { name: string; type: string; size: number } | null
+  ) => void
   isLoading: boolean
   onAnalyzeAction: () => void
-  analysisType: 'text' | 'image'
-  setAnalysisTypeAction: (type: 'text' | 'image') => void
+  analysisType: 'text' | 'file'
+  setAnalysisTypeAction: (type: 'text' | 'file') => void
 }
 
 export default function ContentInputCard({
   content,
   setContentAction,
-  setImageUrlAction,
+  setFileDataUrlAction,
+  setFileMetaAction,
   isLoading,
   onAnalyzeAction,
   analysisType,
@@ -43,20 +46,22 @@ export default function ContentInputCard({
     <Card className="h-auto">
       <CardHeader>
         <CardTitle>作品输入</CardTitle>
-        <CardDescription>请输入要分析的内容，支持文本或图片</CardDescription>
+        <CardDescription>
+          请输入要分析的内容，支持文本或文件/图片
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs
           defaultValue="text"
           value={analysisType}
           onValueChange={(value) =>
-            setAnalysisTypeAction(value as 'text' | 'image')
+            setAnalysisTypeAction(value as 'text' | 'file')
           }
           className="w-full"
         >
           <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="text">文本输入</TabsTrigger>
-            <TabsTrigger value="image">图片上传</TabsTrigger>
+            <TabsTrigger value="file">文件/图片上传</TabsTrigger>
           </TabsList>
 
           <AnimatedTabsContent
@@ -88,7 +93,7 @@ export default function ContentInputCard({
           </AnimatedTabsContent>
 
           <AnimatedTabsContent
-            value="image"
+            value="file"
             activeValue={analysisType}
             className="mt-4"
           >
@@ -97,8 +102,9 @@ export default function ContentInputCard({
               animate={{ opacity: 1 }}
               transition={{ duration: 0.2, delay: 0.1 }}
             >
-              <ImageUploader
-                setImageUrlAction={setImageUrlAction}
+              <FileUploader
+                setFileDataUrlAction={setFileDataUrlAction}
+                setFileMetaAction={setFileMetaAction}
                 isLoading={isLoading}
                 onAnalyzeAction={onAnalyzeAction}
               />
