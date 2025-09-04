@@ -4,6 +4,8 @@ import { buildPrompt } from '@/config/prompts'
 import { calculateOverallScore } from '@/utils/score-calculator'
 import { getLlmApiConfig, isValidLlmApiConfig } from '@/config/api'
 import { logger } from '@/utils/logger'
+import chardet from 'chardet'
+import iconv from 'iconv-lite'
 
 export async function POST(request: Request) {
   try {
@@ -123,29 +125,39 @@ export async function POST(request: Request) {
           const extractTextFromDataUrl = async (
             dataUrl: string
           ): Promise<string> => {
-            const resp = await fetch(dataUrl)
+            const match = dataUrl.match(/^data:([^;,]+)?(;base64)?,([\s\S]*)$/)
+            if (!match) {
+              throw new Error('无效的文件数据')
+            }
+            const mime = (match[1] || 'application/octet-stream').toLowerCase()
+            const isB64 = !!match[2]
+            const dataPart = match[3]
+
+            const extLower = (
+              fileMeta?.name?.split('.').pop() || ''
+            ).toLowerCase()
+            const isTxt = mime === 'text/plain' || extLower === 'txt'
+            if (!isTxt) {
+              throw new Error('仅支持 txt 文本或图片文件')
+            }
+
+            let buf: Buffer
             try {
-              const anyMark: any = await import('markitdown-ts')
-              const MarkCtor = anyMark.Markitdown || anyMark.default
-              if (MarkCtor) {
-                const md = new MarkCtor()
-                const ext = (
-                  fileMeta?.name?.split('.').pop() || ''
-                ).toLowerCase()
-                const conv = await md.convert(resp, {
-                  file_extension: ext ? `.${ext}` : undefined,
-                  llmModel: (getLlmApiConfig().model || 'gpt-4o') as string
-                })
-                if (
-                  conv &&
-                  typeof conv === 'object' &&
-                  typeof conv.text_content === 'string'
-                ) {
-                  return conv.text_content
-                }
-              }
-            } catch {}
-            throw new Error('无法从文件中提取文本')
+              buf = isB64
+                ? Buffer.from(dataPart, 'base64')
+                : Buffer.from(decodeURIComponent(dataPart), 'utf8')
+            } catch {
+              buf = Buffer.alloc(0)
+            }
+
+            try {
+              const detected = chardet.detect(buf) as string | null
+              const enc = (detected || 'utf-8').toLowerCase()
+              const decoded = iconv.decode(buf, enc)
+              return decoded.replace(/^\uFEFF/, '')
+            } catch {
+              return buf.toString('utf8')
+            }
           }
 
           const textContent = await extractTextFromDataUrl(fileDataUrl)

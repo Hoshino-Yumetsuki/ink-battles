@@ -131,7 +131,7 @@ export default function FileUploader({
                 点击浏览
               </Button>
               <p className="text-center text-xs">
-                支持常见文件与图片格式，大小不超过 15MB
+                支持常见 txt 文件与图片格式，大小不超过 15MB
               </p>
             </div>
             {selectedFile && (
