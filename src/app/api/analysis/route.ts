@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import OpenAI from 'openai'
+import { generateText } from 'xsai'
 import { buildPrompt } from '@/config/prompts'
 import { calculateOverallScore } from '@/utils/score-calculator'
 import { getLlmApiConfig, isValidLlmApiConfig } from '@/config/api'
@@ -26,14 +26,9 @@ export async function POST(request: Request) {
       )
     }
 
-    const openai = new OpenAI({
-      apiKey: apiConfig.apiKey,
-      baseURL: apiConfig.baseUrl
-    })
-
     const systemPrompt = buildPrompt(options)
 
-    let response: OpenAI.Chat.Completions.ChatCompletion
+    let generatedText: string
 
     const responseFormat = {
       type: 'json_schema',
@@ -91,7 +86,7 @@ export async function POST(request: Request) {
     }
 
     try {
-      let messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[]
+      let messages: any[]
 
       if (analysisType === 'text') {
         messages = [
@@ -130,10 +125,14 @@ export async function POST(request: Request) {
         ]
       }
 
-      response = await openai.chat.completions.create({
+      const { text } = await generateText({
+        apiKey: apiConfig.apiKey!,
+        baseURL: apiConfig.baseUrl || 'https://api.openai.com/v1/',
         ...requestConfig,
         messages
       })
+
+      generatedText = text as string
     } catch (error: any) {
       logger.error(`Error processing ${analysisType} analysis`, error)
       throw new Error(
@@ -141,22 +140,10 @@ export async function POST(request: Request) {
       )
     }
 
-    if (
-      !response.choices ||
-      !Array.isArray(response.choices) ||
-      response.choices.length === 0
-    ) {
-      logger.error('Invalid AI response structure', response)
-      return NextResponse.json(
-        { error: '内容分析被拒绝或返回了空响应，请检查您的输入是否合规' },
-        { status: 422 }
-      )
-    }
+    const resultText = generatedText
 
-    const resultText = response.choices[0]?.message?.content
-
-    if (!resultText) {
-      logger.error('Missing content in AI response', response.choices[0])
+    if (!resultText || resultText.trim().length === 0) {
+      logger.error('Missing content in AI response', { resultText })
       return NextResponse.json(
         { error: '分析失败，未能获取有效结果' },
         { status: 500 }
