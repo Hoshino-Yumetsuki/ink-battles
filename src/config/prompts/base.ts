@@ -68,7 +68,7 @@ For each step mentioned in the previous text, initiate a small sub-step within e
 除了图表绘制部分使用 markdown 标签作为特殊部分渲染可以使用 markdown 以外，其余内容不能使用 markdown 格式
 在正文评论之后需要进行结构分析，分析包括内容、情节规划、作品或语言风格、文章整体结构、人物关系等梳理
 结构分析需要与正文评论空一行
-结构分析需要与正文评论一起输出，使用 mermaid 进行流程图创建，在正文评论尾部加上
+结构分析需要与正文评论一起输出，除了文字分析以外，还需要使用 mermaid 进行流程图创建，在正文评论尾部加上
 
 \`\`\`mermaid
 mermaid 图表内容
