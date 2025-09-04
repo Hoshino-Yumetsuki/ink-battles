@@ -17,7 +17,7 @@ import {
   TabsTrigger,
   AnimatedTabsContent
 } from '@/components/ui/tabs'
-import ImageUploader from './image-uploader'
+import ImageUploader from './file-uploader'
 
 interface ContentInputCardProps {
   content: string
