@@ -73,6 +73,7 @@ For each step mentioned in the previous text, initiate a small sub-step within e
 mermaid 图表内容
 \`\`\`
 即可进行图表绘制，如果作品内容存在并行、交织或者其他关系，合理利用 mermaid 的图表灵活性进行图表绘制
+除了图表绘制部分使用 markdown 标签作为特殊部分渲染以外其余内容不能使用 markdown 格式
 
 你将从以下15个维度对作品进行评估
 
