@@ -12,7 +12,7 @@ export function getLlmApiConfig(): LlmApiConfig {
     apiKey: process.env.OPENAI_API_KEY || undefined,
     model: process.env.MODEL || undefined,
     temperature: Number(process.env.TEMPERATURE) || 1.2,
-    maxTokens: Number(process.env.MAX_TOKENS) || 1280000
+    maxTokens: Number(process.env.MAX_TOKENS) || 65536
   }
 }
 
