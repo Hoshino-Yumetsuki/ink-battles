@@ -88,8 +88,14 @@ function MermaidBlock({ code }: { code: string }) {
     ;(async () => {
       try {
         mermaid.initialize({ startOnLoad: false })
+        const isErrorSvg = (svg: string) => {
+          return /Syntax\s+error/i.test(svg) || (/mermaid\s+version/i.test(svg) && /error/i.test(svg))
+        }
         const tryRender = async (id: string, source: string) => {
           const { svg } = await mermaid.render(id, source)
+          if (isErrorSvg(svg)) {
+            throw new Error('MermaidSyntaxError: invalid diagram')
+          }
           if (mounted && containerRef.current) {
             containerRef.current.innerHTML = svg
           }
@@ -116,6 +122,10 @@ function MermaidBlock({ code }: { code: string }) {
           error: e,
           codeSnippet: code?.slice(0, 200)
         })
+        // 失败时不渲染任何占位 SVG，保持容器为空，避免出现炸弹图标
+        if (mounted && containerRef.current) {
+          containerRef.current.innerHTML = ''
+        }
       }
     })()
     return () => {
