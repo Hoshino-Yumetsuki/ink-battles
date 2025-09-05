@@ -66,7 +66,10 @@ export async function POST(request: Request) {
               items: { type: 'string' }
             },
             comment: { type: 'string' },
-            structural_analysis: { type: 'string' }
+            structural_analysis: {
+              type: 'array',
+              items: { type: 'string' }
+            }
           },
           required: [
             'overallAssessment',

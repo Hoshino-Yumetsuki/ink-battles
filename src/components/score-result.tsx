@@ -92,12 +92,8 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
         .filter(Boolean)
     : []
 
-  const structureText = (result.structural_analysis ?? '').trim()
-  const structureParas = structureText
-    ? structureText
-        .split(/\n+/)
-        .map((s: string) => s.trim())
-        .filter(Boolean)
+  const structureParas = Array.isArray(result.structural_analysis)
+    ? result.structural_analysis.filter(Boolean)
     : []
 
   return (
