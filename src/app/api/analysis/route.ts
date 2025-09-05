@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { generateText } from 'xsai'
+import { streamText, toAsyncIterator } from 'xsai'
 import { buildPrompt } from '@/config/prompts'
 import { calculateOverallScore } from '@/utils/score-calculator'
 import { getLlmApiConfig, isValidLlmApiConfig } from '@/config/api'
@@ -128,14 +128,21 @@ export async function POST(request: Request) {
         ]
       }
 
-      const { text } = await generateText({
+      const { textStream } = streamText({
         apiKey: apiConfig.apiKey,
         baseURL: apiConfig.baseUrl || 'https://api.openai.com/v1/',
         ...requestConfig,
         messages
       })
 
-      generatedText = text as string
+      const iterableStream = toAsyncIterator(textStream)
+
+      let fullText = ''
+      for await (const textPart of iterableStream) {
+        fullText += textPart
+      }
+
+      generatedText = fullText
     } catch (error: any) {
       logger.error(`Error processing ${analysisType} analysis`, error)
       throw new Error(
