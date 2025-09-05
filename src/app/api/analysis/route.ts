@@ -68,7 +68,9 @@ export async function POST(request: Request) {
               type: 'array',
               items: { type: 'string' }
             },
-            comment: { type: 'string' }
+            comment: { type: 'string' },
+            structural_analysis: { type: 'string' },
+            structural_analysis_graph: { type: 'string' }
           },
           required: [
             'overallAssessment',
@@ -77,7 +79,9 @@ export async function POST(request: Request) {
             'dimensions',
             'strengths',
             'improvements',
-            'comment'
+            'comment',
+            'structural_analysis',
+            'structural_analysis_graph'
           ],
           additionalProperties: false
         }

@@ -48,6 +48,20 @@ function parseMermaidBlocks(text: string): ContentNode[] {
   return nodes
 }
 
+function extractMermaidCodes(text: string): string[] {
+  const codes: string[] = []
+  if (!text) return codes
+  const nodes = parseMermaidBlocks(text)
+  const fenced = nodes
+    .filter((n) => n.type === 'mermaid')
+    .map((n) => (n as Extract<ContentNode, { type: 'mermaid' }>).code)
+  if (fenced.length > 0) return fenced
+
+  const t = text.trim()
+  codes.push(t)
+  return codes
+}
+
 function MermaidBlock({ code }: { code: string }) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const idRef = useRef<string>(`mermaid-${Math.random().toString(36).slice(2)}`)
@@ -127,6 +141,25 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
     hidden: { opacity: 0, y: 20, scale: 0.95 },
     visible: { opacity: 1, y: 0, scale: 1 }
   }
+
+  const commentParagraphs: string[] = result.comment
+    ? parseMermaidBlocks(result.comment)
+        .filter((n) => n.type === 'paragraph')
+        .map((n) =>
+          (n as Extract<ContentNode, { type: 'paragraph' }>).text.trim()
+        )
+        .filter(Boolean)
+    : []
+
+  const structureText = (result.structural_analysis ?? '').trim()
+  const graphText = (result.structural_analysis_graph ?? '').trim()
+  const structureParas = structureText
+    ? structureText
+        .split(/\n+/)
+        .map((s: string) => s.trim())
+        .filter(Boolean)
+    : []
+  const structureMermaids = graphText ? extractMermaidCodes(graphText) : []
 
   return (
     <div className="space-y-6">
@@ -264,27 +297,74 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
             </CardHeader>
             <CardContent>
               <div className="prose prose-sm dark:prose-invert">
-                {parseMermaidBlocks(result.comment).map((node, idx) =>
-                  node.type === 'mermaid' ? (
-                    <motion.div
-                      key={`m-${idx}`}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1 + idx * 0.05, duration: 0.3 }}
-                    >
-                      <MermaidBlock code={node.code} />
-                    </motion.div>
-                  ) : (
+                {commentParagraphs.length > 0 ? (
+                  commentParagraphs.map((paragraph: string, idx: number) => (
                     <motion.p
-                      key={`p-${idx}`}
+                      key={`ov-${idx}`}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.1 + idx * 0.05, duration: 0.3 }}
                     >
-                      {node.text}
+                      {paragraph}
                     </motion.p>
-                  )
+                  ))
+                ) : (
+                  <motion.p
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1, duration: 0.3 }}
+                    className="text-gray-500"
+                  >
+                    暂无作品概述
+                  </motion.p>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {(structureParas.length > 0 || structureMermaids.length > 0) && (
+        <motion.div
+          variants={cardVariants}
+          initial="hidden"
+          animate="visible"
+          transition={{
+            delay: result.comment ? 0.15 : 0.1,
+            duration: 0.5,
+            ease: 'easeOut'
+          }}
+        >
+          <Card className="overflow-hidden">
+            <CardHeader>
+              <CardTitle>结构分析与图表</CardTitle>
+              <CardDescription>从文本中提取的结构分析与可视化</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="prose prose-sm dark:prose-invert">
+                {structureParas.map((paragraph: string, idx: number) => (
+                  <motion.p
+                    key={`st-${idx}`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 + idx * 0.05, duration: 0.3 }}
+                  >
+                    {paragraph}
+                  </motion.p>
+                ))}
+                {structureMermaids.map((code: string, idx: number) => (
+                  <motion.div
+                    key={`sm-${idx}`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      delay: 0.1 + (structureParas.length + idx) * 0.05,
+                      duration: 0.3
+                    }}
+                  >
+                    <MermaidBlock code={code} />
+                  </motion.div>
+                ))}
               </div>
             </CardContent>
           </Card>
