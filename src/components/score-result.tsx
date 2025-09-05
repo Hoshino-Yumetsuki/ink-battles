@@ -12,6 +12,7 @@ import {
 import { Progress } from '@/components/ui/progress'
 import type { WriterAnalysisResult } from '@/app/page'
 import mermaid from 'mermaid'
+import { sanitizeMermaidCode } from '@/utils/mermaid'
 
 interface WriterScoreResultProps {
   result: WriterAnalysisResult
@@ -58,7 +59,23 @@ function extractMermaidCodes(text: string): string[] {
   if (fenced.length > 0) return fenced
 
   const t = text.trim()
-  codes.push(t)
+  const hasAnyFence = /```/.test(text)
+  const hasMermaidFence = /```\s*mermaid/.test(text)
+  if (!hasMermaidFence) {
+    if (hasAnyFence) {
+      const generic = text.match(/```[^\n]*\n([\s\S]*?)\n```/)
+      if (generic && generic[1]) {
+        const inner = generic[1].trim()
+        if (inner) {
+          codes.push(inner)
+          return codes
+        }
+      }
+    }
+  }
+  if (t) {
+    codes.push(t)
+  }
   return codes
 }
 
@@ -71,14 +88,34 @@ function MermaidBlock({ code }: { code: string }) {
     ;(async () => {
       try {
         mermaid.initialize({ startOnLoad: false })
-        const { svg } = await mermaid.render(idRef.current, code)
-        if (mounted && containerRef.current) {
-          containerRef.current.innerHTML = svg
+        const tryRender = async (id: string, source: string) => {
+          const { svg } = await mermaid.render(id, source)
+          if (mounted && containerRef.current) {
+            containerRef.current.innerHTML = svg
+          }
         }
-      } catch (_e) {
-        if (mounted && containerRef.current) {
-          containerRef.current.textContent = 'Mermaid 图表渲染失败'
+
+        try {
+          await tryRender(idRef.current, code)
+        } catch (firstErr) {
+          const { code: fixed, changed } = sanitizeMermaidCode(code)
+          if (changed) {
+            try {
+              await tryRender(`${idRef.current}-retry`, fixed)
+              return
+            } catch (secondErr) {
+              throw secondErr
+            }
+          } else {
+            throw firstErr
+          }
         }
+      } catch (e) {
+        console.error('[Mermaid] 渲染失败', {
+          id: idRef.current,
+          error: e,
+          codeSnippet: code?.slice(0, 200)
+        })
       }
     })()
     return () => {
