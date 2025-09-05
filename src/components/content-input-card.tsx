@@ -61,7 +61,7 @@ export default function ContentInputCard({
         >
           <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="text">文本输入</TabsTrigger>
-            <TabsTrigger value="file">文本文件/图片上传</TabsTrigger>
+            <TabsTrigger value="file">文本/图片上传</TabsTrigger>
           </TabsList>
 
           <AnimatedTabsContent
@@ -107,6 +107,7 @@ export default function ContentInputCard({
                 setFileMetaAction={setFileMetaAction}
                 isLoading={isLoading}
                 onAnalyzeAction={onAnalyzeAction}
+                setContentAction={setContentAction}
               />
             </motion.div>
           </AnimatedTabsContent>

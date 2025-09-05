@@ -59,13 +59,19 @@ export default function WriterAnalysisPage() {
   useEffect(() => {}, [])
 
   const handleAnalyze = async () => {
-    if (analysisType === 'text' && !content.trim()) {
-      toast.error('请输入作品内容再进行分析')
+    const isFileModeText =
+      analysisType === 'file' &&
+      !!fileMeta &&
+      (fileMeta.type === 'text/plain' ||
+        fileMeta.name.toLowerCase().endsWith('.txt'))
+
+    if ((analysisType === 'text' || isFileModeText) && !content.trim()) {
+      toast.error('文本内容为空，请先输入或正确导入文本')
       return
     }
 
-    if (analysisType === 'file' && !fileDataUrl) {
-      toast.error('请先上传文件或图片再进行分析')
+    if (analysisType === 'file' && !isFileModeText && !fileDataUrl) {
+      toast.error('请先上传图片文件再进行分析')
       return
     }
 
@@ -87,18 +93,22 @@ export default function WriterAnalysisPage() {
       }, 500)
 
       try {
+        const payload = {
+          content: analysisType === 'text' || isFileModeText ? content : null,
+          fileDataUrl:
+            analysisType === 'file' && !isFileModeText ? fileDataUrl : null,
+          fileMeta:
+            analysisType === 'file' && !isFileModeText ? fileMeta : null,
+          analysisType: isFileModeText ? 'text' : analysisType,
+          options: enabledOptions
+        }
+
         const response = await fetch('/api/analysis', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({
-            content: analysisType === 'text' ? content : null,
-            fileDataUrl: analysisType === 'file' ? fileDataUrl : null,
-            fileMeta: analysisType === 'file' ? fileMeta : null,
-            analysisType,
-            options: enabledOptions
-          })
+          body: JSON.stringify(payload)
         })
 
         if (!response.ok) {

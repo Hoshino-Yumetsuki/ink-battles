@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
+import { decodeTextFromFile } from '@/utils/decode-text'
 
 interface FileUploaderProps {
   setFileDataUrlAction: (url: string | null) => void
@@ -14,13 +15,15 @@ interface FileUploaderProps {
   setFileMetaAction?: (
     meta: { name: string; type: string; size: number } | null
   ) => void
+  setContentAction: (content: string) => void
 }
 
 export default function FileUploader({
   setFileDataUrlAction,
   isLoading,
   onAnalyzeAction,
-  setFileMetaAction
+  setFileMetaAction,
+  setContentAction
 }: FileUploaderProps) {
   const [hasFile, setHasFile] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -37,7 +40,7 @@ export default function FileUploader({
     return `${(size / (1024 * 1024)).toFixed(1)}MB`
   }
 
-  const processFile = (file: File) => {
+  const processFile = async (file: File) => {
     const maxSize = 15 * 1024 * 1024 // 15MB
     if (file.size > maxSize) {
       toast.error('文件过大，请上传小于 15MB 的文件')
@@ -52,11 +55,40 @@ export default function FileUploader({
       return
     }
 
+    if (isText) {
+      try {
+        const decoded = await decodeTextFromFile(file)
+        if (!decoded || !decoded.trim()) {
+          toast.error('无法从文件中提取文本')
+          return
+        }
+        setContentAction(decoded)
+
+        setPreviewUrl(null)
+        const meta = { name: file.name, type: file.type, size: file.size }
+        setSelectedFile(meta)
+        setFileMetaAction?.(meta)
+        setHasFile(true)
+
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          if (e.target && typeof e.target.result === 'string') {
+            setFileDataUrlAction(e.target.result)
+          }
+        }
+        reader.readAsDataURL(file)
+      } catch (e: any) {
+        console.error(e)
+        toast.error('文本解码失败，请重试或更换文件编码')
+      }
+      return
+    }
+
     const reader = new FileReader()
     reader.onload = (e) => {
       if (e.target && typeof e.target.result === 'string') {
         setFileDataUrlAction(e.target.result)
-        setPreviewUrl(file.type.startsWith('image/') ? e.target.result : null)
+        setPreviewUrl(e.target.result)
         const meta = { name: file.name, type: file.type, size: file.size }
         setSelectedFile(meta)
         setFileMetaAction?.(meta)
@@ -66,19 +98,21 @@ export default function FileUploader({
     reader.readAsDataURL(file)
   }
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0]
     if (!file) return
-    processFile(file)
+    await processFile(file)
   }
 
-  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+  const handleDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault()
     e.stopPropagation()
 
     const file = e.dataTransfer.files?.[0]
     if (!file) return
-    processFile(file)
+    await processFile(file)
   }
 
   const handleRemoveFile = (e: React.MouseEvent) => {

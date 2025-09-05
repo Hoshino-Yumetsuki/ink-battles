@@ -4,13 +4,10 @@ import { buildPrompt } from '@/config/prompts'
 import { calculateOverallScore } from '@/utils/score-calculator'
 import { getLlmApiConfig, isValidLlmApiConfig } from '@/config/api'
 import { logger } from '@/utils/logger'
-import chardet from 'chardet'
-import iconv from 'iconv-lite'
 
 export async function POST(request: Request) {
   try {
-    const { content, fileDataUrl, analysisType, options, fileMeta } =
-      await request.json()
+    const { content, fileDataUrl, analysisType, options } = await request.json()
 
     if (analysisType === 'text' && (!content || content.trim().length === 0)) {
       return NextResponse.json({ error: '文本内容不能为空' }, { status: 400 })
@@ -114,66 +111,20 @@ export async function POST(request: Request) {
 
         const isImage = fileDataUrl.startsWith('data:image/')
 
-        if (isImage) {
-          messages = [
-            { role: 'system', content: systemPrompt },
-            {
-              role: 'user',
-              content: [
-                { type: 'text', text: '请分析此图片中的内容' },
-                { type: 'image_url', image_url: { url: fileDataUrl } }
-              ]
-            }
-          ]
-        } else {
-          const extractTextFromDataUrl = async (
-            dataUrl: string
-          ): Promise<string> => {
-            const match = dataUrl.match(/^data:([^;,]+)?(;base64)?,([\s\S]*)$/)
-            if (!match) {
-              throw new Error('无效的文件数据')
-            }
-            const mime = (match[1] || 'application/octet-stream').toLowerCase()
-            const isB64 = !!match[2]
-            const dataPart = match[3]
-
-            const extLower = (
-              fileMeta?.name?.split('.').pop() || ''
-            ).toLowerCase()
-            const isTxt = mime === 'text/plain' || extLower === 'txt'
-            if (!isTxt) {
-              throw new Error('仅支持 txt 文本或图片文件')
-            }
-
-            let buf: Buffer
-            try {
-              buf = isB64
-                ? Buffer.from(dataPart, 'base64')
-                : Buffer.from(decodeURIComponent(dataPart), 'utf8')
-            } catch {
-              buf = Buffer.alloc(0)
-            }
-
-            try {
-              const detected = chardet.detect(buf) as string | null
-              const enc = (detected || 'utf-8').toLowerCase()
-              const decoded = iconv.decode(buf, enc)
-              return decoded.replace(/^\uFEFF/, '')
-            } catch {
-              return buf.toString('utf8')
-            }
-          }
-
-          const textContent = await extractTextFromDataUrl(fileDataUrl)
-          if (!textContent || !textContent.trim()) {
-            throw new Error('无法从文件中提取文本')
-          }
-
-          messages = [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: textContent }
-          ]
+        if (!isImage) {
+          throw new Error('Invalid file type')
         }
+
+        messages = [
+          { role: 'system', content: systemPrompt },
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: '请分析此图片中的内容' },
+              { type: 'image_url', image_url: { url: fileDataUrl } }
+            ]
+          }
+        ]
       }
 
       const { text } = await generateText({
