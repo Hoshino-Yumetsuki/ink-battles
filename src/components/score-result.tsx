@@ -20,7 +20,7 @@ type ContentNode = { type: 'paragraph'; text: string }
 
 function parseMermaidBlocks(text: string): ContentNode[] {
   const nodes: ContentNode[] = []
-  
+
   if (text) {
     for (const line of text.split('\n')) {
       if (line.trim() !== '') nodes.push({ type: 'paragraph', text: line })
@@ -29,8 +29,6 @@ function parseMermaidBlocks(text: string): ContentNode[] {
 
   return nodes
 }
-
-
 
 export default function WriterScoreResult({ result }: WriterScoreResultProps) {
   const [animatedScore, setAnimatedScore] = useState(0)
@@ -95,14 +93,12 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
     : []
 
   const structureText = (result.structural_analysis ?? '').trim()
-  const graphText = (result.structural_analysis_graph ?? '').trim()
   const structureParas = structureText
     ? structureText
         .split(/\n+/)
         .map((s: string) => s.trim())
         .filter(Boolean)
     : []
-  const structureMermaids: string[] = []
 
   return (
     <div className="space-y-6">
@@ -267,7 +263,7 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
         </motion.div>
       )}
 
-      {(structureParas.length > 0 || structureMermaids.length > 0) && (
+      {structureParas.length > 0 && (
         <motion.div
           variants={cardVariants}
           initial="hidden"
@@ -280,8 +276,8 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
         >
           <Card className="overflow-hidden">
             <CardHeader>
-              <CardTitle>结构分析与图表</CardTitle>
-              <CardDescription>从文本中提取的结构分析与可视化</CardDescription>
+              <CardTitle>结构分析</CardTitle>
+              <CardDescription>从文本中提取的结构分析</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="prose prose-sm dark:prose-invert">

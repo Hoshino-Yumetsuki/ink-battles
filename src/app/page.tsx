@@ -25,7 +25,6 @@ export interface WriterAnalysisResult {
   improvements: string[]
   comment?: string
   structural_analysis?: string
-  structural_analysis_graph?: string
 }
 
 export default function WriterAnalysisPage() {
@@ -136,8 +135,7 @@ export default function WriterAnalysisPage() {
           dimensions: [],
           strengths: [],
           improvements: [],
-          structural_analysis: '',
-          structural_analysis_graph: ''
+          structural_analysis: ''
         }
 
         const safeData = { ...defaultResult, ...data }
