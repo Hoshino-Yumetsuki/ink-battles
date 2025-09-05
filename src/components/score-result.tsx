@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   Card,
@@ -11,37 +11,18 @@ import {
 } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import type { WriterAnalysisResult } from '@/app/page'
-import mermaid from 'mermaid'
-import { sanitizeMermaidCode } from '@/utils/mermaid'
 
 interface WriterScoreResultProps {
   result: WriterAnalysisResult
 }
 
-type ContentNode =
-  | { type: 'paragraph'; text: string }
-  | { type: 'mermaid'; code: string }
+type ContentNode = { type: 'paragraph'; text: string }
 
 function parseMermaidBlocks(text: string): ContentNode[] {
   const nodes: ContentNode[] = []
-  const regex = /```mermaid\s*\n([\s\S]*?)\n```/g
-  let lastIndex = 0
-  for (const match of text.matchAll(regex)) {
-    const idx = match.index ?? 0
-    const before = text.slice(lastIndex, idx)
-    if (before) {
-      for (const line of before.split('\n')) {
-        if (line.trim() !== '') nodes.push({ type: 'paragraph', text: line })
-      }
-    }
-    const code = (match[1] || '').trim()
-    nodes.push({ type: 'mermaid', code })
-    lastIndex = idx + (match[0]?.length ?? 0)
-  }
-
-  const after = text.slice(lastIndex)
-  if (after) {
-    for (const line of after.split('\n')) {
+  
+  if (text) {
+    for (const line of text.split('\n')) {
       if (line.trim() !== '') nodes.push({ type: 'paragraph', text: line })
     }
   }
@@ -49,92 +30,7 @@ function parseMermaidBlocks(text: string): ContentNode[] {
   return nodes
 }
 
-function extractMermaidCodes(text: string): string[] {
-  const codes: string[] = []
-  if (!text) return codes
-  const nodes = parseMermaidBlocks(text)
-  const fenced = nodes
-    .filter((n) => n.type === 'mermaid')
-    .map((n) => (n as Extract<ContentNode, { type: 'mermaid' }>).code)
-  if (fenced.length > 0) return fenced
 
-  const t = text.trim()
-  const hasAnyFence = /```/.test(text)
-  const hasMermaidFence = /```\s*mermaid/.test(text)
-  if (!hasMermaidFence) {
-    if (hasAnyFence) {
-      const generic = text.match(/```[^\n]*\n([\s\S]*?)\n```/)
-      if (generic && generic[1]) {
-        const inner = generic[1].trim()
-        if (inner) {
-          codes.push(inner)
-          return codes
-        }
-      }
-    }
-  }
-  if (t) {
-    codes.push(t)
-  }
-  return codes
-}
-
-function MermaidBlock({ code }: { code: string }) {
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  const idRef = useRef<string>(`mermaid-${Math.random().toString(36).slice(2)}`)
-
-  useEffect(() => {
-    let mounted = true
-    ;(async () => {
-      try {
-        mermaid.initialize({ startOnLoad: false })
-        const isErrorSvg = (svg: string) => {
-          return /Syntax\s+error/i.test(svg) || (/mermaid\s+version/i.test(svg) && /error/i.test(svg))
-        }
-        const tryRender = async (id: string, source: string) => {
-          const { svg } = await mermaid.render(id, source)
-          if (isErrorSvg(svg)) {
-            throw new Error('MermaidSyntaxError: invalid diagram')
-          }
-          if (mounted && containerRef.current) {
-            containerRef.current.innerHTML = svg
-          }
-        }
-
-        try {
-          await tryRender(idRef.current, code)
-        } catch (firstErr) {
-          const { code: fixed, changed } = sanitizeMermaidCode(code)
-          if (changed) {
-            try {
-              await tryRender(`${idRef.current}-retry`, fixed)
-              return
-            } catch (secondErr) {
-              throw secondErr
-            }
-          } else {
-            throw firstErr
-          }
-        }
-      } catch (e) {
-        console.error('[Mermaid] 渲染失败', {
-          id: idRef.current,
-          error: e,
-          codeSnippet: code?.slice(0, 200)
-        })
-        // 失败时不渲染任何占位 SVG，保持容器为空，避免出现炸弹图标
-        if (mounted && containerRef.current) {
-          containerRef.current.innerHTML = ''
-        }
-      }
-    })()
-    return () => {
-      mounted = false
-    }
-  }, [code])
-
-  return <div ref={containerRef} className="my-3 overflow-x-auto" />
-}
 
 export default function WriterScoreResult({ result }: WriterScoreResultProps) {
   const [animatedScore, setAnimatedScore] = useState(0)
@@ -206,7 +102,7 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
         .map((s: string) => s.trim())
         .filter(Boolean)
     : []
-  const structureMermaids = graphText ? extractMermaidCodes(graphText) : []
+  const structureMermaids: string[] = []
 
   return (
     <div className="space-y-6">
@@ -398,19 +294,6 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
                   >
                     {paragraph}
                   </motion.p>
-                ))}
-                {structureMermaids.map((code: string, idx: number) => (
-                  <motion.div
-                    key={`sm-${idx}`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{
-                      delay: 0.1 + (structureParas.length + idx) * 0.05,
-                      duration: 0.3
-                    }}
-                  >
-                    <MermaidBlock code={code} />
-                  </motion.div>
                 ))}
               </div>
             </CardContent>
