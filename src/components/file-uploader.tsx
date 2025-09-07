@@ -1,7 +1,7 @@
 'use client'
 
 import type React from 'react'
-import { useState, useRef } from 'react'
+import { useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
@@ -16,6 +16,8 @@ interface FileUploaderProps {
     meta: { name: string; type: string; size: number } | null
   ) => void
   setUploadedTextAction?: (content: string) => void
+  fileDataUrl?: string | null
+  fileMeta?: { name: string; type: string; size: number } | null
 }
 
 export default function FileUploader({
@@ -23,15 +25,10 @@ export default function FileUploader({
   isLoading,
   onAnalyzeAction,
   setFileMetaAction,
-  setUploadedTextAction
+  setUploadedTextAction,
+  fileDataUrl,
+  fileMeta
 }: FileUploaderProps) {
-  const [hasFile, setHasFile] = useState(false)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [selectedFile, setSelectedFile] = useState<{
-    name: string
-    type: string
-    size: number
-  } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const toReadableSize = (size: number) => {
@@ -65,11 +62,8 @@ export default function FileUploader({
         // 不再把文本写入可见输入框，改为仅保存为“已上传文本”
         setUploadedTextAction?.(decoded)
 
-        setPreviewUrl(null)
         const meta = { name: file.name, type: file.type, size: file.size }
-        setSelectedFile(meta)
         setFileMetaAction?.(meta)
-        setHasFile(true)
 
         const reader = new FileReader()
         reader.onload = (e) => {
@@ -89,11 +83,8 @@ export default function FileUploader({
     reader.onload = (e) => {
       if (e.target && typeof e.target.result === 'string') {
         setFileDataUrlAction(e.target.result)
-        setPreviewUrl(e.target.result)
         const meta = { name: file.name, type: file.type, size: file.size }
-        setSelectedFile(meta)
         setFileMetaAction?.(meta)
-        setHasFile(true)
       }
     }
     reader.readAsDataURL(file)
@@ -119,11 +110,9 @@ export default function FileUploader({
   const handleRemoveFile = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setPreviewUrl(null)
-    setHasFile(false)
-    setSelectedFile(null)
     setFileMetaAction?.(null)
     setFileDataUrlAction(null)
+    setUploadedTextAction?.('')
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -143,54 +132,70 @@ export default function FileUploader({
           accept="image/*,.txt,text/plain"
           onChange={handleFileChange}
         />
-        {!previewUrl ? (
-          <div className="flex flex-col items-center justify-center w-full h-full text-center py-8">
-            <div className="mx-auto h-12 w-12 flex items-center justify-center text-gray-400">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="48"
-                height="48"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-label="上传文件图标"
-                role="img"
-              >
-                <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
-                <path d="M12 12v9"></path>
-                <path d="m16 16-4-4-4 4"></path>
-              </svg>
-            </div>
-            <div className="mt-4 flex flex-col items-center justify-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <p className="text-center">拖拽文件或图片至此，或者</p>
-              <Button
-                variant="ghost"
-                onClick={() => fileInputRef.current?.click()}
-                className="my-2 px-4"
-              >
-                点击浏览
-              </Button>
-              <p className="text-center text-xs">
-                支持 .txt 文本文件与图片格式，大小不超过 15MB
-              </p>
-            </div>
-            {selectedFile && (
-              <div className="mt-2 text-xs text-muted-foreground">
-                已选择：{selectedFile.name}（{toReadableSize(selectedFile.size)}
-                ）
+        {!(
+          (fileMeta?.type?.startsWith('image/') ||
+            (fileDataUrl?.startsWith('data:image/') ?? false)) &&
+          fileDataUrl
+        ) ? (
+          <div className="relative w-full max-w-md mx-auto">
+            <div className="flex flex-col items-center justify-center w-full h-full text-center py-8">
+              <div className="mx-auto h-12 w-12 flex items-center justify-center text-gray-400">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-label="上传文件图标"
+                  role="img"
+                >
+                  <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
+                  <path d="M12 12v9"></path>
+                  <path d="m16 16-4-4-4 4"></path>
+                </svg>
               </div>
+              <div className="mt-4 flex flex-col items-center justify-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-center">拖拽文件或图片至此，或者</p>
+                <Button
+                  variant="ghost"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="my-2 px-4"
+                >
+                  点击浏览
+                </Button>
+                <p className="text-center text-xs">
+                  支持 .txt 文本文件与图片格式，大小不超过 15MB
+                </p>
+              </div>
+              {fileMeta && (
+                <div className="mt-2 text-xs text-muted-foreground">
+                  已选择：{fileMeta.name}（{toReadableSize(fileMeta.size)}）
+                </div>
+              )}
+            </div>
+            {fileMeta && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="absolute top-2 right-2 bg-white/80 dark:bg-black/70 rounded-full p-1 w-8 h-8 flex items-center justify-center"
+                onClick={(e) => handleRemoveFile(e)}
+                aria-label="移除文件"
+              >
+                ×
+              </Button>
             )}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center gap-3 w-full">
             <div className="relative w-full max-w-md mx-auto">
-              {previewUrl && (
+              {fileDataUrl && (
                 <div className="relative w-full h-[300px] flex items-center justify-center">
                   <Image
-                    src={previewUrl}
+                    src={fileDataUrl}
                     alt="预览图片"
                     fill
                     style={{ objectFit: 'contain' }}
@@ -203,16 +208,22 @@ export default function FileUploader({
                 size="sm"
                 className="absolute top-2 right-2 bg-white/80 dark:bg-black/70 rounded-full p-1 w-8 h-8 flex items-center justify-center"
                 onClick={(e) => handleRemoveFile(e)}
+                aria-label="移除文件"
+                disabled={isLoading}
               >
                 ×
               </Button>
             </div>
-            {!previewUrl && selectedFile && (
-              <div className="text-xs text-muted-foreground">
-                已选择文件：{selectedFile.name}（
-                {toReadableSize(selectedFile.size)}）
-              </div>
-            )}
+            {!(
+              (fileMeta?.type?.startsWith('image/') ||
+                (fileDataUrl?.startsWith('data:image/') ?? false)) &&
+              fileDataUrl
+            ) &&
+              fileMeta && (
+                <div className="text-xs text-muted-foreground">
+                  已选择文件：{fileMeta.name}（{toReadableSize(fileMeta.size)}）
+                </div>
+              )}
           </div>
         )}
       </label>
@@ -221,7 +232,7 @@ export default function FileUploader({
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
             onClick={onAnalyzeAction}
-            disabled={isLoading || !hasFile}
+            disabled={isLoading || !fileMeta}
             className="relative overflow-hidden"
           >
             {isLoading ? (
