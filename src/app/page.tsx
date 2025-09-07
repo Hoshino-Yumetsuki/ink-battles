@@ -188,7 +188,9 @@ export default function WriterAnalysisPage() {
             content={content}
             setContentAction={setContent}
             setFileDataUrlAction={setFileDataUrl}
+            fileDataUrl={fileDataUrl}
             setFileMetaAction={setFileMeta}
+            fileMeta={fileMeta}
             isLoading={isLoading}
             onAnalyzeAction={handleAnalyze}
             analysisType={analysisType}
