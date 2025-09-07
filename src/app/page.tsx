@@ -29,6 +29,7 @@ export interface WriterAnalysisResult {
 
 export default function WriterAnalysisPage() {
   const [content, setContent] = useState<string>('')
+  const [uploadedText, setUploadedText] = useState<string>('')
   const [fileDataUrl, setFileDataUrl] = useState<string | null>(null)
   const [analysisType, setAnalysisType] = useState<'text' | 'file'>('text')
   const [isLoading, setIsLoading] = useState<boolean>(false)
@@ -64,8 +65,13 @@ export default function WriterAnalysisPage() {
       (fileMeta.type === 'text/plain' ||
         fileMeta.name.toLowerCase().endsWith('.txt'))
 
-    if ((analysisType === 'text' || isFileModeText) && !content.trim()) {
+    if (analysisType === 'text' && !content.trim()) {
       toast.error('文本内容为空，请先输入或正确导入文本')
+      return
+    }
+
+    if (isFileModeText && !uploadedText.trim()) {
+      toast.error('上传的文本内容为空，请检查 .txt 文件内容')
       return
     }
 
@@ -93,7 +99,12 @@ export default function WriterAnalysisPage() {
 
       try {
         const payload = {
-          content: analysisType === 'text' || isFileModeText ? content : null,
+          content:
+            analysisType === 'text'
+              ? content
+              : isFileModeText
+                ? uploadedText
+                : null,
           fileDataUrl:
             analysisType === 'file' && !isFileModeText ? fileDataUrl : null,
           fileMeta:
@@ -182,6 +193,7 @@ export default function WriterAnalysisPage() {
             onAnalyzeAction={handleAnalyze}
             analysisType={analysisType}
             setAnalysisTypeAction={(t) => setAnalysisType(t)}
+            setUploadedTextAction={setUploadedText}
           />
         </motion.div>
 

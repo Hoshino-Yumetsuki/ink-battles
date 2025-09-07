@@ -30,6 +30,7 @@ interface ContentInputCardProps {
   onAnalyzeAction: () => void
   analysisType: 'text' | 'file'
   setAnalysisTypeAction: (type: 'text' | 'file') => void
+  setUploadedTextAction: (content: string) => void
 }
 
 export default function ContentInputCard({
@@ -40,7 +41,8 @@ export default function ContentInputCard({
   isLoading,
   onAnalyzeAction,
   analysisType,
-  setAnalysisTypeAction
+  setAnalysisTypeAction,
+  setUploadedTextAction
 }: ContentInputCardProps) {
   return (
     <Card className="h-auto">
@@ -107,7 +109,7 @@ export default function ContentInputCard({
                 setFileMetaAction={setFileMetaAction}
                 isLoading={isLoading}
                 onAnalyzeAction={onAnalyzeAction}
-                setContentAction={setContentAction}
+                setUploadedTextAction={setUploadedTextAction}
               />
             </motion.div>
           </AnimatedTabsContent>

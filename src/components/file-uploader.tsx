@@ -15,7 +15,7 @@ interface FileUploaderProps {
   setFileMetaAction?: (
     meta: { name: string; type: string; size: number } | null
   ) => void
-  setContentAction: (content: string) => void
+  setUploadedTextAction?: (content: string) => void
 }
 
 export default function FileUploader({
@@ -23,7 +23,7 @@ export default function FileUploader({
   isLoading,
   onAnalyzeAction,
   setFileMetaAction,
-  setContentAction
+  setUploadedTextAction
 }: FileUploaderProps) {
   const [hasFile, setHasFile] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -62,7 +62,8 @@ export default function FileUploader({
           toast.error('无法从文件中提取文本')
           return
         }
-        setContentAction(decoded)
+        // 不再把文本写入可见输入框，改为仅保存为“已上传文本”
+        setUploadedTextAction?.(decoded)
 
         setPreviewUrl(null)
         const meta = { name: file.name, type: file.type, size: file.size }
