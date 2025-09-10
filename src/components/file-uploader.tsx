@@ -47,12 +47,13 @@ export default function FileUploader({
     const isImage = file.type.startsWith('image/')
     const isText =
       file.type === 'text/plain' || file.name.toLowerCase().endsWith('.txt')
-    if (!isImage && !isText) {
-      toast.error('仅支持图片或 .txt 文本文件')
+    const isDocx = file.name.toLowerCase().endsWith('.docx')
+    if (!isImage && !isText && !isDocx) {
+      toast.error('仅支持 .txt/.docx 或图片')
       return
     }
 
-    if (isText) {
+    if (isText || isDocx) {
       try {
         const decoded = await decodeTextFromFile(file)
         if (!decoded || !decoded.trim()) {
@@ -128,7 +129,7 @@ export default function FileUploader({
           type="file"
           ref={fileInputRef}
           className="hidden"
-          accept="image/*,.txt,text/plain"
+          accept="image/*,.txt,text/plain,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           onChange={handleFileChange}
         />
         {!(
@@ -167,7 +168,7 @@ export default function FileUploader({
                   点击浏览
                 </Button>
                 <p className="text-center text-xs">
-                  支持 .txt 文本文件与图片格式，大小不超过 15MB
+                  支持 .txt/.docx 与图片，大小不超过 15MB
                 </p>
               </div>
               {fileMeta && (

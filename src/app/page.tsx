@@ -63,7 +63,8 @@ export default function WriterAnalysisPage() {
       analysisType === 'file' &&
       !!fileMeta &&
       (fileMeta.type === 'text/plain' ||
-        fileMeta.name.toLowerCase().endsWith('.txt'))
+        fileMeta.name.toLowerCase().endsWith('.txt') ||
+        fileMeta.name.toLowerCase().endsWith('.docx'))
 
     if (analysisType === 'text' && !content.trim()) {
       toast.error('文本内容为空，请先输入或正确导入文本')
@@ -71,7 +72,7 @@ export default function WriterAnalysisPage() {
     }
 
     if (isFileModeText && !uploadedText.trim()) {
-      toast.error('上传的文本内容为空，请检查 .txt 文件内容')
+      toast.error('上传的文本内容为空，请检查文件内容')
       return
     }
 
