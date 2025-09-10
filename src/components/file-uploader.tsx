@@ -59,7 +59,6 @@ export default function FileUploader({
           toast.error('无法从文件中提取文本')
           return
         }
-        // 不再把文本写入可见输入框，改为仅保存为“已上传文本”
         setUploadedTextAction?.(decoded)
 
         const meta = { name: file.name, type: file.type, size: file.size }
