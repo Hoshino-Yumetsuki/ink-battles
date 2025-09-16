@@ -309,6 +309,5 @@ export const basePrompt = `
   "strengths": ["优势1", "优势2", ...],
   "improvements": ["改进建议1", "改进建议2", ...],
   "comment": "作品评论，描述及总体评价，没有可写的就不写",
-  "structural_analysis": ["段落1", "段落2", ...],
-  "structural_analysis_graph": ""
+  "structural_analysis": ["段落1", "段落2", ...]
 }`
