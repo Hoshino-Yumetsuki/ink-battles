@@ -6,7 +6,10 @@ import mammoth from 'mammoth'
 export async function decodeTextFromFile(file: File): Promise<string> {
   const buf = await file.arrayBuffer()
 
-  if (file.name.toLowerCase().endsWith('.docx')) {
+  if (
+    file.name.toLowerCase().endsWith('.docx') ||
+    file.name.toLowerCase().endsWith('.doc')
+  ) {
     try {
       const result = await mammoth.extractRawText({ arrayBuffer: buf })
       if (!result.value) {
