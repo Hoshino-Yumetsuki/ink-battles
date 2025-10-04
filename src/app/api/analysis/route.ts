@@ -152,7 +152,7 @@ const app = new Elysia({ aot: false }).post(
           apiKey: apiConfig.apiKey,
           baseURL: apiConfig.baseUrl,
           ...requestConfig,
-          messages,
+          messages
         }
 
         const { text } = await generateText(genOptions)
