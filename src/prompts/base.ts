@@ -47,11 +47,16 @@ export const basePrompt = `
 结构分析
 
 结构分析包括内容、情节规划、作品或语言风格、文章整体结构、人物关系等梳理，如果有其他内容也需要进行分析，结果输出到 structural_analysis 中
-分析需要尽可能地详细，展示作品的结构、展示作品的逻辑，展示作品的细节，分析一定要详细，不能过于简略。
+分析需要尽可能地详细，展示作品的结构、展示作品的逻辑、展示作品的细节，分析一定要详细，不能过于简略。
 结构分析必须以数组形式返回，每个段落作为数组中的一个元素，而不是单个长字符串。
 文本应该清晰地展示作品的主要结构元素、层次关系和连接方式。
-对于复杂的结构关系，可以使用 Mermaid 图表语法来可视化展示。支持的 Mermaid 图表类型包括：flowchart（流程图）、graph（图表）、sequenceDiagram（时序图）、mindmap（思维导图）、timeline（时间线）等。
-Mermaid 代码可以直接作为 structural_analysis 数组中的一个元素，系统会自动识别并渲染为图表。
+
+结构图示
+
+对于复杂的结构关系，可以使用 Mermaid 图表语法来可视化展示，输出到 mermaid_diagrams 字段中。
+支持的 Mermaid 图表类型包括：flowchart（流程图）、graph（图表）、sequenceDiagram（时序图）、mindmap（思维导图）、timeline（时间线）等。
+Mermaid 代码应该作为独立的字符串数组元素返回在 mermaid_diagrams 字段中，不要混在 structural_analysis 中。
+每个 Mermaid 图表代码应该是完整的、可以直接渲染的代码。
 
 你将从以下15个维度对作品进行评估
 
@@ -311,5 +316,6 @@ Mermaid 代码可以直接作为 structural_analysis 数组中的一个元素，
   "strengths": ["优势1", "优势2", ...],
   "improvements": ["改进建议1", "改进建议2", ...],
   "comment": "作品评论，描述及总体评价，没有可写的就不写",
-  "structural_analysis": ["段落1", "段落2", ...]
+  "structural_analysis": ["段落1", "段落2", ...],
+  "mermaid_diagrams": ["graph TD\n    A[开端] --> B[发展]", "sequenceDiagram\n    participant A\n    A->>B: 事件", ...]
 }`

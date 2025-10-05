@@ -25,6 +25,7 @@ export interface WriterAnalysisResult {
   improvements: string[]
   comment?: string
   structural_analysis?: string[]
+  mermaid_diagrams?: string[]
 }
 
 export default function WriterAnalysisPage() {

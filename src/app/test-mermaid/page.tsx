@@ -34,15 +34,17 @@ export default function TestMermaidPage() {
     improvements: ['可以增加更多的情节反转', '某些次要人物可以更加丰满'],
     comment: '作品整体质量上乘，展现了作者对叙事结构的深刻理解。',
     structural_analysis: [
-      '作品采用了经典的三幕剧结构，同时融入了双线叙事的技巧。整体结构可以用以下流程图来表示：',
-      '```mermaid\ngraph TD\n    A[第一幕：设定] --> B[引入冲突]\n    B --> C[第二幕：对抗]\n    C --> D[情节发展]\n    D --> E[高潮点]\n    E --> F[第三幕：解决]\n    F --> G[结局]\n    \n    style A fill:#e1f5ff\n    style C fill:#fff4e1\n    style F fill:#ffe1e1\n```',
+      '作品采用了经典的三幕剧结构，同时融入了双线叙事的技巧。',
       '从结构图可以看出，作品遵循了经典的戏剧理论，同时在每个幕次中都有明确的转折点。',
-      '人物关系方面，作品构建了一个复杂的人物网络：',
-      'graph LR\n    主角 --> 导师\n    主角 --> 对手\n    主角 --> 盟友\n    对手 --> 幕后黑手\n    盟友 --> 关键人物\n    导师 -.-> 关键人物\n    \n    style 主角 fill:#ffcccc\n    style 对手 fill:#ccccff\n    style 导师 fill:#ccffcc',
+      '人物关系方面，作品构建了一个复杂的人物网络，各个角色之间的关系层次分明。',
       '这种人物关系的设计不仅增强了故事的复杂性，也为情节的推进提供了多种可能性。',
-      '时间线方面，作品采用了非线性叙事，但总体保持了清晰的逻辑：',
-      'sequenceDiagram\n    participant 现在线\n    participant 回忆线\n    participant 未来线\n    \n    现在线->>回忆线: 触发回忆\n    回忆线-->>现在线: 揭示真相\n    现在线->>未来线: 预示结局\n    未来线-->>现在线: 形成对比',
+      '时间线方面，作品采用了非线性叙事，但总体保持了清晰的逻辑。',
       '总体来说，作品的结构设计体现了作者对叙事艺术的深刻理解和娴熟运用。'
+    ],
+    mermaid_diagrams: [
+      'graph TD\n    A[第一幕：设定] --> B[引入冲突]\n    B --> C[第二幕：对抗]\n    C --> D[情节发展]\n    D --> E[高潮点]\n    E --> F[第三幕：解决]\n    F --> G[结局]\n    \n    style A fill:#e1f5ff\n    style C fill:#fff4e1\n    style F fill:#ffe1e1',
+      'graph LR\n    主角 --> 导师\n    主角 --> 对手\n    主角 --> 盟友\n    对手 --> 幕后黑手\n    盟友 --> 关键人物\n    导师 -.-> 关键人物\n    \n    style 主角 fill:#ffcccc\n    style 对手 fill:#ccccff\n    style 导师 fill:#ccffcc',
+      'sequenceDiagram\n    participant 现在线\n    participant 回忆线\n    participant 未来线\n    \n    现在线->>回忆线: 触发回忆\n    回忆线-->>现在线: 揭示真相\n    现在线->>未来线: 预示结局\n    未来线-->>现在线: 形成对比'
     ]
   }
 
@@ -54,9 +56,8 @@ export default function TestMermaidPage() {
           本页面展示了在作品结构分析中使用 Mermaid 图表的效果。
         </p>
         <p className="text-gray-600 dark:text-gray-400">
-          在 structural_analysis 字段中，系统会自动识别 Mermaid 代码（以
-          graph、flowchart、sequenceDiagram 等关键词开头，或者用 ```mermaid
-          代码块包裹），并将其渲染为可视化图表。
+          Mermaid 图表代码现在存储在独立的 mermaid_diagrams 字段中，与文本描述的
+          structural_analysis 字段分开，使数据结构更加清晰。
         </p>
       </div>
 

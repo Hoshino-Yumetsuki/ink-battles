@@ -33,36 +33,6 @@ function parseMermaidBlocks(text: string): ContentNode[] {
   return nodes
 }
 
-function isMermaidCode(text: string): boolean {
-  // Check if text contains mermaid code block markers or starts with common mermaid keywords
-  const mermaidKeywords = [
-    'graph',
-    'flowchart',
-    'sequenceDiagram',
-    'classDiagram',
-    'stateDiagram',
-    'erDiagram',
-    'journey',
-    'gantt',
-    'pie',
-    'gitGraph',
-    'mindmap',
-    'timeline'
-  ]
-  const trimmedText = text.trim()
-
-  // Check for code fence with mermaid
-  if (
-    trimmedText.startsWith('```mermaid') ||
-    trimmedText.includes('```mermaid')
-  ) {
-    return true
-  }
-
-  // Check if it starts with common mermaid keywords
-  return mermaidKeywords.some((keyword) => trimmedText.startsWith(keyword))
-}
-
 function extractMermaidCode(text: string): string {
   let code = text.trim()
 
@@ -194,6 +164,10 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
 
   const structureParas = Array.isArray(result.structural_analysis)
     ? result.structural_analysis.filter(Boolean)
+    : []
+
+  const mermaidDiagrams = Array.isArray(result.mermaid_diagrams)
+    ? result.mermaid_diagrams.filter(Boolean)
     : []
 
   return (
@@ -377,32 +351,52 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
             </CardHeader>
             <CardContent>
               <div className="prose prose-sm dark:prose-invert max-w-none">
-                {structureParas.map((paragraph: string, idx: number) => {
-                  // Check if this paragraph is a mermaid diagram
-                  if (isMermaidCode(paragraph)) {
-                    const mermaidCode = extractMermaidCode(paragraph)
-                    return (
-                      <motion.div
-                        key={`st-${idx}`}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 + idx * 0.05, duration: 0.3 }}
-                      >
-                        <MermaidDiagram code={mermaidCode} />
-                      </motion.div>
-                    )
-                  }
+                {structureParas.map((paragraph: string, idx: number) => (
+                  <motion.p
+                    key={`st-${idx}`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 + idx * 0.05, duration: 0.3 }}
+                  >
+                    {paragraph}
+                  </motion.p>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
-                  // Otherwise render as normal paragraph
+      {mermaidDiagrams.length > 0 && (
+        <motion.div
+          variants={cardVariants}
+          initial="hidden"
+          animate="visible"
+          transition={{
+            delay:
+              structureParas.length > 0 ? 0.2 : result.comment ? 0.15 : 0.1,
+            duration: 0.5,
+            ease: 'easeOut'
+          }}
+        >
+          <Card className="overflow-hidden">
+            <CardHeader>
+              <CardTitle>结构图示</CardTitle>
+              <CardDescription>作品结构的可视化展示</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {mermaidDiagrams.map((diagram: string, idx: number) => {
+                  const mermaidCode = extractMermaidCode(diagram)
                   return (
-                    <motion.p
-                      key={`st-${idx}`}
+                    <motion.div
+                      key={`md-${idx}`}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.1 + idx * 0.05, duration: 0.3 }}
                     >
-                      {paragraph}
-                    </motion.p>
+                      <MermaidDiagram code={mermaidCode} />
+                    </motion.div>
                   )
                 })}
               </div>
