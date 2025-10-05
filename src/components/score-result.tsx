@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import {
   Card,
@@ -11,12 +11,15 @@ import {
 } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import type { WriterAnalysisResult } from '@/app/page'
+import mermaid from 'mermaid'
 
 interface WriterScoreResultProps {
   result: WriterAnalysisResult
 }
 
-type ContentNode = { type: 'paragraph'; text: string }
+type ContentNode =
+  | { type: 'paragraph'; text: string }
+  | { type: 'mermaid'; code: string }
 
 function parseMermaidBlocks(text: string): ContentNode[] {
   const nodes: ContentNode[] = []
@@ -28,6 +31,103 @@ function parseMermaidBlocks(text: string): ContentNode[] {
   }
 
   return nodes
+}
+
+function isMermaidCode(text: string): boolean {
+  // Check if text contains mermaid code block markers or starts with common mermaid keywords
+  const mermaidKeywords = [
+    'graph',
+    'flowchart',
+    'sequenceDiagram',
+    'classDiagram',
+    'stateDiagram',
+    'erDiagram',
+    'journey',
+    'gantt',
+    'pie',
+    'gitGraph',
+    'mindmap',
+    'timeline'
+  ]
+  const trimmedText = text.trim()
+
+  // Check for code fence with mermaid
+  if (
+    trimmedText.startsWith('```mermaid') ||
+    trimmedText.includes('```mermaid')
+  ) {
+    return true
+  }
+
+  // Check if it starts with common mermaid keywords
+  return mermaidKeywords.some((keyword) => trimmedText.startsWith(keyword))
+}
+
+function extractMermaidCode(text: string): string {
+  let code = text.trim()
+
+  // Remove code fence markers if present
+  if (code.startsWith('```mermaid')) {
+    code = code.replace(/^```mermaid\s*\n/, '')
+  }
+  if (code.endsWith('```')) {
+    code = code.replace(/\n```$/, '')
+  }
+
+  return code
+}
+
+function MermaidDiagram({ code }: { code: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const renderDiagram = async () => {
+      if (!ref.current) return
+
+      try {
+        // Initialize mermaid with configuration
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: 'default',
+          securityLevel: 'loose',
+          fontFamily: 'inherit'
+        })
+
+        // Clear previous content
+        ref.current.innerHTML = ''
+
+        // Generate unique ID for this diagram
+        const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`
+
+        // Render the diagram
+        const { svg } = await mermaid.render(id, code)
+        ref.current.innerHTML = svg
+        setError(null)
+      } catch (err) {
+        console.error('Mermaid rendering error:', err)
+        setError('图表渲染失败，显示原始代码')
+      }
+    }
+
+    renderDiagram()
+  }, [code])
+
+  if (error) {
+    return (
+      <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg overflow-x-auto">
+        <pre className="text-sm whitespace-pre-wrap">{code}</pre>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      ref={ref}
+      className="mermaid-container flex justify-center items-center my-4 overflow-x-auto"
+      style={{ minHeight: '100px' }}
+    />
+  )
 }
 
 export default function WriterScoreResult({ result }: WriterScoreResultProps) {
@@ -276,17 +376,35 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
               <CardDescription>从文本中提取的结构分析</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="prose prose-sm dark:prose-invert">
-                {structureParas.map((paragraph: string, idx: number) => (
-                  <motion.p
-                    key={`st-${idx}`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 + idx * 0.05, duration: 0.3 }}
-                  >
-                    {paragraph}
-                  </motion.p>
-                ))}
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                {structureParas.map((paragraph: string, idx: number) => {
+                  // Check if this paragraph is a mermaid diagram
+                  if (isMermaidCode(paragraph)) {
+                    const mermaidCode = extractMermaidCode(paragraph)
+                    return (
+                      <motion.div
+                        key={`st-${idx}`}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 + idx * 0.05, duration: 0.3 }}
+                      >
+                        <MermaidDiagram code={mermaidCode} />
+                      </motion.div>
+                    )
+                  }
+
+                  // Otherwise render as normal paragraph
+                  return (
+                    <motion.p
+                      key={`st-${idx}`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 + idx * 0.05, duration: 0.3 }}
+                    >
+                      {paragraph}
+                    </motion.p>
+                  )
+                })}
               </div>
             </CardContent>
           </Card>

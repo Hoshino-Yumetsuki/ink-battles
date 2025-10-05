@@ -120,3 +120,33 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Mermaid diagram styling */
+.mermaid-container {
+  @apply bg-white dark:bg-gray-900 rounded-lg p-4;
+}
+
+.mermaid-container svg {
+  @apply max-w-full h-auto;
+}
+
+/* Adjust mermaid diagram colors for dark mode */
+.dark .mermaid-container .node rect,
+.dark .mermaid-container .node circle,
+.dark .mermaid-container .node ellipse,
+.dark .mermaid-container .node polygon {
+  @apply fill-gray-800 stroke-gray-600;
+}
+
+.dark .mermaid-container .nodeLabel,
+.dark .mermaid-container text {
+  @apply fill-gray-200;
+}
+
+.dark .mermaid-container .edgePath .path {
+  @apply stroke-gray-400;
+}
+
+.dark .mermaid-container .arrowheadPath {
+  @apply fill-gray-400;
+}
