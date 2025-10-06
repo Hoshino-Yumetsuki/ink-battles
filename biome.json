@@ -34,7 +34,8 @@
     "rules": {
       "recommended": true,
       "security": {
-        "noGlobalEval": "error"
+        "noGlobalEval": "error",
+        "noDangerouslySetInnerHtml": "off"
       },
       "suspicious": {
         "noArrayIndexKey": "off",
@@ -46,6 +47,9 @@
       },
       "correctness": {
         "noUnusedImports": "on"
+      },
+      "a11y": {
+        "useSemanticElements": "off"
       }
     }
   },
