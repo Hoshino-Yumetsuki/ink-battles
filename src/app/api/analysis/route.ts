@@ -89,7 +89,20 @@ const app = new Elysia({ aot: false }).post(
               strengths: { type: 'array', items: { type: 'string' } },
               improvements: { type: 'array', items: { type: 'string' } },
               comment: { type: 'string' },
-              structural_analysis: { type: 'array', items: { type: 'string' } }
+              structural_analysis: { type: 'array', items: { type: 'string' } },
+              mermaid_diagrams: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    type: { type: 'string' },
+                    title: { type: 'string' },
+                    code: { type: 'string' }
+                  },
+                  required: ['type', 'title', 'code'],
+                  additionalProperties: false
+                }
+              }
             },
             required: [
               'overallAssessment',
@@ -99,7 +112,8 @@ const app = new Elysia({ aot: false }).post(
               'strengths',
               'improvements',
               'comment',
-              'structural_analysis'
+              'structural_analysis',
+              'mermaid_diagrams'
             ],
             additionalProperties: false
           }

@@ -11,6 +11,12 @@ import AnalysisOptions from '@/components/analysis-options'
 import WriterScoreResult from '@/components/score-result'
 import AnimatedBackground from '@/components/animated-background'
 
+export interface MermaidDiagram {
+  type: string
+  title: string
+  code: string
+}
+
 export interface WriterAnalysisResult {
   overallScore: number
   overallAssessment: string
@@ -25,6 +31,7 @@ export interface WriterAnalysisResult {
   improvements: string[]
   comment?: string
   structural_analysis?: string[]
+  mermaid_diagrams?: MermaidDiagram[]
 }
 
 export default function WriterAnalysisPage() {
@@ -147,7 +154,8 @@ export default function WriterAnalysisPage() {
           dimensions: [],
           strengths: [],
           improvements: [],
-          structural_analysis: []
+          structural_analysis: [],
+          mermaid_diagrams: []
         }
 
         const safeData = { ...defaultResult, ...data }

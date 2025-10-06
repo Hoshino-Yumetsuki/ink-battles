@@ -120,3 +120,40 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Mermaid 图表样式 */
+.mermaid-container svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.mermaid-container .node rect,
+.mermaid-container .node circle,
+.mermaid-container .node ellipse,
+.mermaid-container .node polygon {
+  fill: hsl(var(--primary) / 0.1);
+  stroke: hsl(var(--primary));
+  stroke-width: 2px;
+}
+
+.mermaid-container .node .label {
+  color: hsl(var(--foreground));
+}
+
+.mermaid-container .edgePath .path {
+  stroke: hsl(var(--muted-foreground));
+  stroke-width: 2px;
+}
+
+.mermaid-container .edgeLabel {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.dark .mermaid-container .node rect,
+.dark .mermaid-container .node circle,
+.dark .mermaid-container .node ellipse,
+.dark .mermaid-container .node polygon {
+  fill: hsl(var(--primary) / 0.2);
+  stroke: hsl(var(--primary));
+}

@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import type { WriterAnalysisResult } from '@/app/page'
+import MermaidDiagram from '@/components/mermaid-diagram'
 
 interface WriterScoreResultProps {
   result: WriterAnalysisResult
@@ -362,6 +363,24 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
           </CardContent>
         </Card>
       </motion.div>
+
+      {result.mermaid_diagrams &&
+        result.mermaid_diagrams.length > 0 &&
+        result.mermaid_diagrams.map((diagram, index) => (
+          <motion.div
+            key={`mermaid-${index}`}
+            variants={cardVariants}
+            initial="hidden"
+            animate="visible"
+            transition={{
+              delay: result.comment ? 0.4 + index * 0.1 : 0.3 + index * 0.1,
+              duration: 0.5,
+              ease: 'easeOut'
+            }}
+          >
+            <MermaidDiagram chart={diagram.code} title={diagram.title} />
+          </motion.div>
+        ))}
     </div>
   )
 }
