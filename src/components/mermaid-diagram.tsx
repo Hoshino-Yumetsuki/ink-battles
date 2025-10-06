@@ -50,16 +50,6 @@ export default function MermaidDiagram({
         if (containerRef.current) {
           containerRef.current.innerHTML = svg
           setIsRendered(true)
-
-          const errorDivs = document.querySelectorAll('div[id^="dmermaid"]')
-          errorDivs.forEach((div) => {
-            const errorSvg = div.querySelector(
-              'svg[aria-roledescription="error"]'
-            )
-            if (errorSvg) {
-              div.remove()
-            }
-          })
         }
       } catch (err: any) {
         console.error('Mermaid 渲染错误:', err)

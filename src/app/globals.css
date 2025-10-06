@@ -157,3 +157,7 @@
   fill: hsl(var(--primary) / 0.2);
   stroke: hsl(var(--primary));
 }
+
+div[id^="dmermaid"]:has(svg[aria-roledescription="error"]) {
+  display: none;
+}
