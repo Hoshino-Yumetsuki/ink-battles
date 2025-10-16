@@ -4,12 +4,13 @@ WORKDIR /app
 
 COPY . .
 
+RUN npm install -g corepack
 RUN corepack enable
-RUN corepack prepare
+RUN corepack install -g yarn
 
 RUN export NODE_ENV=production
 
-RUN yarn install
+RUN yarn install --immutable
 RUN yarn build
 
 EXPOSE 3000

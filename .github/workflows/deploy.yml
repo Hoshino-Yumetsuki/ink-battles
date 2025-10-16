@@ -17,14 +17,15 @@ jobs:
         with:
           node-version: "lts/*"
 
-      - name: Setup Corepack
+      - name: Setup environment
         run: |
+          npm install -g corepack
           corepack enable
+          corepack install -g yarn
 
       - name: Setup
         run: |
-          corepack prepare
-          yarn install
+          yarn install --immutable
 
       - name: Build and Deploy
         env:
