@@ -8118,6 +8118,7 @@ __metadata:
     iconv-lite: "npm:^0.7.0"
     lucide-react: "npm:^0.545.0"
     mammoth: "npm:^1.11.0"
+    memoirist: "npm:^0.4.0"
     mermaid: "npm:^11.12.0"
     next: "npm:^15.5.5"
     next-themes: "npm:^0.4.6"
@@ -8746,6 +8747,13 @@ __metadata:
   version: 1.1.0
   resolution: "media-typer@npm:1.1.0"
   checksum: 10c0/7b4baa40b25964bb90e2121ee489ec38642127e48d0cc2b6baa442688d3fde6262bfdca86d6bbf6ba708784afcac168c06840c71facac70e390f5f759ac121b9
+  languageName: node
+  linkType: hard
+
+"memoirist@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "memoirist@npm:0.4.0"
+  checksum: 10c0/986426c3474abe7018edeb6a88f11ef22409de652199096565a0c5479a9b91423cb0c8513411e017061b5b8df64cc5e15ccb6e7bac3e83d416753a9698aebe4f
   languageName: node
   linkType: hard
 
