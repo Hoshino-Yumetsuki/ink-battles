@@ -20,6 +20,8 @@ interface FileUploaderProps {
   fileMeta?: { name: string; type: string; size: number } | null
 }
 
+const MAX_FILE_SIZE = 15 * 1024 * 1024
+
 export default function FileUploader({
   setFileDataUrlAction,
   isLoading,
@@ -38,9 +40,10 @@ export default function FileUploader({
   }
 
   const processFile = async (file: File) => {
-    const maxSize = 15 * 1024 * 1024 // 15MB
-    if (file.size > maxSize) {
-      toast.error('文件过大，请上传小于 15MB 的文件')
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error(
+        `文件过大，请上传小于 ${toReadableSize(MAX_FILE_SIZE)} 的文件`
+      )
       return
     }
 
@@ -168,7 +171,8 @@ export default function FileUploader({
                   点击浏览
                 </Button>
                 <p className="text-center text-xs">
-                  支持 .txt/.docx 与图片，大小不超过 15MB
+                  支持 .txt/.docx 与图片，大小不超过{' '}
+                  {toReadableSize(MAX_FILE_SIZE)}
                 </p>
               </div>
               {fileMeta && (

@@ -10,6 +10,7 @@ import LoadingProgress from '@/components/loading-progress'
 import AnalysisOptions from '@/components/analysis-options'
 import WriterScoreResult from '@/components/score-result'
 import AnimatedBackground from '@/components/animated-background'
+import { analyzeContent } from './actions/analyze'
 
 export interface MermaidDiagram {
   type: string
@@ -106,38 +107,29 @@ export default function WriterAnalysisPage() {
       }, 500)
 
       try {
-        const payload = {
-          content:
-            analysisType === 'text'
-              ? content
-              : isFileModeText
-                ? uploadedText
-                : null,
-          fileDataUrl:
-            analysisType === 'file' && !isFileModeText ? fileDataUrl : null,
-          fileMeta:
-            analysisType === 'file' && !isFileModeText ? fileMeta : null,
-          analysisType: isFileModeText ? 'text' : analysisType,
-          options: enabledOptions
+        const formData = new FormData()
+
+        const contentToSubmit =
+          analysisType === 'text' ? content : isFileModeText ? uploadedText : ''
+
+        if (contentToSubmit) {
+          formData.append('content', contentToSubmit)
         }
 
-        const response = await fetch('/api/analysis', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload)
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
-
-          throw new Error(
-            errorData.error || `HTTP ${response.status}: ${response.statusText}`
-          )
+        if (analysisType === 'file' && !isFileModeText && fileDataUrl) {
+          formData.append('fileDataUrl', fileDataUrl)
         }
 
-        const data = await response.json()
+        formData.append('analysisType', isFileModeText ? 'text' : analysisType)
+        formData.append('options', JSON.stringify(enabledOptions))
+
+        const result = await analyzeContent(formData)
+
+        if (!result.success) {
+          throw new Error(result.error || '分析失败')
+        }
+
+        const data = result.data
         if (!data || typeof data !== 'object') {
           throw new Error('返回的分析结果格式无效')
         }
