@@ -11,6 +11,7 @@ import AnalysisOptions from '@/components/analysis-options'
 import WriterScoreResult from '@/components/score-result'
 import AnimatedBackground from '@/components/animated-background'
 import { analyzeContent } from './actions/analyze'
+import { encodeDataUrlToBase32768 } from '@/utils/base32768'
 
 export interface MermaidDiagram {
   type: string
@@ -117,7 +118,8 @@ export default function WriterAnalysisPage() {
         }
 
         if (analysisType === 'file' && !isFileModeText && fileDataUrl) {
-          formData.append('fileDataUrl', fileDataUrl)
+          const base32768DataUrl = encodeDataUrlToBase32768(fileDataUrl)
+          formData.append('fileDataUrl', base32768DataUrl)
         }
 
         formData.append('analysisType', isFileModeText ? 'text' : analysisType)
