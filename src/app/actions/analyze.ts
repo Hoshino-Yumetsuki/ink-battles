@@ -4,7 +4,6 @@ import { generateText } from 'xsai'
 import { buildPrompt } from '@/prompts'
 import { calculateOverallScore } from '@/utils/score-calculator'
 import { logger } from '@/utils/logger'
-import { decodeBase32768ToDataUrl } from '@/utils/base32768'
 
 interface LlmApiConfig {
   baseUrl: string
@@ -167,12 +166,7 @@ export async function analyzeContent(
           throw new Error('Invalid file data URL')
         }
 
-        let processedDataUrl = fileDataUrl
-        if (fileDataUrl.includes(';base32768,')) {
-          processedDataUrl = decodeBase32768ToDataUrl(fileDataUrl)
-        }
-
-        const isImage = processedDataUrl.startsWith('data:image/')
+        const isImage = fileDataUrl.startsWith('data:image/')
         if (!isImage) {
           throw new Error('Invalid file type')
         }
@@ -183,7 +177,7 @@ export async function analyzeContent(
             role: 'user',
             content: [
               { type: 'text', text: '请分析此图片中的内容' },
-              { type: 'image_url', image_url: { url: processedDataUrl } }
+              { type: 'image_url', image_url: { url: fileDataUrl } }
             ]
           }
         ]
