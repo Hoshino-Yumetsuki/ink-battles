@@ -16,6 +16,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "lts/*"
+          cache: "yarn"
 
       - name: Setup environment
         run: |
@@ -26,6 +27,17 @@ jobs:
       - name: Setup
         run: |
           yarn install --immutable
+
+      - name: Cache Next.js and OpenNext build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/.next/cache
+            ${{ github.workspace }}/.open-next
+          key: ${{ runner.os }}-nextjs-opennext-${{ hashFiles('**/yarn.lock') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-opennext-${{ hashFiles('**/yarn.lock') }}-
+            ${{ runner.os }}-nextjs-opennext-
 
       - name: Build and Deploy
         env:
