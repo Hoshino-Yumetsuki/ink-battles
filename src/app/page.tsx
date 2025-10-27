@@ -38,16 +38,12 @@ export interface WriterAnalysisResult {
 export default function WriterAnalysisPage() {
   const [content, setContent] = useState<string>('')
   const [uploadedText, setUploadedText] = useState<string>('')
-  const [fileDataUrl, setFileDataUrl] = useState<string | null>(null)
+  const [file, setFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [analysisType, setAnalysisType] = useState<'text' | 'file'>('text')
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [progress, setProgress] = useState<number>(0)
   const [result, setResult] = useState<WriterAnalysisResult | null>(null)
-  const [fileMeta, setFileMeta] = useState<{
-    name: string
-    type: string
-    size: number
-  } | null>(null)
   const [enabledOptions, setEnabledOptions] = useState<{
     [key: string]: boolean
   }>({
@@ -64,15 +60,23 @@ export default function WriterAnalysisPage() {
     setEnabledOptions({ ...enabledOptions, [key]: value })
   }
 
-  useEffect(() => {}, [])
+  useEffect(() => {
+    if (file?.type.startsWith('image/')) {
+      const url = URL.createObjectURL(file)
+      setPreviewUrl(url)
+      return () => URL.revokeObjectURL(url)
+    } else {
+      setPreviewUrl(null)
+    }
+  }, [file])
 
   const handleAnalyze = async () => {
     const isFileModeText =
       analysisType === 'file' &&
-      !!fileMeta &&
-      (fileMeta.type === 'text/plain' ||
-        fileMeta.name.toLowerCase().endsWith('.txt') ||
-        fileMeta.name.toLowerCase().endsWith('.docx'))
+      !!file &&
+      (file.type === 'text/plain' ||
+        file.name.toLowerCase().endsWith('.txt') ||
+        file.name.toLowerCase().endsWith('.docx'))
 
     if (analysisType === 'text' && !content.trim()) {
       toast.error('文本内容为空，请先输入或正确导入文本')
@@ -84,7 +88,7 @@ export default function WriterAnalysisPage() {
       return
     }
 
-    if (analysisType === 'file' && !isFileModeText && !fileDataUrl) {
+    if (analysisType === 'file' && !isFileModeText && !file) {
       toast.error('请先上传图片文件再进行分析')
       return
     }
@@ -116,8 +120,8 @@ export default function WriterAnalysisPage() {
           formData.append('content', contentToSubmit)
         }
 
-        if (analysisType === 'file' && !isFileModeText && fileDataUrl) {
-          formData.append('fileDataUrl', fileDataUrl)
+        if (analysisType === 'file' && !isFileModeText && file) {
+          formData.append('file', file)
         }
 
         formData.append('analysisType', isFileModeText ? 'text' : analysisType)
@@ -188,10 +192,9 @@ export default function WriterAnalysisPage() {
           <ContentInputCard
             content={content}
             setContentAction={setContent}
-            setFileDataUrlAction={setFileDataUrl}
-            fileDataUrl={fileDataUrl}
-            setFileMetaAction={setFileMeta}
-            fileMeta={fileMeta}
+            setFileAction={setFile}
+            file={file}
+            previewUrl={previewUrl}
             isLoading={isLoading}
             onAnalyzeAction={handleAnalyze}
             analysisType={analysisType}

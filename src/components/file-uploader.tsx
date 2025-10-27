@@ -9,27 +9,23 @@ import Image from 'next/image'
 import { decodeTextFromFile } from '@/utils/decode-text'
 
 interface FileUploaderProps {
-  setFileDataUrlAction: (url: string | null) => void
+  setFileAction: (file: File | null) => void
   isLoading: boolean
   onAnalyzeAction: () => void
-  setFileMetaAction?: (
-    meta: { name: string; type: string; size: number } | null
-  ) => void
   setUploadedTextAction?: (content: string) => void
-  fileDataUrl?: string | null
-  fileMeta?: { name: string; type: string; size: number } | null
+  file?: File | null
+  previewUrl?: string | null
 }
 
 const MAX_FILE_SIZE = 15 * 1024 * 1024
 
 export default function FileUploader({
-  setFileDataUrlAction,
+  setFileAction,
   isLoading,
   onAnalyzeAction,
-  setFileMetaAction,
   setUploadedTextAction,
-  fileDataUrl,
-  fileMeta
+  file,
+  previewUrl
 }: FileUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -39,58 +35,42 @@ export default function FileUploader({
     return `${(size / (1024 * 1024)).toFixed(1)}MB`
   }
 
-  const processFile = async (file: File) => {
-    if (file.size > MAX_FILE_SIZE) {
+  const processFile = async (selectedFile: File) => {
+    if (selectedFile.size > MAX_FILE_SIZE) {
       toast.error(
         `文件过大，请上传小于 ${toReadableSize(MAX_FILE_SIZE)} 的文件`
       )
       return
     }
 
-    const isImage = file.type.startsWith('image/')
+    const isImage = selectedFile.type.startsWith('image/')
     const isText =
-      file.type === 'text/plain' || file.name.toLowerCase().endsWith('.txt')
-    const isDocx = file.name.toLowerCase().endsWith('.docx')
+      selectedFile.type === 'text/plain' ||
+      selectedFile.name.toLowerCase().endsWith('.txt')
+    const isDocx = selectedFile.name.toLowerCase().endsWith('.docx')
     if (!isImage && !isText && !isDocx) {
       toast.error('仅支持 .txt/.docx 或图片')
       return
     }
 
+    // 对于文本文件，提取文本内容
     if (isText || isDocx) {
       try {
-        const decoded = await decodeTextFromFile(file)
+        const decoded = await decodeTextFromFile(selectedFile)
         if (!decoded || !decoded.trim()) {
           toast.error('无法从文件中提取文本')
           return
         }
         setUploadedTextAction?.(decoded)
-
-        const meta = { name: file.name, type: file.type, size: file.size }
-        setFileMetaAction?.(meta)
-
-        const reader = new FileReader()
-        reader.onload = (e) => {
-          if (e.target && typeof e.target.result === 'string') {
-            setFileDataUrlAction(e.target.result)
-          }
-        }
-        reader.readAsDataURL(file)
       } catch (e: any) {
         console.error(e)
         toast.error('文本解码失败，请重试或更换文件编码')
+        return
       }
-      return
     }
 
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      if (e.target && typeof e.target.result === 'string') {
-        setFileDataUrlAction(e.target.result)
-        const meta = { name: file.name, type: file.type, size: file.size }
-        setFileMetaAction?.(meta)
-      }
-    }
-    reader.readAsDataURL(file)
+    // 直接保存 File 对象，不转换为 base64
+    setFileAction(selectedFile)
   }
 
   const handleFileChange = async (
@@ -113,8 +93,7 @@ export default function FileUploader({
   const handleRemoveFile = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setFileMetaAction?.(null)
-    setFileDataUrlAction(null)
+    setFileAction(null)
     setUploadedTextAction?.('')
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
@@ -135,11 +114,7 @@ export default function FileUploader({
           accept="image/*,.txt,text/plain,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           onChange={handleFileChange}
         />
-        {!(
-          (fileMeta?.type?.startsWith('image/') ||
-            (fileDataUrl?.startsWith('data:image/') ?? false)) &&
-          fileDataUrl
-        ) ? (
+        {!(file?.type?.startsWith('image/') && previewUrl) ? (
           <div className="relative w-full max-w-md mx-auto">
             <div className="flex flex-col items-center justify-center w-full h-full text-center py-8">
               <div className="mx-auto h-12 w-12 flex items-center justify-center text-gray-400">
@@ -175,13 +150,13 @@ export default function FileUploader({
                   {toReadableSize(MAX_FILE_SIZE)}
                 </p>
               </div>
-              {fileMeta && (
+              {file && (
                 <div className="mt-2 text-xs text-muted-foreground">
-                  已选择：{fileMeta.name}（{toReadableSize(fileMeta.size)}）
+                  已选择：{file.name}（{toReadableSize(file.size)}）
                 </div>
               )}
             </div>
-            {fileMeta && (
+            {file && (
               <Button
                 variant="outline"
                 size="sm"
@@ -196,10 +171,10 @@ export default function FileUploader({
         ) : (
           <div className="flex flex-col items-center justify-center gap-3 w-full">
             <div className="relative w-full max-w-md mx-auto">
-              {fileDataUrl && (
+              {previewUrl && (
                 <div className="relative w-full h-[300px] flex items-center justify-center">
                   <Image
-                    src={fileDataUrl}
+                    src={previewUrl}
                     alt="预览图片"
                     fill
                     style={{ objectFit: 'contain' }}
@@ -218,16 +193,11 @@ export default function FileUploader({
                 ×
               </Button>
             </div>
-            {!(
-              (fileMeta?.type?.startsWith('image/') ||
-                (fileDataUrl?.startsWith('data:image/') ?? false)) &&
-              fileDataUrl
-            ) &&
-              fileMeta && (
-                <div className="text-xs text-muted-foreground">
-                  已选择文件：{fileMeta.name}（{toReadableSize(fileMeta.size)}）
-                </div>
-              )}
+            {!(file?.type?.startsWith('image/') && previewUrl) && file && (
+              <div className="text-xs text-muted-foreground">
+                已选择文件：{file.name}（{toReadableSize(file.size)}）
+              </div>
+            )}
           </div>
         )}
       </label>
@@ -236,7 +206,7 @@ export default function FileUploader({
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
             onClick={onAnalyzeAction}
-            disabled={isLoading || !fileMeta}
+            disabled={isLoading || !file}
             className="relative overflow-hidden"
           >
             {isLoading ? (

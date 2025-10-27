@@ -57,7 +57,7 @@ export async function analyzeContent(
 ): Promise<AnalysisResult> {
   try {
     const content = formData.get('content') as string | null
-    const fileDataUrl = formData.get('fileDataUrl') as string | null
+    const file = formData.get('file') as File | null
     const analysisType = formData.get('analysisType') as 'text' | 'file'
     const optionsJson = formData.get('options') as string | null
     const options = optionsJson ? JSON.parse(optionsJson) : {}
@@ -73,7 +73,7 @@ export async function analyzeContent(
       return { success: false, error: '文本内容不能为空' }
     }
 
-    if (analysisType === 'file' && !fileDataUrl) {
+    if (analysisType === 'file' && !file) {
       return { success: false, error: '文件/图片数据不能为空' }
     }
 
@@ -158,18 +158,18 @@ export async function analyzeContent(
           { role: 'user', content: content }
         ]
       } else {
-        if (
-          !fileDataUrl ||
-          typeof fileDataUrl !== 'string' ||
-          !fileDataUrl.startsWith('data:')
-        ) {
-          throw new Error('Invalid file data URL')
+        if (!file || !(file instanceof File)) {
+          throw new Error('Invalid file object')
         }
 
-        const isImage = fileDataUrl.startsWith('data:image/')
+        const isImage = file.type.startsWith('image/')
         if (!isImage) {
           throw new Error('Invalid file type')
         }
+
+        const arrayBuffer = await file.arrayBuffer()
+        const base64 = Buffer.from(arrayBuffer).toString('base64')
+        const fileDataUrl = `data:${file.type};base64,${base64}`
 
         messages = [
           { role: 'system', content: systemPrompt },

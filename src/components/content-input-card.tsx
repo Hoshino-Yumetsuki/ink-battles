@@ -22,12 +22,9 @@ import FileUploader from './file-uploader'
 interface ContentInputCardProps {
   content: string
   setContentAction: (content: string) => void
-  setFileDataUrlAction: (url: string | null) => void
-  fileDataUrl: string | null
-  setFileMetaAction?: (
-    meta: { name: string; type: string; size: number } | null
-  ) => void
-  fileMeta?: { name: string; type: string; size: number } | null
+  setFileAction: (file: File | null) => void
+  file: File | null
+  previewUrl: string | null
   isLoading: boolean
   onAnalyzeAction: () => void
   analysisType: 'text' | 'file'
@@ -38,10 +35,9 @@ interface ContentInputCardProps {
 export default function ContentInputCard({
   content,
   setContentAction,
-  setFileDataUrlAction,
-  fileDataUrl,
-  setFileMetaAction,
-  fileMeta,
+  setFileAction,
+  file,
+  previewUrl,
   isLoading,
   onAnalyzeAction,
   analysisType,
@@ -109,10 +105,9 @@ export default function ContentInputCard({
               transition={{ duration: 0.2, delay: 0.1 }}
             >
               <FileUploader
-                setFileDataUrlAction={setFileDataUrlAction}
-                fileDataUrl={fileDataUrl}
-                setFileMetaAction={setFileMetaAction}
-                fileMeta={fileMeta}
+                setFileAction={setFileAction}
+                file={file}
+                previewUrl={previewUrl}
                 isLoading={isLoading}
                 onAnalyzeAction={onAnalyzeAction}
                 setUploadedTextAction={setUploadedTextAction}
