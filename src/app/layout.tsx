@@ -3,6 +3,7 @@ import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 import Navbar from '@/components/navbar'
+import Footer from '@/components/footer'
 import { ThemeProvider } from '@/components/theme-provider'
 import ErrorBoundary from '@/components/error-boundary'
 
@@ -30,6 +31,7 @@ export default function RootLayout({
           <ErrorBoundary>
             <Navbar />
             <main className="flex-1">{children}</main>
+            <Footer />
           </ErrorBoundary>
         </ThemeProvider>
       </body>

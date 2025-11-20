@@ -7,6 +7,8 @@ import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { decodeTextFromFile } from '@/utils/decode-text'
+import { UploadCloud, X, FileText, Loader2, Sparkles } from 'lucide-react'
+import { cn } from '@/utils/utils'
 
 interface FileUploaderProps {
   setFileAction: (file: File | null) => void
@@ -101,9 +103,14 @@ export default function FileUploader({
   }
 
   return (
-    <div className="flex flex-col gap-4 w-full">
+    <div className="flex flex-col h-full w-full">
       <label
-        className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-md p-6 flex flex-col items-center justify-center cursor-pointer w-full min-h-[240px]"
+        className={cn(
+          'relative flex-1 border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer w-full transition-all duration-200 group min-h-[400px]',
+          file
+            ? 'border-primary/50 bg-primary/5'
+            : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-accent/50'
+        )}
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
       >
@@ -114,131 +121,80 @@ export default function FileUploader({
           accept="image/*,.txt,text/plain,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           onChange={handleFileChange}
         />
-        {!(file?.type?.startsWith('image/') && previewUrl) ? (
-          <div className="relative w-full max-w-md mx-auto">
-            <div className="flex flex-col items-center justify-center w-full h-full text-center py-8">
-              <div className="mx-auto h-12 w-12 flex items-center justify-center text-gray-400">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="48"
-                  height="48"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-label="上传文件图标"
-                  role="img"
-                >
-                  <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
-                  <path d="M12 12v9"></path>
-                  <path d="m16 16-4-4-4 4"></path>
-                </svg>
-              </div>
-              <div className="mt-4 flex flex-col items-center justify-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                <p className="text-center">拖拽文件或图片至此，或者</p>
-                <Button
-                  variant="ghost"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="my-2 px-4"
-                >
-                  点击浏览
-                </Button>
-                <p className="text-center text-xs">
-                  支持 .txt/.docx 与图片，大小不超过{' '}
-                  {toReadableSize(MAX_FILE_SIZE)}
-                </p>
-              </div>
-              {file && (
-                <div className="mt-2 text-xs text-muted-foreground">
-                  已选择：{file.name}（{toReadableSize(file.size)}）
-                </div>
-              )}
+
+        {!file ? (
+          <div className="flex flex-col items-center justify-center text-center space-y-4">
+            <div className="p-4 rounded-full bg-muted group-hover:bg-background transition-colors shadow-sm">
+              <UploadCloud className="w-10 h-10 text-muted-foreground group-hover:text-primary transition-colors" />
             </div>
-            {file && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="absolute top-2 right-2 bg-white/80 dark:bg-black/70 rounded-full p-1 w-8 h-8 flex items-center justify-center"
-                onClick={(e) => handleRemoveFile(e)}
-                aria-label="移除文件"
-              >
-                ×
-              </Button>
-            )}
+            <div className="space-y-2">
+              <p className="text-lg font-medium text-foreground">
+                点击或拖拽文件到此处
+              </p>
+              <p className="text-sm text-muted-foreground">
+                支持 .txt, .docx 文档或图片格式
+              </p>
+            </div>
+            <div className="text-xs text-muted-foreground/70 bg-muted/50 px-3 py-1 rounded-full">
+              最大支持 {toReadableSize(MAX_FILE_SIZE)}
+            </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center gap-3 w-full">
-            <div className="relative w-full max-w-md mx-auto">
-              {previewUrl && (
-                <div className="relative w-full h-[300px] flex items-center justify-center">
-                  <Image
-                    src={previewUrl}
-                    alt="预览图片"
-                    fill
-                    style={{ objectFit: 'contain' }}
-                    className="mx-auto rounded-md shadow-md"
-                  />
+          <div className="w-full h-full flex flex-col items-center justify-center">
+            {previewUrl ? (
+              <div className="relative w-full h-full min-h-[200px] flex items-center justify-center">
+                <Image
+                  src={previewUrl}
+                  alt="预览图片"
+                  fill
+                  style={{ objectFit: 'contain' }}
+                  className="rounded-lg shadow-sm"
+                />
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-4 p-8">
+                <FileText className="w-16 h-16 text-primary" />
+                <div className="text-center">
+                  <p className="font-medium text-lg break-all line-clamp-2">
+                    {file.name}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {toReadableSize(file.size)}
+                  </p>
                 </div>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                className="absolute top-2 right-2 bg-white/80 dark:bg-black/70 rounded-full p-1 w-8 h-8 flex items-center justify-center"
-                onClick={(e) => handleRemoveFile(e)}
-                aria-label="移除文件"
-                disabled={isLoading}
-              >
-                ×
-              </Button>
-            </div>
-            {!(file?.type?.startsWith('image/') && previewUrl) && file && (
-              <div className="text-xs text-muted-foreground">
-                已选择文件：{file.name}（{toReadableSize(file.size)}）
               </div>
             )}
+
+            <Button
+              variant="destructive"
+              size="icon"
+              className="absolute top-4 right-4 rounded-full shadow-md hover:scale-110 transition-transform"
+              onClick={handleRemoveFile}
+            >
+              <X className="w-4 h-4" />
+            </Button>
           </div>
         )}
       </label>
 
-      <div className="flex justify-end mt-2">
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+      <div className="mt-6">
+        <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
           <Button
             onClick={onAnalyzeAction}
             disabled={isLoading || !file}
-            className="relative overflow-hidden"
+            className="w-full h-12 text-lg font-medium shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+            size="lg"
           >
             {isLoading ? (
-              <span className="flex items-center">
-                <motion.span
-                  animate={{ rotate: 360 }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: 'linear'
-                  }}
-                  className="inline-block mr-2"
-                >
-                  ⟳
-                </motion.span>
-                分析中...
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                正在深入分析...
               </span>
             ) : (
-              <>
-                <motion.span
-                  whileHover={{ x: 2 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  开始分析
-                </motion.span>
-                <motion.span
-                  className="absolute inset-0 bg-white/10"
-                  initial={{ x: '-100%' }}
-                  whileHover={{ x: '100%' }}
-                  transition={{ duration: 0.5, ease: 'easeOut' }}
-                />
-              </>
+              <span className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                开始分析
+              </span>
             )}
           </Button>
         </motion.div>

@@ -13,7 +13,10 @@ export default function Navbar() {
   const [lastScrollY, setLastScrollY] = useState(0)
   const logoTitleId = useId()
 
-  const navItems = [{ label: '首页', path: '/' }]
+  const navItems = [
+    { label: '首页', path: '/' },
+    { label: '使用指南', path: '/guide' }
+  ]
 
   useMotionValueEvent(scrollY, 'change', (latest) => {
     // 向下滚动超过10px时隐藏，向上滚动时显示
