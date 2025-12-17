@@ -8378,7 +8378,6 @@ __metadata:
     iconv-lite: "npm:^0.7.1"
     lucide-react: "npm:^0.561.0"
     mammoth: "npm:^1.11.0"
-    memoirist: "npm:^0.4.0"
     mermaid: "npm:^11.12.2"
     next: "npm:^16.0.10"
     next-themes: "npm:^0.4.6"

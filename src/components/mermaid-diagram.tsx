@@ -85,7 +85,7 @@ export default function MermaidDiagram({
           ) : (
             <div
               ref={containerRef}
-              className="mermaid-container flex justify-center items-center min-h-[200px] cursor-pointer hover:opacity-80 transition-opacity"
+              className="mermaid-container flex justify-center items-center min-h-50 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => setIsZoomed(true)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {

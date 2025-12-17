@@ -11,7 +11,6 @@ import AnalysisOptions from '@/components/analysis-options'
 import WriterScoreResult from '@/components/score-result'
 import AnimatedBackground from '@/components/animated-background'
 import FeaturesSection from '@/components/features-section'
-import { analyzeContent } from './actions/analyze'
 
 export interface MermaidDiagram {
   type: string
@@ -128,38 +127,83 @@ export default function WriterAnalysisPage() {
         formData.append('analysisType', isFileModeText ? 'text' : analysisType)
         formData.append('options', JSON.stringify(enabledOptions))
 
-        const result = await analyzeContent(formData)
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          body: formData
+        })
 
-        if (!result.success) {
-          throw new Error(result.error || '分析失败')
+        if (!response.ok) {
+          throw new Error(`请求失败: ${response.status}`)
         }
 
-        const data = result.data
-        if (!data || typeof data !== 'object') {
-          throw new Error('返回的分析结果格式无效')
-        }
-        if (!('dimensions' in data) || !Array.isArray(data.dimensions)) {
-          toast.warning('分析数据不完整，部分功能可能受到影响')
-          data.dimensions = data.dimensions || []
+        if (!response.body) {
+          throw new Error('响应体为空')
         }
 
-        const defaultResult: WriterAnalysisResult = {
-          overallScore: 0,
-          overallAssessment: '暂无整体评估',
-          title: '分析结果',
-          ratingTag: '未知',
-          dimensions: [],
-          strengths: [],
-          improvements: [],
-          structural_analysis: [],
-          mermaid_diagrams: []
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+
+        while (true) {
+          const { done, value } = await reader.read()
+
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''
+
+          for (const line of lines) {
+            if (!line.trim()) continue
+
+            try {
+              const message = JSON.parse(line)
+
+              if (message.type === 'heartbeat') {
+                console.log(
+                  '收到心跳:',
+                  new Date(message.timestamp).toLocaleTimeString()
+                )
+              } else if (message.type === 'progress') {
+                console.log('进度:', message.message)
+              } else if (message.type === 'result' && message.success) {
+                const data = message.data
+                if (!data || typeof data !== 'object') {
+                  throw new Error('返回的分析结果格式无效')
+                }
+                if (
+                  !('dimensions' in data) ||
+                  !Array.isArray(data.dimensions)
+                ) {
+                  toast.warning('分析数据不完整，部分功能可能受到影响')
+                  data.dimensions = data.dimensions || []
+                }
+
+                const defaultResult: WriterAnalysisResult = {
+                  overallScore: 0,
+                  overallAssessment: '暂无整体评估',
+                  title: '分析结果',
+                  ratingTag: '未知',
+                  dimensions: [],
+                  strengths: [],
+                  improvements: [],
+                  structural_analysis: [],
+                  mermaid_diagrams: []
+                }
+
+                const safeData = { ...defaultResult, ...data }
+
+                clearInterval(progressInterval)
+                setProgress(100)
+                setResult(safeData)
+              } else if (message.type === 'error') {
+                throw new Error(message.error || '分析失败')
+              }
+            } catch (parseError) {
+              console.warn('解析消息失败:', line, parseError)
+            }
+          }
         }
-
-        const safeData = { ...defaultResult, ...data }
-
-        clearInterval(progressInterval)
-        setProgress(100)
-        setResult(safeData)
       } catch (error: any) {
         console.error('Analysis data error:', error)
         toast.error(`分析错误: ${error?.message || '未知错误'}`)
@@ -175,7 +219,7 @@ export default function WriterAnalysisPage() {
 
   return (
     <div className="w-full">
-      <div className="max-w-[1200px] w-full mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-300 w-full mx-auto px-4 sm:px-6 py-8">
         <PageHeader />
 
         <div className="mb-16" id="analysis-tool">
@@ -303,7 +347,7 @@ export default function WriterAnalysisPage() {
         </div>
       </div>
 
-      <div className="max-w-[1200px] w-full mx-auto px-4 sm:px-6">
+      <div className="max-w-300 w-full mx-auto px-4 sm:px-6">
         <FeaturesSection />
       </div>
 
