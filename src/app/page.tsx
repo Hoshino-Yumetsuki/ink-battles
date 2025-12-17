@@ -11,7 +11,7 @@ import AnalysisOptions from '@/components/analysis-options'
 import WriterScoreResult from '@/components/score-result'
 import AnimatedBackground from '@/components/animated-background'
 import FeaturesSection from '@/components/features-section'
-import { analyzeContent } from './actions/analyze'
+import { handleStreamResponse } from '@/utils/stream-handler'
 
 export interface MermaidDiagram {
   type: string
@@ -128,7 +128,30 @@ export default function WriterAnalysisPage() {
         formData.append('analysisType', isFileModeText ? 'text' : analysisType)
         formData.append('options', JSON.stringify(enabledOptions))
 
-        const result = await analyzeContent(formData)
+        // Use streaming API with heartbeat support
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          body: formData
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        if (!response.body) {
+          throw new Error('响应体为空')
+        }
+
+        // Handle the stream with heartbeat callback
+        const result = await handleStreamResponse(
+          response.body,
+          (timestamp) => {
+            console.log(
+              'Heartbeat received:',
+              new Date(timestamp).toISOString()
+            )
+          }
+        )
 
         if (!result.success) {
           throw new Error(result.error || '分析失败')
