@@ -28,7 +28,11 @@ function isValidLlmApiConfig(config: LlmApiConfig): boolean {
 
 export const maxDuration = 300 // 最大执行时间 5 分钟
 
-const app = new Elysia({ prefix: '/api/analyze' }).post(
+const app = new Elysia({
+  prefix: '/api/analyze',
+  aot: false,
+  normalize: false
+}).post(
   '/',
   async ({ request, set }) => {
     try {
