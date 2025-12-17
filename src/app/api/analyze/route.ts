@@ -1,3 +1,11 @@
+/**
+ * Analysis API Route with Streaming and Heartbeat Support
+ *
+ * This module implements a streaming HTTP endpoint to handle long-running
+ * AI analysis requests without timing out on Cloudflare's 100-second limit.
+ * It sends periodic heartbeat messages to keep the connection alive.
+ */
+
 import type { NextRequest } from 'next/server'
 import { generateText } from 'xsai'
 import { buildPrompt } from '@/prompts'
@@ -61,6 +69,16 @@ interface ResultMessage {
   result: AnalysisResult
 }
 
+/**
+ * POST /api/analyze - Streaming analysis endpoint with heartbeat support
+ *
+ * This endpoint prevents Cloudflare 524 timeout errors by sending periodic
+ * heartbeat messages while processing long-running LLM requests (>100 seconds).
+ *
+ * The response is a stream of JSON-delimited messages:
+ * - Heartbeat messages: {"type":"heartbeat","timestamp":1234567890}
+ * - Result message: {"type":"result","result":{...}}
+ */
 export async function POST(request: NextRequest) {
   const encoder = new TextEncoder()
 
@@ -69,7 +87,8 @@ export async function POST(request: NextRequest) {
       let heartbeatInterval: NodeJS.Timeout | null = null
 
       try {
-        // Start heartbeat to keep connection alive
+        // Start heartbeat to keep connection alive and prevent 524 timeout
+        // Sends a heartbeat message every 15 seconds during processing
         heartbeatInterval = setInterval(() => {
           const heartbeat: HeartbeatMessage = {
             type: 'heartbeat',

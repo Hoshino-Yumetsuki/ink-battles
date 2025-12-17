@@ -1,3 +1,10 @@
+/**
+ * Stream Handler Utility
+ *
+ * Handles streaming responses from the /api/analyze endpoint,
+ * processing both heartbeat messages and the final analysis result.
+ */
+
 interface AnalysisResult {
   success: boolean
   data?: {
@@ -35,6 +42,13 @@ interface ResultMessage {
 
 type StreamMessage = HeartbeatMessage | ResultMessage
 
+/**
+ * Processes a streaming response from the analysis API
+ *
+ * @param stream - ReadableStream from fetch response body
+ * @param onHeartbeat - Optional callback invoked when heartbeat messages are received
+ * @returns Promise that resolves to the final AnalysisResult
+ */
 export async function handleStreamResponse(
   stream: ReadableStream<Uint8Array>,
   onHeartbeat?: (timestamp: number) => void
