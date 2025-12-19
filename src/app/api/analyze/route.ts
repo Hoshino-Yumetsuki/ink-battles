@@ -76,8 +76,7 @@ export async function POST(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         const sendHeartbeat = () => {
-          const heartbeat =
-            `${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n`
+          const heartbeat = `${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n`
           controller.enqueue(encoder.encode(heartbeat))
         }
 

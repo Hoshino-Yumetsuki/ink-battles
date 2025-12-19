@@ -106,7 +106,7 @@ export default function FileUploader({
     <div className="flex flex-col h-full w-full">
       <label
         className={cn(
-          'relative flex-1 border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer w-full transition-all duration-200 group min-h-[400px]',
+          'relative flex-1 border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer w-full transition-all duration-200 group min-h-100',
           file
             ? 'border-primary/50 bg-primary/5'
             : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-accent/50'
@@ -142,7 +142,7 @@ export default function FileUploader({
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center">
             {previewUrl ? (
-              <div className="relative w-full h-full min-h-[200px] flex items-center justify-center">
+              <div className="relative w-full h-full min-h-50 flex items-center justify-center">
                 <Image
                   src={previewUrl}
                   alt="预览图片"

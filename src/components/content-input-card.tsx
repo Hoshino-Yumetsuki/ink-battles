@@ -95,7 +95,7 @@ export default function ContentInputCard({
             >
               <Textarea
                 placeholder="请在此处粘贴您的作品全文... (建议 500 字以上以获得更准确的分析)"
-                className="flex-1 min-h-[400px] resize-none p-6 text-base leading-relaxed border-muted-foreground/20 focus-visible:ring-primary/30 transition-all duration-300 bg-background/50"
+                className="flex-1 min-h-100 resize-none p-6 text-base leading-relaxed border-muted-foreground/20 focus-visible:ring-primary/30 transition-all duration-300 bg-background/50"
                 value={content}
                 onChange={(e) => setContentAction(e.target.value)}
                 disabled={isLoading}

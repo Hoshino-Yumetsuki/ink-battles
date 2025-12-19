@@ -8,8 +8,8 @@ export default function PageHeader() {
     <div className="relative py-8 mb-4">
       {/* 背景装饰 */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary/5 rounded-full blur-3xl opacity-50" />
-        <div className="absolute top-20 left-1/3 w-[300px] h-[300px] bg-blue-500/5 rounded-full blur-3xl opacity-30" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-150 h-100 bg-primary/5 rounded-full blur-3xl opacity-50" />
+        <div className="absolute top-20 left-1/3 w-75 h-75 bg-blue-500/5 rounded-full blur-3xl opacity-30" />
       </div>
 
       <motion.div
@@ -53,6 +53,23 @@ export default function PageHeader() {
             className="text-primary hover:text-primary/80 transition-colors font-medium hover:underline underline-offset-4"
           >
             iykrzu 的作家战力分析
+          </a>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="flex items-center gap-2 text-xs text-muted-foreground bg-background/50 backdrop-blur-sm px-3 py-1 rounded-full border border-border/50 shadow-sm"
+        >
+          <LinkIcon className="w-3 h-3" />
+          <a
+            href="https://afdian.com/a/q78kg"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:text-primary/80 transition-colors font-medium hover:underline underline-offset-4"
+          >
+            支持我们 (爱发电)
           </a>
         </motion.div>
 
