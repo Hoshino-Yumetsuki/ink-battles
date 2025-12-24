@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server'
-import { generateText } from 'xsai'
+import { generateText, streamText } from 'xsai'
 import { buildPrompt } from '@/prompts'
 import { calculateOverallScore } from '@/utils/score-calculator'
 import { logger } from '@/utils/logger'
@@ -10,6 +10,7 @@ interface LlmApiConfig {
   model: string
   temperature: number
   maxTokens: number
+  useStreaming: boolean
 }
 
 function getLlmApiConfig(): LlmApiConfig {
@@ -18,7 +19,8 @@ function getLlmApiConfig(): LlmApiConfig {
     apiKey: String(process.env.OPENAI_API_KEY),
     model: String(process.env.MODEL),
     temperature: Number(process.env.TEMPERATURE) || 1.2,
-    maxTokens: Number(process.env.MAX_TOKENS) || 65536
+    maxTokens: Number(process.env.MAX_TOKENS) || 65536,
+    useStreaming: process.env.USE_STREAMING === 'true'
   }
 }
 
@@ -154,7 +156,6 @@ export async function POST(request: NextRequest) {
             response_format: responseFormat
           }
 
-          let generatedText: string
           let messages: any[]
 
           if (analysisType === 'text') {
@@ -200,8 +201,36 @@ export async function POST(request: NextRequest) {
             '\n'
           controller.enqueue(encoder.encode(progressMsg))
 
-          const { text } = await generateText(genOptions)
-          generatedText = text as string
+          let generatedText: string
+
+          if (apiConfig.useStreaming) {
+            // Use streaming mode
+            const streamResult = streamText(genOptions)
+
+            // Collect the full text from the stream
+            const textChunks: string[] = []
+            const reader = streamResult.textStream.getReader()
+
+            try {
+              while (true) {
+                const { done, value } = await reader.read()
+                if (done) break
+                textChunks.push(value)
+              }
+              generatedText = textChunks.join('')
+            } catch (error: any) {
+              logger.error('Error reading from stream', error)
+              throw new Error(
+                `流式响应读取失败: ${error.message || '未知错误'}`
+              )
+            } finally {
+              reader.releaseLock()
+            }
+          } else {
+            // Use non-streaming mode
+            const { text } = await generateText(genOptions)
+            generatedText = text as string
+          }
 
           if (!generatedText || generatedText.trim().length === 0) {
             logger.error('Missing content in AI response', { generatedText })

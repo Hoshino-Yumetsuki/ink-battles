@@ -23,6 +23,11 @@ OPENAI_BASE_URL=https://api.openai.com/v1
 
 # 指定模型 (可选，默认 gpt-4o)
 MODEL=gpt-4o
+
+# 启用流式响应 (可选，默认 false)
+# 当设置为 true 时，在调用 AI API 时将使用流式模式
+# 并等待完全响应后再返回内容给前端
+USE_STREAMING=false
 ```
 
 ## 快速开始
