@@ -220,7 +220,9 @@ export async function POST(request: NextRequest) {
               generatedText = textChunks.join('')
             } catch (error: any) {
               logger.error('Error reading from stream', error)
-              throw new Error('流式响应读取失败')
+              throw new Error(
+                `流式响应读取失败: ${error.message || '未知错误'}`
+              )
             } finally {
               reader.releaseLock()
             }
