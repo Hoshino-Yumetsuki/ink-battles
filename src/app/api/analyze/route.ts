@@ -217,11 +217,13 @@ export async function POST(request: NextRequest) {
                 if (done) break
                 textChunks.push(value)
               }
+              generatedText = textChunks.join('')
+            } catch (error: any) {
+              logger.error('Error reading from stream', error)
+              throw new Error('流式响应读取失败')
             } finally {
               reader.releaseLock()
             }
-
-            generatedText = textChunks.join('')
           } else {
             // Use non-streaming mode
             const { text } = await generateText(genOptions)
