@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6.1.0
         with:
           node-version: "lts/*"
 
@@ -28,7 +28,7 @@ jobs:
           yarn install --immutable
 
       - name: Cache Next.js and OpenNext build
-        uses: actions/cache@v4
+        uses: actions/cache@v5.0.1
         with:
           path: |
             ${{ github.workspace }}/.next/cache
