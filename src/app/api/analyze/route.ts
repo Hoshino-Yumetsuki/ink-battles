@@ -30,6 +30,8 @@ function isValidLlmApiConfig(config: LlmApiConfig): boolean {
 
 export const maxDuration = 300 // 最大执行时间 5 分钟
 
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB 图片大小限制
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
@@ -61,6 +63,19 @@ export async function POST(request: NextRequest) {
         JSON.stringify({ success: false, error: '文件/图片数据不能为空' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       )
+    }
+
+    // 检查图片文件大小限制
+    if (analysisType === 'file' && file && file.type.startsWith('image/')) {
+      if (file.size > MAX_IMAGE_SIZE) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: `图片文件过大，最大支持 ${(MAX_IMAGE_SIZE / (1024 * 1024)).toFixed(0)}MB`
+          }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        )
+      }
     }
 
     const apiConfig = getLlmApiConfig()
