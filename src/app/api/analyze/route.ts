@@ -30,7 +30,8 @@ function isValidLlmApiConfig(config: LlmApiConfig): boolean {
 
 export const maxDuration = 300 // 最大执行时间 5 分钟
 
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB 图片大小限制
+// 图片大小限制 5MB (与 utils/image-compression.ts 中的 MAX_IMAGE_SIZE_MB 保持一致)
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024
 
 export async function POST(request: NextRequest) {
   try {

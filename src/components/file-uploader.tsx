@@ -9,7 +9,8 @@ import Image from 'next/image'
 import { decodeTextFromFile } from '@/utils/decode-text'
 import {
   compressImage,
-  toReadableSize as formatSize
+  toReadableSize,
+  MAX_IMAGE_SIZE_MB
 } from '@/utils/image-compression'
 import { UploadCloud, X, FileText, Loader2, Sparkles } from 'lucide-react'
 import { cn } from '@/utils/utils'
@@ -24,7 +25,7 @@ interface FileUploaderProps {
 }
 
 const MAX_FILE_SIZE = 15 * 1024 * 1024
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 图片限制为 5MB
+const MAX_IMAGE_SIZE = MAX_IMAGE_SIZE_MB * 1024 * 1024 // 使用统一的常量
 
 export default function FileUploader({
   setFileAction,
@@ -37,25 +38,23 @@ export default function FileUploader({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isCompressing, setIsCompressing] = useState(false)
 
-  const toReadableSize = (size: number) => {
-    return formatSize(size)
-  }
-
   const processFile = async (selectedFile: File) => {
-    if (selectedFile.size > MAX_FILE_SIZE) {
-      toast.error(
-        `文件过大，请上传小于 ${toReadableSize(MAX_FILE_SIZE)} 的文件`
-      )
-      return
-    }
-
     const isImage = selectedFile.type.startsWith('image/')
     const isText =
       selectedFile.type === 'text/plain' ||
       selectedFile.name.toLowerCase().endsWith('.txt')
     const isDocx = selectedFile.name.toLowerCase().endsWith('.docx')
+
     if (!isImage && !isText && !isDocx) {
       toast.error('仅支持 .txt/.docx 或图片')
+      return
+    }
+
+    // 对于非图片文件，检查常规文件大小限制
+    if (!isImage && selectedFile.size > MAX_FILE_SIZE) {
+      toast.error(
+        `文件过大，请上传小于 ${toReadableSize(MAX_FILE_SIZE)} 的文件`
+      )
       return
     }
 

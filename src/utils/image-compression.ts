@@ -1,7 +1,7 @@
 import imageCompression from 'browser-image-compression'
 
-const TARGET_SIZE_MB = 4.5 // 目标压缩到约 4.5MB
-const MAX_SIZE_MB = 5 // 最大允许 5MB
+export const TARGET_SIZE_MB = 4.5 // 目标压缩到约 4.5MB
+export const MAX_IMAGE_SIZE_MB = 5 // 最大允许 5MB
 
 /**
  * 压缩图片到指定大小以内
@@ -28,7 +28,7 @@ export async function compressImage(file: File): Promise<File> {
     const compressedFile = await imageCompression(file, options)
 
     // 如果压缩后的文件仍然大于最大允许大小，进一步压缩
-    if (compressedFile.size > MAX_SIZE_MB * 1024 * 1024) {
+    if (compressedFile.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
       const secondPassOptions = {
         ...options,
         maxSizeMB: TARGET_SIZE_MB * 0.9, // 更激进的压缩
