@@ -1,12 +1,17 @@
 'use client'
 
 import type React from 'react'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { decodeTextFromFile } from '@/utils/decode-text'
+import {
+  compressImage,
+  toReadableSize,
+  MAX_IMAGE_SIZE_MB
+} from '@/utils/image-compression'
 import { UploadCloud, X, FileText, Loader2, Sparkles } from 'lucide-react'
 import { cn } from '@/utils/utils'
 
@@ -20,6 +25,7 @@ interface FileUploaderProps {
 }
 
 const MAX_FILE_SIZE = 15 * 1024 * 1024
+const MAX_IMAGE_SIZE = MAX_IMAGE_SIZE_MB * 1024 * 1024 // 使用统一的常量
 
 export default function FileUploader({
   setFileAction,
@@ -30,29 +36,47 @@ export default function FileUploader({
   previewUrl
 }: FileUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const toReadableSize = (size: number) => {
-    if (size < 1024) return `${size}B`
-    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)}KB`
-    return `${(size / (1024 * 1024)).toFixed(1)}MB`
-  }
+  const [isCompressing, setIsCompressing] = useState(false)
 
   const processFile = async (selectedFile: File) => {
-    if (selectedFile.size > MAX_FILE_SIZE) {
+    const isImage = selectedFile.type.startsWith('image/')
+    const isText =
+      selectedFile.type === 'text/plain' ||
+      selectedFile.name.toLowerCase().endsWith('.txt')
+    const isDocx = selectedFile.name.toLowerCase().endsWith('.docx')
+
+    if (!isImage && !isText && !isDocx) {
+      toast.error('仅支持 .txt/.docx 或图片')
+      return
+    }
+
+    // 对于非图片文件，检查常规文件大小限制
+    if (!isImage && selectedFile.size > MAX_FILE_SIZE) {
       toast.error(
         `文件过大，请上传小于 ${toReadableSize(MAX_FILE_SIZE)} 的文件`
       )
       return
     }
 
-    const isImage = selectedFile.type.startsWith('image/')
-    const isText =
-      selectedFile.type === 'text/plain' ||
-      selectedFile.name.toLowerCase().endsWith('.txt')
-    const isDocx = selectedFile.name.toLowerCase().endsWith('.docx')
-    if (!isImage && !isText && !isDocx) {
-      toast.error('仅支持 .txt/.docx 或图片')
-      return
+    // 对于图片文件，检查大小并压缩
+    if (isImage) {
+      if (selectedFile.size > MAX_IMAGE_SIZE) {
+        const originalSize = toReadableSize(selectedFile.size)
+        toast.info(`图片过大 (${originalSize})，正在压缩...`)
+        setIsCompressing(true)
+
+        try {
+          const compressedFile = await compressImage(selectedFile)
+          const compressedSize = toReadableSize(compressedFile.size)
+          toast.success(`图片已压缩：${originalSize} → ${compressedSize}`)
+          setFileAction(compressedFile)
+        } catch (error: any) {
+          toast.error(error.message || '图片压缩失败')
+        } finally {
+          setIsCompressing(false)
+        }
+        return
+      }
     }
 
     // 对于文本文件，提取文本内容
@@ -136,7 +160,8 @@ export default function FileUploader({
               </p>
             </div>
             <div className="text-xs text-muted-foreground/70 bg-muted/50 px-3 py-1 rounded-full">
-              最大支持 {toReadableSize(MAX_FILE_SIZE)}
+              图片最大 {toReadableSize(MAX_IMAGE_SIZE)} · 文档最大{' '}
+              {toReadableSize(MAX_FILE_SIZE)}
             </div>
           </div>
         ) : (
@@ -181,11 +206,16 @@ export default function FileUploader({
         <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
           <Button
             onClick={onAnalyzeAction}
-            disabled={isLoading || !file}
+            disabled={isLoading || !file || isCompressing}
             className="w-full h-12 text-lg font-medium shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
             size="lg"
           >
-            {isLoading ? (
+            {isCompressing ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                正在压缩图片...
+              </span>
+            ) : isLoading ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="w-5 h-5 animate-spin" />
                 正在深入分析...

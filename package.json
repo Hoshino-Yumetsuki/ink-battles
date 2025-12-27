@@ -26,6 +26,7 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@sinclair/typebox": "^0.34.41",
+    "browser-image-compression": "^2.0.2",
     "chardet": "^2.1.1",
     "class-variance-authority": "^0.7.1",
     "file-type": "^21.1.1",
