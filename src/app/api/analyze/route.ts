@@ -9,7 +9,6 @@ interface LlmApiConfig {
   apiKey: string
   model: string
   temperature: number
-  maxTokens: number
   useStreaming: boolean
   useStructuredOutput: boolean
 }
@@ -20,7 +19,6 @@ function getLlmApiConfig(): LlmApiConfig {
     apiKey: String(process.env.OPENAI_API_KEY),
     model: String(process.env.MODEL),
     temperature: Number(process.env.TEMPERATURE) || 1.2,
-    maxTokens: Number(process.env.MAX_TOKENS) || 65536,
     useStreaming: process.env.USE_STREAMING === 'true',
     useStructuredOutput: process.env.USE_STRUCTURED_OUTPUT !== 'false' // 默认为true
   }
@@ -153,8 +151,7 @@ export async function POST(request: NextRequest) {
 
           const requestConfig: any = {
             model: apiConfig.model,
-            temperature: apiConfig.temperature,
-            max_tokens: apiConfig.maxTokens
+            temperature: apiConfig.temperature
           }
 
           if (apiConfig.useStructuredOutput) {
