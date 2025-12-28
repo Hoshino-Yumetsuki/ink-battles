@@ -208,7 +208,7 @@ export default function WriterAnalysisPage() {
                 )
 
                 const defaultResult: WriterAnalysisResult = {
-                  overallScore: 0,
+                  overallScore: overallScore,
                   overallAssessment: '暂无整体评估',
                   title: '分析结果',
                   ratingTag: '未知',
@@ -219,11 +219,7 @@ export default function WriterAnalysisPage() {
                   mermaid_diagrams: []
                 }
 
-                const finalResult = {
-                  ...defaultResult,
-                  ...parsedData,
-                  overallScore
-                }
+                const finalResult = { ...defaultResult, ...parsedData }
 
                 clearInterval(progressInterval)
                 setProgress(100)
