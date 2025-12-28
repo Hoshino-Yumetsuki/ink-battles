@@ -11,6 +11,7 @@ interface LlmApiConfig {
   temperature: number
   maxTokens: number
   useStreaming: boolean
+  useStructuredOutput: boolean
 }
 
 function getLlmApiConfig(): LlmApiConfig {
@@ -20,7 +21,8 @@ function getLlmApiConfig(): LlmApiConfig {
     model: String(process.env.MODEL),
     temperature: Number(process.env.TEMPERATURE) || 1.2,
     maxTokens: Number(process.env.MAX_TOKENS) || 65536,
-    useStreaming: process.env.USE_STREAMING === 'true'
+    useStreaming: process.env.USE_STREAMING === 'true',
+    useStructuredOutput: process.env.USE_STRUCTURED_OUTPUT !== 'false' // 默认为true
   }
 }
 
@@ -149,11 +151,14 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          const requestConfig = {
+          const requestConfig: any = {
             model: apiConfig.model,
             temperature: apiConfig.temperature,
-            max_tokens: apiConfig.maxTokens,
-            response_format: responseFormat
+            max_tokens: apiConfig.maxTokens
+          }
+
+          if (apiConfig.useStructuredOutput) {
+            requestConfig.response_format = responseFormat
           }
 
           let messages: any[]
@@ -237,7 +242,35 @@ export async function POST(request: NextRequest) {
             throw new Error('分析失败，未能获取有效结果')
           }
 
-          const result = JSON.parse(generatedText)
+          let result: any
+
+          if (!apiConfig.useStructuredOutput) {
+            const jsonMatch = generatedText.match(
+              /```(?:json)?\s*\n?([\s\S]*?)```/
+            )
+            if (jsonMatch?.[1]) {
+              try {
+                result = JSON.parse(jsonMatch[1].trim())
+              } catch (_e) {
+                logger.error('Failed to parse JSON from markdown block', {
+                  text: jsonMatch[1]
+                })
+                throw new Error('无法解析模型响应中的JSON数据')
+              }
+            } else {
+              try {
+                result = JSON.parse(generatedText.trim())
+              } catch (_e) {
+                logger.error('Failed to parse JSON from raw text', {
+                  generatedText
+                })
+                throw new Error('模型响应格式不正确，无法解析JSON')
+              }
+            }
+          } else {
+            result = JSON.parse(generatedText)
+          }
+
           if (!result || typeof result !== 'object') {
             logger.error('Parsed AI response is not a valid object', {
               generatedText
