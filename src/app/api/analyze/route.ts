@@ -1,7 +1,6 @@
 import type { NextRequest } from 'next/server'
 import { generateText, streamText } from 'xsai'
 import { buildPrompt } from '@/prompts'
-import { calculateOverallScore } from '@/utils/score-calculator'
 import { logger } from '@/utils/logger'
 
 interface LlmApiConfig {
@@ -44,6 +43,17 @@ export async function POST(request: NextRequest) {
         JSON.stringify({
           success: false,
           error: 'analysisType 必填，应为 "text" 或 "file"'
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+    if (file && file.size > MAX_FILE_SIZE) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `文件过大，请上传小于 5MB 的文件（当前文件大小：${(file.size / (1024 * 1024)).toFixed(2)}MB）`
         }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       )
@@ -239,53 +249,18 @@ export async function POST(request: NextRequest) {
             throw new Error('分析失败，未能获取有效结果')
           }
 
-          let result: any
-
-          if (!apiConfig.useStructuredOutput) {
-            const jsonMatch = generatedText.match(
-              /```(?:json)?\s*\n?([\s\S]*?)```/
-            )
-            if (jsonMatch?.[1]) {
-              try {
-                result = JSON.parse(jsonMatch[1].trim())
-              } catch (_e) {
-                logger.error('Failed to parse JSON from markdown block', {
-                  text: jsonMatch[1]
-                })
-                throw new Error('无法解析模型响应中的JSON数据')
-              }
-            } else {
-              try {
-                result = JSON.parse(generatedText.trim())
-              } catch (_e) {
-                logger.error('Failed to parse JSON from raw text', {
-                  generatedText
-                })
-                throw new Error('模型响应格式不正确，无法解析JSON')
-              }
-            }
-          } else {
-            result = JSON.parse(generatedText)
-          }
-
-          if (!result || typeof result !== 'object') {
-            logger.error('Parsed AI response is not a valid object', {
-              generatedText
-            })
-            throw new Error('服务器无法处理 AI 响应')
-          }
-
-          const overallScore = calculateOverallScore(result.dimensions)
-          const finalResult = { ...result, overallScore }
-
           const resultMsg = `${JSON.stringify({
             type: 'result',
             success: true,
-            data: finalResult
+            data: generatedText
           })}\n`
           controller.enqueue(encoder.encode(resultMsg))
         } catch (error: any) {
-          logger.error('Error processing analysis request', error)
+          logger.error('Error processing analysis request', {
+            error: error.message,
+            stack: error.stack,
+            name: error.name
+          })
           const errorMsg = `${JSON.stringify({
             type: 'error',
             success: false,

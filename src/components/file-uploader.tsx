@@ -9,6 +9,7 @@ import Image from 'next/image'
 import { decodeTextFromFile } from '@/utils/decode-text'
 import { UploadCloud, X, FileText, Loader2, Sparkles } from 'lucide-react'
 import { cn } from '@/utils/utils'
+import { compressImage, toReadableSize } from '@/utils/image-compressor'
 
 interface FileUploaderProps {
   setFileAction: (file: File | null) => void
@@ -18,8 +19,6 @@ interface FileUploaderProps {
   file?: File | null
   previewUrl?: string | null
 }
-
-const MAX_FILE_SIZE = 15 * 1024 * 1024
 
 export default function FileUploader({
   setFileAction,
@@ -31,25 +30,13 @@ export default function FileUploader({
 }: FileUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const toReadableSize = (size: number) => {
-    if (size < 1024) return `${size}B`
-    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)}KB`
-    return `${(size / (1024 * 1024)).toFixed(1)}MB`
-  }
-
   const processFile = async (selectedFile: File) => {
-    if (selectedFile.size > MAX_FILE_SIZE) {
-      toast.error(
-        `文件过大，请上传小于 ${toReadableSize(MAX_FILE_SIZE)} 的文件`
-      )
-      return
-    }
-
     const isImage = selectedFile.type.startsWith('image/')
     const isText =
       selectedFile.type === 'text/plain' ||
       selectedFile.name.toLowerCase().endsWith('.txt')
     const isDocx = selectedFile.name.toLowerCase().endsWith('.docx')
+
     if (!isImage && !isText && !isDocx) {
       toast.error('仅支持 .txt/.docx 或图片')
       return
@@ -71,8 +58,27 @@ export default function FileUploader({
       }
     }
 
-    // 直接保存 File 对象，不转换为 base64
-    setFileAction(selectedFile)
+    // 对于图片文件，立即压缩到约 4.5MB
+    let fileToUpload = selectedFile
+    if (isImage) {
+      // 检查文件大小，如果大于 4.5MB 则显示压缩提示
+      const TARGET_SIZE = 4.5 * 1024 * 1024
+      if (selectedFile.size > TARGET_SIZE) {
+        toast.info(
+          `图片较大（${toReadableSize(selectedFile.size)}），正在压缩...`
+        )
+      }
+
+      const result = await compressImage(selectedFile)
+      fileToUpload = result.file
+
+      if (result.compressed) {
+        toast.success(
+          `图片已压缩：${toReadableSize(result.originalSize)} → ${toReadableSize(result.compressedSize)}`
+        )
+      }
+    }
+    setFileAction(fileToUpload)
   }
 
   const handleFileChange = async (
@@ -134,9 +140,9 @@ export default function FileUploader({
               <p className="text-sm text-muted-foreground">
                 支持 .txt, .docx 文档或图片格式
               </p>
-            </div>
-            <div className="text-xs text-muted-foreground/70 bg-muted/50 px-3 py-1 rounded-full">
-              最大支持 {toReadableSize(MAX_FILE_SIZE)}
+              <p className="text-xs text-muted-foreground/60">
+                图片将自动压缩以保证上传速度
+              </p>
             </div>
           </div>
         ) : (

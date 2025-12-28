@@ -11,6 +11,8 @@ import AnalysisOptions from '@/components/analysis-options'
 import WriterScoreResult from '@/components/score-result'
 import AnimatedBackground from '@/components/animated-background'
 import FeaturesSection from '@/components/features-section'
+import { extractCodeBlock } from '@/utils/markdown-parser'
+import { calculateOverallScore } from '@/utils/score-calculator'
 
 export interface MermaidDiagram {
   type: string
@@ -133,7 +135,12 @@ export default function WriterAnalysisPage() {
         })
 
         if (!response.ok) {
-          throw new Error(`请求失败: ${response.status}`)
+          try {
+            const errorData = await response.json()
+            throw new Error(errorData.error || `请求失败: ${response.status}`)
+          } catch (_e) {
+            throw new Error(`请求失败: ${response.status}`)
+          }
         }
 
         if (!response.body) {
@@ -167,17 +174,38 @@ export default function WriterAnalysisPage() {
               } else if (message.type === 'progress') {
                 console.log('进度:', message.message)
               } else if (message.type === 'result' && message.success) {
-                const data = message.data
-                if (!data || typeof data !== 'object') {
+                const rawText = message.data
+                if (!rawText || typeof rawText !== 'string') {
                   throw new Error('返回的分析结果格式无效')
                 }
+
+                const jsonText = extractCodeBlock(rawText, 'json')
+
+                let parsedData: any
+                try {
+                  parsedData = JSON.parse(jsonText)
+                } catch (parseError: any) {
+                  console.error('JSON 解析失败:', parseError)
+                  console.error('原始文本:', rawText)
+                  console.error('提取的文本:', jsonText)
+                  throw new Error(`无法解析分析结果: ${parseError.message}`)
+                }
+
+                if (!parsedData || typeof parsedData !== 'object') {
+                  throw new Error('分析结果格式无效')
+                }
+
                 if (
-                  !('dimensions' in data) ||
-                  !Array.isArray(data.dimensions)
+                  !('dimensions' in parsedData) ||
+                  !Array.isArray(parsedData.dimensions)
                 ) {
                   toast.warning('分析数据不完整，部分功能可能受到影响')
-                  data.dimensions = data.dimensions || []
+                  parsedData.dimensions = parsedData.dimensions || []
                 }
+
+                const overallScore = calculateOverallScore(
+                  parsedData.dimensions
+                )
 
                 const defaultResult: WriterAnalysisResult = {
                   overallScore: 0,
@@ -191,13 +219,21 @@ export default function WriterAnalysisPage() {
                   mermaid_diagrams: []
                 }
 
-                const safeData = { ...defaultResult, ...data }
+                const finalResult = {
+                  ...defaultResult,
+                  ...parsedData,
+                  overallScore
+                }
 
                 clearInterval(progressInterval)
                 setProgress(100)
-                setResult(safeData)
+                setResult(finalResult)
               } else if (message.type === 'error') {
-                throw new Error(message.error || '分析失败')
+                clearInterval(progressInterval)
+                setProgress(0)
+                toast.error(`分析失败: ${message.error || '未知错误'}`)
+                await reader.cancel()
+                return
               }
             } catch (parseError) {
               console.warn('解析消息失败:', line, parseError)

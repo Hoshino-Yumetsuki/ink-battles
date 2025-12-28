@@ -12,6 +12,7 @@ import {
 import { Progress } from '@/components/ui/progress'
 import type { WriterAnalysisResult } from '@/app/page'
 import MermaidDiagram from '@/components/mermaid-diagram'
+import MarkdownRenderer from '@/components/markdown-renderer'
 
 interface WriterScoreResultProps {
   result: WriterAnalysisResult
@@ -84,7 +85,7 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
     visible: { opacity: 1, y: 0, scale: 1 }
   }
 
-  const commentParagraphs: string[] = result.comment
+  const _commentParagraphs: string[] = result.comment
     ? parseMermaidBlocks(result.comment)
         .filter((n) => n.type === 'paragraph')
         .map((n) =>
@@ -200,7 +201,7 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
                   </motion.div>
                   {dimension.description && (
                     <motion.p
-                      className="text-sm text-gray-500 mt-1"
+                      className="text-sm text-muted-foreground mt-2"
                       initial={{ opacity: 0, y: 5 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 1.1 + index * 0.1, duration: 0.3 }}
@@ -232,29 +233,13 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
               <CardDescription>作品描述及总体评价</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="prose prose-sm dark:prose-invert">
-                {commentParagraphs.length > 0 ? (
-                  commentParagraphs.map((paragraph: string, idx: number) => (
-                    <motion.p
-                      key={`ov-${idx}`}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1 + idx * 0.05, duration: 0.3 }}
-                    >
-                      {paragraph}
-                    </motion.p>
-                  ))
-                ) : (
-                  <motion.p
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1, duration: 0.3 }}
-                    className="text-gray-500"
-                  >
-                    暂无作品概述
-                  </motion.p>
-                )}
-              </div>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 0.3 }}
+              >
+                <MarkdownRenderer content={result.comment} />
+              </motion.div>
             </CardContent>
           </Card>
         </motion.div>
@@ -277,18 +262,18 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
               <CardDescription>从文本中提取的结构分析</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="prose prose-sm dark:prose-invert">
+              <ul className="list-disc pl-5 space-y-2">
                 {structureParas.map((paragraph: string, idx: number) => (
-                  <motion.p
+                  <motion.li
                     key={`st-${idx}`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.1 + idx * 0.05, duration: 0.3 }}
                   >
-                    {paragraph}
-                  </motion.p>
+                    <MarkdownRenderer content={paragraph} />
+                  </motion.li>
                 ))}
-              </div>
+              </ul>
             </CardContent>
           </Card>
         </motion.div>
@@ -318,7 +303,7 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.1 + index * 0.05, duration: 0.3 }}
                   >
-                    {strength}
+                    <MarkdownRenderer content={strength} />
                   </motion.li>
                 ))
               ) : (
@@ -353,7 +338,7 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.1 + index * 0.05, duration: 0.3 }}
                   >
-                    {improvement}
+                    <MarkdownRenderer content={improvement} />
                   </motion.li>
                 ))
               ) : (
