@@ -17,14 +17,14 @@ jobs:
         with:
           node-version: "lts/*"
 
-      - name: Setup environment
+      - name: Setup Corepack
         run: |
           npm install -g corepack
           corepack enable
-          corepack prepare
 
-      - name: Setup
+      - name: Setup Dependencies
         run: |
+          corepack prepare
           yarn install --immutable
 
       - name: Cache Next.js and OpenNext build
