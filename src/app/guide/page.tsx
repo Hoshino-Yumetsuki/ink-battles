@@ -1,8 +1,8 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import HowItWorks from '@/components/how-it-works'
-import FAQSection from '@/components/faq-section'
+import HowItWorks from '@/components/sections/how-it-works'
+import FAQSection from '@/components/sections/faq-section'
 
 export default function GuidePage() {
   return (

@@ -11,8 +11,8 @@ import {
 } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import type { WriterAnalysisResult } from '@/app/page'
-import MermaidDiagram from '@/components/mermaid-diagram'
-import MarkdownRenderer from '@/components/markdown-renderer'
+import MermaidDiagram from '@/components/renderers/mermaid-diagram'
+import MarkdownRenderer from '@/components/renderers/markdown-renderer'
 
 interface WriterScoreResultProps {
   result: WriterAnalysisResult

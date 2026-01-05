@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ThemeSwitcher } from './theme-switcher'
+import { ThemeSwitcher } from '@/components/common/theme-switcher'
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion'
 import { useId, useState } from 'react'
 
