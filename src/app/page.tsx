@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Toaster, toast } from 'sonner'
 import { AnimatePresence, motion } from 'framer-motion'
 
-import PageHeader from '@/components/sections/page-header'
+import PageHeader from '@/components/layout/page-header'
 import ContentInputCard from '@/components/features/upload/content-input-card'
 import LoadingProgress from '@/components/common/loading-progress'
 import AnalysisOptions from '@/components/features/analysis/analysis-options'
