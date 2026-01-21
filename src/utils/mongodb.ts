@@ -2,9 +2,9 @@ import { MongoClient } from 'mongodb'
 import { logger } from './logger'
 
 export async function connectToDatabase() {
-  const mongoUrl = process.env.MONGODB_URL
+  const mongoUrl = process.env.MONGODB_URI
   if (!mongoUrl) {
-    throw new Error('MONGODB_URL is not defined in environment variables')
+    throw new Error('MONGODB_URI is not defined in environment variables')
   }
 
   try {
