@@ -2,6 +2,11 @@ import type { NextRequest } from 'next/server'
 import { generateText, streamText } from 'xsai'
 import { buildPrompt } from '@/prompts'
 import { logger } from '@/utils/logger'
+import {
+  checkRateLimit,
+  recordVisit,
+  incrementRateLimit
+} from '@/utils/rate-limiter'
 
 interface LlmApiConfig {
   baseUrl: string
@@ -31,6 +36,38 @@ export const maxDuration = 300 // 最大执行时间 5 分钟
 
 export async function POST(request: NextRequest) {
   try {
+    // 速率限制检查
+    const rateLimitResult = await checkRateLimit(request)
+    if (!rateLimitResult.allowed) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: rateLimitResult.error || '请求超过使用限制，请稍后再尝试',
+          remainingRequests: rateLimitResult.remainingRequests,
+          resetTime: rateLimitResult.resetTime
+        }),
+        {
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-RateLimit-Remaining': String(
+              rateLimitResult.remainingRequests || 0
+            ),
+            'X-RateLimit-Reset': rateLimitResult.resetTime?.toISOString() || ''
+          }
+        }
+      )
+    }
+
+    // 记录访问
+    const fingerprint = request.headers.get('x-fingerprint')
+    if (fingerprint) {
+      recordVisit(fingerprint, {
+        userAgent: request.headers.get('user-agent'),
+        timestamp: new Date()
+      }).catch((err) => logger.error('Failed to record visit', err))
+    }
+
     const formData = await request.formData()
     const content = formData.get('content') as string | null
     const file = formData.get('file') as File | null
@@ -248,6 +285,10 @@ export async function POST(request: NextRequest) {
             logger.error('Missing content in AI response', { generatedText })
             throw new Error('分析失败，未能获取有效结果')
           }
+
+          incrementRateLimit(request).catch((err) =>
+            logger.error('Failed to increment rate limit', err)
+          )
 
           const resultMsg = `${JSON.stringify({
             type: 'result',

@@ -13,6 +13,7 @@ import AnimatedBackground from '@/components/common/animated-background'
 import FeaturesSection from '@/components/sections/features-section'
 import { extractCodeBlock } from '@/utils/markdown-parser'
 import { calculateOverallScore } from '@/utils/score-calculator'
+import { useFingerprint } from '@/hooks/use-fingerprint'
 
 export interface MermaidDiagram {
   type: string
@@ -38,6 +39,7 @@ export interface WriterAnalysisResult {
 }
 
 export default function WriterAnalysisPage() {
+  const { fingerprint } = useFingerprint()
   const [content, setContent] = useState<string>('')
   const [uploadedText, setUploadedText] = useState<string>('')
   const [file, setFile] = useState<File | null>(null)
@@ -129,16 +131,28 @@ export default function WriterAnalysisPage() {
         formData.append('analysisType', isFileModeText ? 'text' : analysisType)
         formData.append('options', JSON.stringify(enabledOptions))
 
+        const headers: HeadersInit = {}
+        if (fingerprint) {
+          headers['x-fingerprint'] = fingerprint
+        }
+
         const response = await fetch('/api/analyze', {
           method: 'POST',
-          body: formData
+          body: formData,
+          headers
         })
 
         if (!response.ok) {
           try {
             const errorData = await response.json()
             throw new Error(errorData.error || `请求失败: ${response.status}`)
-          } catch (_e) {
+          } catch (parseError) {
+            if (
+              parseError instanceof Error &&
+              parseError.message !== `请求失败: ${response.status}`
+            ) {
+              throw parseError
+            }
             throw new Error(`请求失败: ${response.status}`)
           }
         }
