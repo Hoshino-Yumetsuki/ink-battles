@@ -124,9 +124,19 @@ export async function POST(request: NextRequest) {
     const encoder = new TextEncoder()
     const stream = new ReadableStream({
       async start(controller) {
+        let isStreamClosed = false
+
         const sendHeartbeat = () => {
-          const heartbeat = `${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n`
-          controller.enqueue(encoder.encode(heartbeat))
+          if (isStreamClosed) {
+            return
+          }
+          try {
+            const heartbeat = `${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n`
+            controller.enqueue(encoder.encode(heartbeat))
+          } catch (error) {
+            // Stream already closed, ignore
+            isStreamClosed = true
+          }
         }
 
         const heartbeatInterval = setInterval(sendHeartbeat, 10000)
@@ -286,7 +296,7 @@ export async function POST(request: NextRequest) {
             throw new Error('分析失败，未能获取有效结果')
           }
 
-          incrementRateLimit(request).catch((err) =>
+          incrementRateLimit(fingerprint).catch((err) =>
             logger.error('Failed to increment rate limit', err)
           )
 
@@ -309,6 +319,7 @@ export async function POST(request: NextRequest) {
           })}\n`
           controller.enqueue(encoder.encode(errorMsg))
         } finally {
+          isStreamClosed = true
           clearInterval(heartbeatInterval)
           controller.close()
         }

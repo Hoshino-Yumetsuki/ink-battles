@@ -174,7 +174,7 @@ export async function checkRateLimit(request: NextRequest): Promise<{
 /**
  * 增加速率限制计数（只在请求成功后调用）
  */
-export async function incrementRateLimit(request: NextRequest): Promise<void> {
+export async function incrementRateLimit(fingerprint: string | null): Promise<void> {
   const config = getRateLimitConfig()
 
   // 如果功能未启用，直接返回
@@ -182,8 +182,8 @@ export async function incrementRateLimit(request: NextRequest): Promise<void> {
     return
   }
 
-  const fingerprint = extractFingerprint(request)
   if (!fingerprint) {
+    logger.warn('Cannot increment rate limit: fingerprint is missing')
     return
   }
 
