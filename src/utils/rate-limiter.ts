@@ -57,9 +57,14 @@ function formatWaitTime(seconds: number): string {
 
 /**
  * 检查速率限制
+ * @param request - Next.js 请求对象
+ * @param sharedDb - 可选的共享数据库连接，如果提供则不会自动关闭
  * @returns { allowed: boolean, remainingRequests?: number, resetTime?: Date }
  */
-export async function checkRateLimit(request: NextRequest): Promise<{
+export async function checkRateLimit(
+  request: NextRequest,
+  sharedDb?: { db: Db; client: MongoClient }
+): Promise<{
   allowed: boolean
   remainingRequests?: number
   resetTime?: Date
@@ -81,9 +86,18 @@ export async function checkRateLimit(request: NextRequest): Promise<{
   }
 
   let client: MongoClient | undefined
+  let db: Db
+  const shouldCloseConnection = !sharedDb
+
   try {
-    const { db, client: dbClient } = await getDatabase()
-    client = dbClient
+    if (sharedDb) {
+      db = sharedDb.db
+      client = sharedDb.client
+    } else {
+      const dbConnection = await getDatabase()
+      db = dbConnection.db
+      client = dbConnection.client
+    }
     const collection = db.collection<RateLimitRecord>('rate_limits')
 
     await collection.createIndex({ fingerprint: 1 })
@@ -164,8 +178,8 @@ export async function checkRateLimit(request: NextRequest): Promise<{
     // 如果速率限制检查失败，默认允许请求（避免因基础设施问题完全阻止服务）
     return { allowed: true }
   } finally {
-    // 确保关闭数据库连接
-    if (client) {
+    // 只在没有使用共享连接时才关闭
+    if (shouldCloseConnection && client) {
       await closeDatabaseConnection(client)
     }
   }
@@ -173,8 +187,13 @@ export async function checkRateLimit(request: NextRequest): Promise<{
 
 /**
  * 增加速率限制计数（只在请求成功后调用）
+ * @param fingerprint - 用户指纹
+ * @param sharedDb - 可选的共享数据库连接，如果提供则不会自动关闭
  */
-export async function incrementRateLimit(fingerprint: string | null): Promise<void> {
+export async function incrementRateLimit(
+  fingerprint: string | null,
+  sharedDb?: { db: Db; client: MongoClient }
+): Promise<void> {
   const config = getRateLimitConfig()
 
   // 如果功能未启用，直接返回
@@ -188,9 +207,18 @@ export async function incrementRateLimit(fingerprint: string | null): Promise<vo
   }
 
   let client: MongoClient | undefined
+  let db: Db
+  const shouldCloseConnection = !sharedDb
+
   try {
-    const { db, client: dbClient } = await getDatabase()
-    client = dbClient
+    if (sharedDb) {
+      db = sharedDb.db
+      client = sharedDb.client
+    } else {
+      const dbConnection = await getDatabase()
+      db = dbConnection.db
+      client = dbConnection.client
+    }
     const collection = db.collection<RateLimitRecord>('rate_limits')
 
     const now = new Date()
@@ -228,9 +256,8 @@ export async function incrementRateLimit(fingerprint: string | null): Promise<vo
     }
   } catch (error) {
     logger.error('Error incrementing rate limit', error)
-    // 增加计数失败不应影响主流程
   } finally {
-    if (client) {
+    if (shouldCloseConnection && client) {
       await closeDatabaseConnection(client)
     }
   }
@@ -289,7 +316,6 @@ async function adjustQuotaIfConfigChanged(db: Db, currentMaxRequests: number) {
     }
   } catch (error) {
     logger.error('Error adjusting quota for config change', error)
-    // 调整失败不应影响主流程
   }
 }
 
@@ -325,21 +351,33 @@ async function cleanExpiredRecords(db: Db, windowStart: Date) {
     }
   } catch (error) {
     logger.error('Error cleaning expired records', error)
-    // 清理失败不应影响主流程
   }
 }
 
 /**
  * 记录用户访问（不进行速率限制检查，仅用于统计）
+ * @param fingerprint - 用户指纹
+ * @param metadata - 可选的元数据
+ * @param sharedDb - 可选的共享数据库连接，如果提供则不会自动关闭
  */
 export async function recordVisit(
   fingerprint: string,
-  metadata?: Record<string, any>
+  metadata?: Record<string, any>,
+  sharedDb?: { db: Db; client: MongoClient }
 ) {
   let client: MongoClient | undefined
+  let db: Db
+  const shouldCloseConnection = !sharedDb
+
   try {
-    const { db, client: dbClient } = await getDatabase()
-    client = dbClient
+    if (sharedDb) {
+      db = sharedDb.db
+      client = sharedDb.client
+    } else {
+      const dbConnection = await getDatabase()
+      db = dbConnection.db
+      client = dbConnection.client
+    }
     const collection = db.collection('visits')
 
     await collection.insertOne({
@@ -354,8 +392,7 @@ export async function recordVisit(
   } catch (error) {
     logger.error('Error recording visit', error)
   } finally {
-    // 确保关闭数据库连接
-    if (client) {
+    if (shouldCloseConnection && client) {
       await closeDatabaseConnection(client)
     }
   }

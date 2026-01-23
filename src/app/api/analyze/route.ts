@@ -7,6 +7,8 @@ import {
   recordVisit,
   incrementRateLimit
 } from '@/utils/rate-limiter'
+import { getDatabase, closeDatabaseConnection } from '@/utils/mongodb'
+import type { Db, MongoClient } from 'mongodb'
 
 interface LlmApiConfig {
   baseUrl: string
@@ -35,9 +37,18 @@ function isValidLlmApiConfig(config: LlmApiConfig): boolean {
 export const maxDuration = 300 // 最大执行时间 5 分钟
 
 export async function POST(request: NextRequest) {
+  let dbClient: MongoClient | undefined
+  let db: Db | undefined
+
   try {
-    // 速率限制检查
-    const rateLimitResult = await checkRateLimit(request)
+    const dbConnection = await getDatabase()
+    db = dbConnection.db
+    dbClient = dbConnection.client
+
+    const rateLimitResult = await checkRateLimit(request, {
+      db,
+      client: dbClient
+    })
     if (!rateLimitResult.allowed) {
       return new Response(
         JSON.stringify({
@@ -59,13 +70,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 记录访问
     const fingerprint = request.headers.get('x-fingerprint')
-    if (fingerprint) {
-      recordVisit(fingerprint, {
-        userAgent: request.headers.get('user-agent'),
-        timestamp: new Date()
-      }).catch((err) => logger.error('Failed to record visit', err))
+    if (fingerprint && db && dbClient) {
+      recordVisit(
+        fingerprint,
+        {
+          userAgent: request.headers.get('user-agent'),
+          timestamp: new Date()
+        },
+        { db, client: dbClient }
+      ).catch((err) => logger.error('Failed to record visit', err))
     }
 
     const formData = await request.formData()
@@ -133,7 +147,7 @@ export async function POST(request: NextRequest) {
           try {
             const heartbeat = `${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n`
             controller.enqueue(encoder.encode(heartbeat))
-          } catch (error) {
+          } catch (_error) {
             // Stream already closed, ignore
             isStreamClosed = true
           }
@@ -296,9 +310,11 @@ export async function POST(request: NextRequest) {
             throw new Error('分析失败，未能获取有效结果')
           }
 
-          incrementRateLimit(fingerprint).catch((err) =>
-            logger.error('Failed to increment rate limit', err)
-          )
+          if (db && dbClient) {
+            incrementRateLimit(fingerprint, { db, client: dbClient }).catch(
+              (err) => logger.error('Failed to increment rate limit', err)
+            )
+          }
 
           const resultMsg = `${JSON.stringify({
             type: 'result',
@@ -339,5 +355,9 @@ export async function POST(request: NextRequest) {
       JSON.stringify({ success: false, error: '处理请求时出错' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     )
+  } finally {
+    if (dbClient) {
+      await closeDatabaseConnection(dbClient)
+    }
   }
 }
