@@ -3,9 +3,6 @@
 import { useEffect, useState } from 'react'
 import { getFingerprint } from '@/utils/fingerprint'
 
-/**
- * 获取并缓存浏览器指纹
- */
 export function useFingerprint() {
   const [fingerprint, setFingerprint] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)

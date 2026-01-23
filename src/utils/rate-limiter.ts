@@ -8,7 +8,7 @@ interface RateLimitRecord {
   lastRequest: Date
   requestCount: number
   windowStart: Date
-  maxRequests: number // 记录创建时的最大请求次数
+  maxRequests: number
 }
 
 interface RateLimitConfig {
@@ -33,9 +33,6 @@ function extractFingerprint(request: NextRequest): string | null {
   return request.headers.get('x-fingerprint')
 }
 
-/**
- * 将秒数转换为人类可读的时间格式
- */
 function formatWaitTime(seconds: number): string {
   if (seconds < 60) {
     return `${seconds}秒`
@@ -55,12 +52,6 @@ function formatWaitTime(seconds: number): string {
   return parts.join('')
 }
 
-/**
- * 检查速率限制
- * @param request - Next.js 请求对象
- * @param sharedDb - 可选的共享数据库连接，如果提供则不会自动关闭
- * @returns { allowed: boolean, remainingRequests?: number, resetTime?: Date }
- */
 export async function checkRateLimit(
   request: NextRequest,
   sharedDb?: { db: Db; client: MongoClient }
@@ -185,18 +176,12 @@ export async function checkRateLimit(
   }
 }
 
-/**
- * 增加速率限制计数（只在请求成功后调用）
- * @param fingerprint - 用户指纹
- * @param sharedDb - 可选的共享数据库连接，如果提供则不会自动关闭
- */
 export async function incrementRateLimit(
   fingerprint: string | null,
   sharedDb?: { db: Db; client: MongoClient }
 ): Promise<void> {
   const config = getRateLimitConfig()
 
-  // 如果功能未启用，直接返回
   if (!config.enabled) {
     return
   }
@@ -354,12 +339,6 @@ async function cleanExpiredRecords(db: Db, windowStart: Date) {
   }
 }
 
-/**
- * 记录用户访问（不进行速率限制检查，仅用于统计）
- * @param fingerprint - 用户指纹
- * @param metadata - 可选的元数据
- * @param sharedDb - 可选的共享数据库连接，如果提供则不会自动关闭
- */
 export async function recordVisit(
   fingerprint: string,
   metadata?: Record<string, any>,
@@ -386,7 +365,6 @@ export async function recordVisit(
       metadata: metadata || {}
     })
 
-    // 创建索引
     await collection.createIndex({ fingerprint: 1 })
     await collection.createIndex({ timestamp: 1 })
   } catch (error) {
