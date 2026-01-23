@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
 
     const fingerprint = request.headers.get('x-fingerprint')
     if (fingerprint && db && dbClient) {
-      recordVisit(
+      await recordVisit(
         fingerprint,
         {
           userAgent: request.headers.get('user-agent'),
@@ -310,11 +310,10 @@ export async function POST(request: NextRequest) {
             throw new Error('分析失败，未能获取有效结果')
           }
 
-          if (db && dbClient) {
-            incrementRateLimit(fingerprint, { db, client: dbClient }).catch(
-              (err) => logger.error('Failed to increment rate limit', err)
-            )
-          }
+          // incrementRateLimit 需要独立连接，因为主连接在 stream 返回后会关闭
+          await incrementRateLimit(fingerprint).catch((err) =>
+            logger.error('Failed to increment rate limit', err)
+          )
 
           const resultMsg = `${JSON.stringify({
             type: 'result',
