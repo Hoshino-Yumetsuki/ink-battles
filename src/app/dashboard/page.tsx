@@ -264,13 +264,13 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="h-screen w-full relative p-4 flex gap-4 overflow-hidden font-sans bg-zinc-100 dark:bg-zinc-950">
+    <div className="h-screen w-full relative p-0 md:p-4 flex flex-col md:flex-row gap-0 md:gap-4 overflow-hidden font-sans bg-zinc-100 dark:bg-zinc-950">
       <div className="absolute inset-0 z-0">
         <AnimatedBackground />
       </div>
 
-      {/* 侧边栏 */}
-      <aside className="w-20 bg-black text-white rounded-2xl py-8 flex flex-col items-center shadow-2xl h-full transition-all duration-300 z-10 shrink-0">
+      {/* 桌面端侧边栏 - 仅在 md 以上显示 */}
+      <aside className="hidden md:flex flex-col items-center justify-between z-20 transition-all duration-300 bg-black text-white shadow-2xl h-full w-20 rounded-2xl py-8 shrink-0">
         <div className="mb-8 p-3 rounded-full bg-white/10 backdrop-blur-md">
           <svg
             className="w-6 h-6 text-white"
@@ -289,18 +289,13 @@ export default function DashboardPage() {
         </div>
 
         <nav className="flex-1 flex flex-col gap-6 w-full items-center">
-          {/* 这里可以放侧边栏图标 */}
           <button
             type="button"
             className={`w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors ${activeTab === 'overview' ? 'bg-white/30' : 'bg-white/20 hover:bg-white/30'}`}
             onClick={() => setActiveTab('overview')}
+            title="概览"
           >
-            <div className="w-4 h-4 bg-white rounded-sm grid grid-cols-2 gap-0.5">
-              <div className="bg-transparent border border-black w-full h-full"></div>
-              <div className="bg-transparent border border-black w-full h-full"></div>
-              <div className="bg-transparent border border-black w-full h-full"></div>
-              <div className="bg-transparent border border-black w-full h-full"></div>
-            </div>
+            <LayoutDashboard className="w-5 h-5 text-white" />
           </button>
         </nav>
 
@@ -308,19 +303,51 @@ export default function DashboardPage() {
           type="button"
           className="mt-auto p-3 hover:bg-white/10 rounded-full cursor-pointer transition-colors"
           onClick={() => router.push('/')}
+          title="返回首页"
         >
-          <LayoutDashboard className="w-5 h-5 text-gray-400" />
+          <div className="w-4 h-4 bg-white rounded-sm grid grid-cols-2 gap-0.5">
+              <div className="bg-transparent border border-black w-full h-full"></div>
+              <div className="bg-transparent border border-black w-full h-full"></div>
+              <div className="bg-transparent border border-black w-full h-full"></div>
+              <div className="bg-transparent border border-black w-full h-full"></div>
+            </div>
         </button>
       </aside>
 
+      {/* 移动端底部按钮栏 - 仅在 md 以下显示 */}
+      <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-2 px-2 py-2 bg-black/90 backdrop-blur-md text-white rounded-full shadow-2xl w-[90%] max-w-sm border border-white/10">
+          <button
+            type="button"
+            className={`flex-1 flex items-center justify-center py-3 rounded-full transition-colors ${activeTab === 'overview' ? 'bg-white/20' : 'hover:bg-white/10'}`}
+            onClick={() => setActiveTab('overview')}
+          >
+             <LayoutDashboard className="w-5 h-5" />
+          </button>
+
+          <div className="w-px h-6 bg-white/20"></div>
+
+          <button
+            type="button"
+            className="flex-1 flex items-center justify-center py-3 rounded-full hover:bg-white/10 transition-colors"
+            onClick={() => router.push('/')}
+          >
+             <div className="w-4 h-4 bg-white rounded-sm grid grid-cols-2 gap-0.5">
+              <div className="bg-transparent border border-black w-full h-full"></div>
+              <div className="bg-transparent border border-black w-full h-full"></div>
+              <div className="bg-transparent border border-black w-full h-full"></div>
+              <div className="bg-transparent border border-black w-full h-full"></div>
+            </div>
+          </button>
+      </div>
+
       {/* 主内容区 */}
-      <main className="flex-1 bg-white dark:bg-zinc-800/80 rounded-2xl px-8 pt-6 pb-8 overflow-hidden shadow-2xl relative h-full flex flex-col backdrop-blur-3xl border border-white/50 dark:border-white/10">
+      <main className="flex-1 bg-white dark:bg-zinc-800/80 rounded-none md:rounded-2xl px-4 pt-4 pb-24 md:pb-8 md:px-8 md:pt-6 overflow-hidden shadow-2xl relative h-full flex flex-col backdrop-blur-3xl border-x-0 md:border border-white/50 dark:border-white/10">
         <div className="max-w-7xl mx-auto w-full h-full flex flex-col">
           {/* 顶部栏 - 模仿参考图 */}
           <div className="flex justify-between items-start mb-6 shrink-0">
             {/* 左侧头像区域 */}
             <div className="flex flex-col items-center gap-2">
-              <div className="w-16 h-16 rounded-full border-4 border-white shadow-lg overflow-hidden relative group cursor-pointer">
+              <div className="w-12 h-12 md:w-16 md:h-16 rounded-full border-4 border-white shadow-lg overflow-hidden relative group cursor-pointer">
                 {user?.avatar ? (
                   <Image
                     src={user.avatar}
@@ -337,38 +364,42 @@ export default function DashboardPage() {
             </div>
 
             {/* 右侧控制栏 */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4">
               {/* 登录/用户胶囊按钮 */}
               <button
                 type="button"
-                className="bg-black/80 backdrop-blur-md text-white rounded-full px-6 py-2 flex items-center gap-2 shadow-lg cursor-pointer hover:bg-black transition-colors"
+                className="bg-black/80 backdrop-blur-md text-white rounded-full px-3 py-1 md:px-6 md:py-2 flex items-center gap-2 shadow-lg cursor-pointer hover:bg-black transition-colors"
                 onClick={() =>
                   user ? setActiveTab('settings') : router.push('/login')
                 }
               >
-                <User className="w-4 h-4" />
-                <span className="text-sm font-medium">
+                <User className="w-3 h-3 md:w-4 md:h-4" />
+                <span className="text-xs md:text-sm font-medium hidden md:inline">
                   {user?.username || '登录'}
+                </span>
+                <span className="text-xs md:hidden inline">
+                   {/* Mobile only simplified text or nothing */}
+                   {user ? '' : '登录'}
                 </span>
               </button>
 
               {/* 窗口控制按钮模拟 */}
-              <div className="flex items-center gap-3 ml-2">
+              <div className="flex items-center gap-1 md:gap-3 ml-1 md:ml-2">
                 <button
                   type="button"
-                  className="w-10 h-10 rounded-full bg-black/80 text-white flex items-center justify-center hover:bg-black transition-colors shadow-lg"
+                  className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-black/80 text-white flex items-center justify-center hover:bg-black transition-colors shadow-lg"
                 >
                   <Settings
-                    className="w-5 h-5"
+                    className="w-4 h-4 md:w-5 md:h-5"
                     onClick={() => setActiveTab('settings')}
                   />
                 </button>
                 <button
                   type="button"
-                  className="w-10 h-10 rounded-full bg-black/80 text-white flex items-center justify-center hover:bg-black transition-colors shadow-lg"
+                  className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-black/80 text-white flex items-center justify-center hover:bg-black transition-colors shadow-lg"
                   onClick={handleLogout}
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-3 h-3 md:w-4 md:h-4" />
                 </button>
               </div>
             </div>
