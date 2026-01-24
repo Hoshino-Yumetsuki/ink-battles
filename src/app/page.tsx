@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Toaster, toast } from 'sonner'
 import { AnimatePresence, motion } from 'framer-motion'
 
@@ -49,12 +49,16 @@ export default function WriterAnalysisPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [progress, setProgress] = useState<number>(0)
   const [result, setResult] = useState<WriterAnalysisResult | null>(null)
-  const [usageInfo, setUsageInfo] = useState<{
-    isLoggedIn: boolean
-    username?: string
-    used: number
-    limit: number
-  } | undefined>(undefined)
+  const [usageInfo, setUsageInfo] = useState<
+    | {
+        isLoggedIn: boolean
+        username?: string
+        used: number
+        limit: number
+        resetTime?: string | null
+      }
+    | undefined
+  >(undefined)
 
   const [enabledOptions, setEnabledOptions] = useState<{
     [key: string]: boolean
@@ -68,35 +72,49 @@ export default function WriterAnalysisPage() {
     speedReview: false
   })
 
-  const fetchLimits = async () => {
+  const fetchLimits = useCallback(async () => {
     if (!fingerprint) return
     const token = localStorage.getItem('auth_token')
     const headers: any = {
       'x-fingerprint': fingerprint
     }
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`
+      headers.Authorization = `Bearer ${token}`
     }
 
     try {
-      const res = await fetch('/api/analyze/limits', { headers })
+      // Create a URL with timestamp to prevent caching
+      const url = new URL('/api/analyze/limits', window.location.origin)
+      url.searchParams.append('_t', Date.now().toString())
+
+      const res = await fetch(url.toString(), { headers })
       if (res.ok) {
         const data = await res.json()
         setUsageInfo({
           isLoggedIn: data.isLoggedIn,
           username: data.username,
           used: data.usage.used,
-          limit: data.usage.limit
+          limit: data.usage.limit,
+          resetTime: data.usage.resetTime // 确保传递 resetTime
         })
       }
     } catch (e) {
       console.error('Failed to fetch limits', e)
     }
-  }
+  }, [fingerprint])
 
   useEffect(() => {
     fetchLimits()
-  }, [fingerprint])
+
+    // Listen for auth changes (login/logout from Navbar)
+    const handleAuthChange = () => {
+      // Small delay to ensure localStorage/cookies are updated
+      setTimeout(fetchLimits, 100)
+    }
+
+    window.addEventListener('auth-change', handleAuthChange)
+    return () => window.removeEventListener('auth-change', handleAuthChange)
+  }, [fetchLimits])
 
   const handleOptionChange = (key: string, value: boolean) => {
     setEnabledOptions({ ...enabledOptions, [key]: value })

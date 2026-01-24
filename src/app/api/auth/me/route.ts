@@ -40,11 +40,10 @@ export async function GET(req: NextRequest) {
     // 获取配额配置
     const maxRequests = Number(process.env.NEXT_PUBLIC_USER_DAILY_LIMIT) || 10
 
-    // 检查窗口是否过期 (简单判断，详细逻辑应与 rate-limiter 保持一致，这里仅做展示)
-    // rate-limiter 中窗口过期会重置 windowStart 和 requestCount
-    // 这里我们假设如果当前时间超过 windowStart + windowSeconds 则计数为0
+    // 检查窗口是否过期 (详细逻辑与 rate-limiter 保持一致)
     const windowSeconds = Number(process.env.RATE_LIMIT_WINDOW_SECONDS) || 86400
     let usedCount = 0
+    let resetTime: Date | null = null
 
     if (limitRecord) {
       const now = new Date()
@@ -53,6 +52,7 @@ export async function GET(req: NextRequest) {
 
       if (now < expiryTime) {
         usedCount = limitRecord.requestCount
+        resetTime = expiryTime
       }
     }
 
@@ -66,7 +66,8 @@ export async function GET(req: NextRequest) {
         lastLoginAt: user.lastLoginAt,
         usage: {
           used: usedCount,
-          limit: maxRequests
+          limit: maxRequests,
+          resetTime: resetTime ? resetTime.toISOString() : null
         }
       }
     })

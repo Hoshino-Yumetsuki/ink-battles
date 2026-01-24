@@ -1,8 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { getDatabase, closeDatabaseConnection } from '@/utils/mongodb'
 import { verifyToken, extractToken } from '@/utils/jwt'
-import { checkRateLimit } from '@/utils/rate-limiter'
-import { MongoClient } from 'mongodb'
+import type { MongoClient } from 'mongodb'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,14 +18,14 @@ export async function GET(req: NextRequest) {
 
     // Try to verify token
     if (token) {
-        try {
-            const payload = await verifyToken(token)
-            userId = payload.userId
-            isLoggedIn = true
-            username = payload.username
-        } catch (e) {
-            // Token invalid, treat as guest
-        }
+      try {
+        const payload = await verifyToken(token)
+        userId = payload.userId
+        isLoggedIn = true
+        username = payload.username
+      } catch (_e) {
+        // Token invalid, treat as guest
+      }
     }
 
     // 2. Get Limits (We can reuse checkRateLimit logic or query manually)
@@ -34,7 +33,8 @@ export async function GET(req: NextRequest) {
     // But checkRateLimit in utils handles config reading.
 
     const maxRequestsGuest = Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 5
-    const maxRequestsUser = Number(process.env.NEXT_PUBLIC_USER_DAILY_LIMIT) || 10
+    const maxRequestsUser =
+      Number(process.env.NEXT_PUBLIC_USER_DAILY_LIMIT) || 10
     const limit = isLoggedIn ? maxRequestsUser : maxRequestsGuest
 
     const fingerprint = req.headers.get('x-fingerprint') || 'unknown'
@@ -49,32 +49,37 @@ export async function GET(req: NextRequest) {
 
     const windowSeconds = Number(process.env.RATE_LIMIT_WINDOW_SECONDS) || 86400
     let used = 0
+    let resetTime: Date | null = null
 
     if (record) {
-        const now = new Date()
-        const windowStart = new Date(record.windowStart)
-        const expiryTime = new Date(windowStart.getTime() + windowSeconds * 1000)
+      const now = new Date()
+      const windowStart = new Date(record.windowStart)
+      const expiryTime = new Date(windowStart.getTime() + windowSeconds * 1000)
 
-        if (now < expiryTime) {
-            used = record.requestCount
-        }
+      if (now < expiryTime) {
+        used = record.requestCount
+        resetTime = expiryTime
+      }
     }
 
     return NextResponse.json({
-        isLoggedIn,
-        username,
-        usage: {
-            used,
-            limit
-        }
+      isLoggedIn,
+      username,
+      usage: {
+        used,
+        limit,
+        resetTime: resetTime ? resetTime.toISOString() : null
+      }
     })
-
   } catch (error) {
     console.error('Limit check error:', error)
-    return NextResponse.json({ error: 'Failed to fetch limits' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to fetch limits' },
+      { status: 500 }
+    )
   } finally {
-      if (dbClient) {
-          await closeDatabaseConnection(dbClient)
-      }
+    if (dbClient) {
+      await closeDatabaseConnection(dbClient)
+    }
   }
 }

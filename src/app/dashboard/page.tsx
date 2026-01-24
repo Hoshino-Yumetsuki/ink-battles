@@ -21,7 +21,8 @@ import {
   ChevronRight,
   ExternalLink,
   Github,
-  Heart
+  Heart,
+  Zap
 } from 'lucide-react'
 import AnimatedBackground from '@/components/common/animated-background'
 import WriterScoreResult from '@/components/features/analysis/score-result'
@@ -34,6 +35,7 @@ interface UserInfo {
   usage?: {
     used: number
     limit: number
+    resetTime?: string | null
   }
 }
 
@@ -55,6 +57,30 @@ export default function DashboardPage() {
   const [avatarLoading, setAvatarLoading] = useState(false)
   const [selectedHistory, setSelectedHistory] =
     useState<AnalysisHistory | null>(null)
+
+  const [timeLeft, setTimeLeft] = useState('--:--')
+
+  useEffect(() => {
+    const updateTimer = () => {
+      let diff = 0
+      if (user?.usage?.resetTime) {
+        const resetDate = new Date(user.usage.resetTime)
+        diff = resetDate.getTime() - Date.now()
+      } else {
+        setTimeLeft('--:--')
+        return
+      }
+
+      if (diff < 0) diff = 0
+      const h = Math.floor(diff / (1000 * 60 * 60))
+      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+      setTimeLeft(`${h}h ${m}m`)
+    }
+
+    updateTimer()
+    const interval = setInterval(updateTimer, 60000)
+    return () => clearInterval(interval)
+  }, [user])
 
   // Pagination State
   const [page, setPage] = useState(1)
@@ -217,6 +243,8 @@ export default function DashboardPage() {
     localStorage.removeItem('username')
     localStorage.removeItem('user_password')
     await fetch('/api/auth/logout', { method: 'POST' })
+    // Dispatch event to notify other components to update auth state
+    window.dispatchEvent(new Event('auth-change'))
     router.push('/login')
   }
 
@@ -342,49 +370,56 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 overflow-auto pr-1">
             {activeTab === 'overview' && (
-              <div className="space-y-6">
-                {/* 顶部使用情况卡片 */}
-                <Card className="p-8 relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
-                  <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl -ml-32 -mb-32 pointer-events-none" />
-
-                  <div className="relative z-10">
-                    <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                       <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+              <div className="flex flex-col h-full gap-4">
+                {/* 顶部使用情况卡片 - 紧凑且风格统一 */}
+                <Card className="p-6 shrink-0">
+                  <div className="flex flex-col h-full">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-lg font-bold flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center">
+                          <Zap className="w-4 h-4" />
+                        </div>
                         当前使用状态
-                       </span>
-                    </h2>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                       <div className="flex flex-col gap-1">
-                          <span className="text-sm text-muted-foreground font-medium">已用次数</span>
-                          <span className="text-4xl font-bold text-gray-900 dark:text-white">
-                            {user?.usage?.used || 0}
-                          </span>
-                       </div>
-
-                       <div className="flex flex-col gap-1">
-                          <span className="text-sm text-muted-foreground font-medium">可用次数</span>
-                          <span className="text-4xl font-bold text-gray-900 dark:text-white">
-                            {(user?.usage?.limit || 0) - (user?.usage?.used || 0)}
-                          </span>
-                       </div>
-
-                       <div className="flex flex-col gap-1">
-                          <span className="text-sm text-muted-foreground font-medium">刷新时间</span>
-                          <span className="text-xl font-semibold text-gray-700 dark:text-gray-300 mt-auto mb-1">
-                            每日 00:00 (UTC)
-                          </span>
-                       </div>
+                      </h2>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground font-medium">
+                          刷新倒计时
+                        </span>
+                        <span className="text-sm font-mono font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                          {timeLeft}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="mt-8">
-                      <div className="h-2 w-full bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                    <div className="grid grid-cols-2 gap-8 mb-4">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs text-muted-foreground font-medium">
+                          已用次数
+                        </span>
+                        <span className="text-3xl font-bold">
+                          {user?.usage?.used || 0}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs text-muted-foreground font-medium">
+                          剩余可用
+                        </span>
+                        <span className="text-3xl font-bold">
+                          {(user?.usage?.limit || 0) - (user?.usage?.used || 0)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mb-4">
+                      <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-500"
-                          style={{ width: `${Math.min(( (user?.usage?.used || 0) / (user?.usage?.limit || 1) ) * 100, 100)}%` }}
+                          className="h-full bg-black dark:bg-white rounded-full transition-all duration-500"
+                          style={{
+                            width: `${Math.min(((user?.usage?.used || 0) / (user?.usage?.limit || 1)) * 100, 100)}%`
+                          }}
                         />
                       </div>
                       <p className="text-xs text-muted-foreground mt-2 text-right">
@@ -392,109 +427,116 @@ export default function DashboardPage() {
                       </p>
                     </div>
 
-                    {/* 底部按钮栏 */}
-                    <div className="flex flex-wrap gap-4 mt-8 pt-6 border-t border-gray-100 dark:border-zinc-800">
-                      <a
-                        href="https://github.com/Hoshino-Yumetsuki/ink-battles"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors text-sm font-medium"
+                    {/* 底部按钮栏 - 更加紧凑 */}
+                    <div className="flex flex-wrap gap-2 pt-4 border-t mt-auto">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-xs gap-1.5"
+                        asChild
                       >
-                        <Github className="w-4 h-4" />
-                        GitHub 仓库
-                      </a>
-                      <a
-                        href="#"
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors text-sm font-medium"
+                        <a
+                          href="https://github.com/Hoshino-Yumetsuki/ink-battles"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Github className="w-3.5 h-3.5" />
+                          GitHub
+                        </a>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-xs gap-1.5"
+                        asChild
                       >
-                         <ExternalLink className="w-4 h-4" />
-                         使用指南
-                      </a>
-                      <a
-                        href="#"
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors text-sm font-medium text-pink-600 dark:text-pink-400"
+                        <a href="/guide">
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          指南
+                        </a>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-xs gap-1.5 text-pink-600 hover:text-pink-700 hover:bg-pink-50 dark:hover:bg-pink-900/20"
+                        asChild
                       >
-                         <Heart className="w-4 h-4" />
-                         支持我们 (爱发电)
-                      </a>
+                        <a
+                          href="https://afdian.com/a/q78kg"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Heart className="w-3.5 h-3.5" />
+                          支持
+                        </a>
+                      </Button>
                     </div>
                   </div>
                 </Card>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <Card className="p-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                        <FileText className="w-6 h-6 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          总分析次数
-                        </p>
-                        <p className="text-2xl font-bold">{totalCount}</p>
-                      </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
+                  <Card className="p-4 flex flex-col items-center justify-center gap-2 text-center h-full">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center shrink-0">
+                      <FileText className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">
+                        总分析次数
+                      </p>
+                      <p className="text-xl font-bold">{totalCount}</p>
                     </div>
                   </Card>
 
-                  <Card className="p-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                        <TrendingUp className="w-6 h-6 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          平均分数
-                        </p>
-                        <p className="text-2xl font-bold">
-                          {histories.length > 0
-                            ? Math.round(
-                                histories.reduce(
-                                  (sum, h) => sum + (h.result?.score || 0),
-                                  0
-                                ) / histories.length
-                              )
-                            : 0}
-                        </p>
-                      </div>
+                  <Card className="p-4 flex flex-col items-center justify-center gap-2 text-center h-full">
+                    <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center shrink-0">
+                      <TrendingUp className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">平均分数</p>
+                      <p className="text-xl font-bold">
+                        {histories.length > 0
+                          ? Math.round(
+                              histories.reduce(
+                                (sum, h) => sum + (h.result?.score || 0),
+                                0
+                              ) / histories.length
+                            )
+                          : 0}
+                      </p>
                     </div>
                   </Card>
 
-                  <Card className="p-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
-                        <Clock className="w-6 h-6 text-purple-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          账户年龄
-                        </p>
-                        <p className="text-2xl font-bold">
-                          {user?.createdAt &&
-                            Math.floor(
-                              (Date.now() -
-                                new Date(user.createdAt).getTime()) /
-                                (1000 * 60 * 60 * 24)
-                            )}
-                          天
-                        </p>
-                      </div>
+                  <Card className="p-4 flex flex-col items-center justify-center gap-2 text-center h-full">
+                    <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center shrink-0">
+                      <Clock className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">账户年龄</p>
+                      <p className="text-xl font-bold">
+                        {user?.createdAt &&
+                          Math.floor(
+                            (Date.now() - new Date(user.createdAt).getTime()) /
+                              (1000 * 60 * 60 * 24)
+                          )}
+                        天
+                      </p>
                     </div>
                   </Card>
                 </div>
 
-                <Card className="p-6">
-                  <h2 className="text-xl font-bold mb-4">快速操作</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="p-6 flex-1 flex flex-col justify-center min-h-30">
+                  <h2 className="text-lg font-bold mb-3">快速操作</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
                     <Button
                       onClick={() => router.push('/')}
-                      className="h-20 text-lg"
+                      className="h-full text-base"
                     >
                       新建分析
                     </Button>
                     <Button
                       onClick={() => setActiveTab('history')}
                       variant="outline"
-                      className="h-20 text-lg"
+                      className="h-full text-base"
                     >
                       查看历史记录
                     </Button>

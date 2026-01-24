@@ -8,11 +8,12 @@ import { z } from 'zod'
 import sanitize from 'mongo-sanitize'
 
 const registerSchema = z.object({
-  username: z.string()
+  username: z
+    .string()
     .min(3, '用户名长度至少3个字符')
     .max(20, '用户名长度最多20个字符')
     .trim(),
-    //.regex(/^[a-zA-Z0-9_\u4e00-\u9fa5]+$/, '用户名只能包含字母、数字、下划线和中文'), // 根据需要决定是否严格限制字符
+  //.regex(/^[a-zA-Z0-9_\u4e00-\u9fa5]+$/, '用户名只能包含字母、数字、下划线和中文'), // 根据需要决定是否严格限制字符
   password: z.string().min(8, '密码长度至少为8个字符'),
   turnstileToken: z.string().optional()
 })
@@ -76,7 +77,7 @@ export async function POST(req: NextRequest) {
     // 如果启用了Turnstile，验证token
     if (isTurnstileEnabled) {
       // turnstileToken 已经被 zod 验证为 string | undefined，非空检查在上面
-      const isTurnstileValid = await verifyTurnstile(turnstileToken!)
+      const isTurnstileValid = await verifyTurnstile(turnstileToken as string)
       if (!isTurnstileValid) {
         return NextResponse.json(
           { error: '人机验证失败，请重试' },

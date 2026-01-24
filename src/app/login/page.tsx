@@ -65,6 +65,9 @@ export default function LoginPage() {
       localStorage.setItem('username', data.user.username)
       localStorage.setItem('user_password', password) // 用于解密
 
+      // Dispatch event to notify other components to update auth state
+      window.dispatchEvent(new Event('auth-change'))
+
       // 跳转到dashboard
       router.push('/dashboard')
     } catch (err: any) {
@@ -77,8 +80,12 @@ export default function LoginPage() {
   return (
     <AuthLayout title="Ink Battles">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">欢迎回来</h2>
-        <p className="mt-2 text-gray-500 dark:text-gray-400">登录您的账户以继续</p>
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+          欢迎回来
+        </h2>
+        <p className="mt-2 text-gray-500 dark:text-gray-400">
+          登录您的账户以继续
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

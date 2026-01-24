@@ -57,10 +57,15 @@ export default function Navbar() {
     }
 
     checkLoginStatus()
-    // 监听 storage 事件以响应登录/登出变化（可选）
+    // 监听 storage 和 auth-change 事件以响应登录/登出变化
     window.addEventListener('storage', checkLoginStatus)
-    return () => window.removeEventListener('storage', checkLoginStatus)
-  }, [pathname]) // 依赖 pathname 变化来重新检查登录状态
+    window.addEventListener('auth-change', checkLoginStatus)
+
+    return () => {
+      window.removeEventListener('storage', checkLoginStatus)
+      window.removeEventListener('auth-change', checkLoginStatus)
+    }
+  }, []) // 依赖 pathname 变化来重新检查登录状态
 
   const handleLogout = async () => {
     localStorage.removeItem('auth_token')
@@ -69,6 +74,9 @@ export default function Navbar() {
     await fetch('/api/auth/logout', { method: 'POST' })
     setIsLoggedIn(false)
     setAvatar(null)
+
+    // Dispatch event to notify other components (like home page) to update auth state
+    window.dispatchEvent(new Event('auth-change'))
 
     // 如果当前不是需要保护的页面，不跳转到登录页，而是保持在当前页面
     // 比如在首页点击退出，就留在首页
