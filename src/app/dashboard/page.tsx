@@ -37,6 +37,10 @@ interface UserInfo {
     limit: number
     resetTime?: string | null
   }
+  stats?: {
+    totalCount: number
+    averageScore: number
+  }
 }
 
 interface AnalysisHistory {
@@ -483,7 +487,9 @@ export default function DashboardPage() {
                       <p className="text-xs text-muted-foreground">
                         总分析次数
                       </p>
-                      <p className="text-xl font-bold">{totalCount}</p>
+                      <p className="text-xl font-bold">
+                        {user?.stats?.totalCount || totalCount}
+                      </p>
                     </div>
                   </Card>
 
@@ -494,14 +500,7 @@ export default function DashboardPage() {
                     <div>
                       <p className="text-xs text-muted-foreground">平均分数</p>
                       <p className="text-xl font-bold">
-                        {histories.length > 0
-                          ? Math.round(
-                              histories.reduce(
-                                (sum, h) => sum + (h.result?.score || 0),
-                                0
-                              ) / histories.length
-                            )
-                          : 0}
+                        {user?.stats?.averageScore || 0}
                       </p>
                     </div>
                   </Card>

@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server'
-import type { Db, MongoClient } from 'mongodb'
+import { type Db, type MongoClient, ObjectId } from 'mongodb'
 import { getDatabase, closeDatabaseConnection } from './mongodb'
 import { logger } from './logger'
 
@@ -14,18 +14,21 @@ interface RateLimitRecord {
 interface RateLimitConfig {
   enabled: boolean
   windowSeconds: number
-  maxRequests: number
+  maxRequestsGuest: number
+  maxRequestsUser: number
 }
 
 function getRateLimitConfig(): RateLimitConfig {
   const enabled = process.env.FINGERPRINT_RATE_LIMIT_ENABLED === 'true'
   const windowSeconds = Number(process.env.RATE_LIMIT_WINDOW_SECONDS) || 86400
-  const maxRequests = Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 10
+  const maxRequestsGuest = Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 10
+  const maxRequestsUser = Number(process.env.USER_DAILY_LIMIT) || 20
 
   return {
     enabled,
     windowSeconds,
-    maxRequests
+    maxRequestsGuest,
+    maxRequestsUser
   }
 }
 
@@ -69,21 +72,6 @@ export async function checkRateLimit(
     return { allowed: true }
   }
 
-  let identifier: string | null = null
-  if (userId) {
-    identifier = `user:${userId}`
-  } else {
-    identifier = extractFingerprint(request)
-  }
-
-  if (!identifier) {
-    logger.warn('Rate limit enabled but no identifier provided')
-    return {
-      allowed: false,
-      error: '缺少用户标识，请刷新页面后重试'
-    }
-  }
-
   let client: MongoClient | undefined
   let db: Db
   const shouldCloseConnection = !sharedDb
@@ -97,54 +85,137 @@ export async function checkRateLimit(
       db = dbConnection.db
       client = dbConnection.client
     }
-    const collection = db.collection<RateLimitRecord>('rate_limits')
 
+    const now = new Date()
+    const windowStart = new Date(now.getTime() - config.windowSeconds * 1000)
+
+    // 如果是登录用户，检查 users 集合
+    if (userId && ObjectId.isValid(userId)) {
+      const identifier = `user:${userId}`
+      const usersCollection = db.collection('users')
+      const user = await usersCollection.findOne({ _id: new ObjectId(userId) })
+
+      if (!user) {
+        return { allowed: false, error: '用户不存在' }
+      }
+
+      const usage = user.usage || {
+        used: 0,
+        limit: config.maxRequestsUser,
+        resetTime: new Date(now.getTime() + config.windowSeconds * 1000)
+      }
+
+      // 检查配额配置是否变化 (Lazy Update)
+      const currentLimit = usage.limit || config.maxRequestsUser
+      if (currentLimit !== config.maxRequestsUser) {
+        // 配额变动：更新 limit，同时调整 used 以避免不公平截断
+        const quotaDiff = config.maxRequestsUser - currentLimit
+        let newUsed = usage.used
+
+        if (quotaDiff < 0) {
+          newUsed = Math.min(usage.used, config.maxRequestsUser)
+        }
+
+        await usersCollection.updateOne(
+          { _id: user._id },
+          {
+            $set: {
+              'usage.limit': config.maxRequestsUser,
+              'usage.used': newUsed
+            }
+          }
+        )
+
+        usage.limit = config.maxRequestsUser
+        usage.used = newUsed
+        logger.info(
+          `Lazy adjusted quota for user ${userId}: ${currentLimit} -> ${config.maxRequestsUser}`
+        )
+      }
+
+      // 检查 resetTime 是否过期
+      if (usage.resetTime && new Date(usage.resetTime) < now) {
+        return {
+          allowed: true,
+          remainingRequests: config.maxRequestsUser - 1,
+          resetTime: new Date(now.getTime() + config.windowSeconds * 1000),
+          identifier
+        }
+      }
+
+      if (usage.used >= (usage.limit || config.maxRequestsUser)) {
+        const resetTime = usage.resetTime
+          ? new Date(usage.resetTime)
+          : new Date(now.getTime() + config.windowSeconds * 1000)
+        const waitSeconds = Math.ceil(
+          (resetTime.getTime() - now.getTime()) / 1000
+        )
+
+        return {
+          allowed: false,
+          remainingRequests: 0,
+          resetTime,
+          error: `请求超过使用限制，请在${formatWaitTime(waitSeconds)}后重试`
+        }
+      }
+
+      return {
+        allowed: true,
+        remainingRequests:
+          (usage.limit || config.maxRequestsUser) - usage.used - 1,
+        resetTime: usage.resetTime
+          ? new Date(usage.resetTime)
+          : new Date(now.getTime() + config.windowSeconds * 1000),
+        identifier
+      }
+    }
+
+    // 匿名用户逻辑
+    const identifier = extractFingerprint(request)
+    if (!identifier) {
+      logger.warn('Rate limit enabled but no identifier provided')
+      return {
+        allowed: false,
+        error: '缺少用户标识，请刷新页面后重试'
+      }
+    }
+
+    const collection = db.collection<RateLimitRecord>('rate_limits')
     await collection.createIndex({ fingerprint: 1 })
     await collection.createIndex(
       { windowStart: 1 },
       { expireAfterSeconds: config.windowSeconds * 2 }
     )
 
-    const now = new Date()
-    const windowStart = new Date(now.getTime() - config.windowSeconds * 1000)
-
     // 清理所有过期的速率限制记录
     await cleanExpiredRecords(db, windowStart)
 
-    // 检查并调整配额（如果配置变化）
-    await adjustQuotaIfConfigChanged(db, config.maxRequests)
+    // 检查并调整配额（如果配置变化）(仅针对匿名用户记录)
+    await adjustQuotaIfConfigChanged(db, config.maxRequestsGuest)
 
-    // 查找当前用户的速率限制记录 (使用 fingerprint 字段存储标识符)
     const record = await collection.findOne({ fingerprint: identifier })
 
     if (!record) {
-      // 首次请求，先不创建记录，等待请求成功后再创建
       return {
         allowed: true,
-        remainingRequests: config.maxRequests - 1,
+        remainingRequests: config.maxRequestsGuest - 1,
         resetTime: new Date(now.getTime() + config.windowSeconds * 1000),
         identifier
       }
     }
 
-    // 检查是否需要重置时间窗口
     if (record.windowStart < windowStart) {
-      // 时间窗口已过期，删除旧记录，等待请求成功后再创建新记录
       await collection.deleteOne({ fingerprint: identifier })
-
       logger.info('Rate limit record expired and cleaned', { identifier })
-
       return {
         allowed: true,
-        remainingRequests: config.maxRequests - 1,
+        remainingRequests: config.maxRequestsGuest - 1,
         resetTime: new Date(now.getTime() + config.windowSeconds * 1000),
         identifier
       }
     }
 
-    // 在当前时间窗口内
-    if (record.requestCount >= config.maxRequests) {
-      // 超过速率限制
+    if (record.requestCount >= config.maxRequestsGuest) {
       const resetTime = new Date(
         record.windowStart.getTime() + config.windowSeconds * 1000
       )
@@ -155,7 +226,7 @@ export async function checkRateLimit(
       logger.warn('Rate limit exceeded', {
         identifier,
         requestCount: record.requestCount,
-        maxRequests: config.maxRequests
+        maxRequests: config.maxRequestsGuest
       })
 
       return {
@@ -166,10 +237,9 @@ export async function checkRateLimit(
       }
     }
 
-    // 允许请求,但不增加计数（等待请求成功后再增加）
     return {
       allowed: true,
-      remainingRequests: config.maxRequests - record.requestCount - 1,
+      remainingRequests: config.maxRequestsGuest - record.requestCount - 1,
       resetTime: new Date(
         record.windowStart.getTime() + config.windowSeconds * 1000
       ),
@@ -177,10 +247,8 @@ export async function checkRateLimit(
     }
   } catch (error) {
     logger.error('Error checking rate limit', error)
-    // 如果速率限制检查失败，默认允许请求（避免因基础设施问题完全阻止服务）
     return { allowed: true }
   } finally {
-    // 只在没有使用共享连接时才关闭
     if (shouldCloseConnection && client) {
       await closeDatabaseConnection(client)
     }
@@ -188,7 +256,7 @@ export async function checkRateLimit(
 }
 
 export async function incrementRateLimit(
-  fingerprint: string | null,
+  descriptor: string | null,
   sharedDb?: { db: Db; client: MongoClient }
 ): Promise<void> {
   const config = getRateLimitConfig()
@@ -197,8 +265,10 @@ export async function incrementRateLimit(
     return
   }
 
-  if (!fingerprint) {
-    logger.warn('Cannot increment rate limit: fingerprint is missing')
+  const identifier = descriptor
+
+  if (!identifier) {
+    logger.warn('Cannot increment rate limit: identifier is missing')
     return
   }
 
@@ -215,38 +285,97 @@ export async function incrementRateLimit(
       db = dbConnection.db
       client = dbConnection.client
     }
-    const collection = db.collection<RateLimitRecord>('rate_limits')
 
     const now = new Date()
+
+    // 登录用户处理逻辑
+    if (identifier.startsWith('user:')) {
+      const userId = identifier.split(':')[1]
+      if (ObjectId.isValid(userId)) {
+        const usersCollection = db.collection('users')
+        const user = await usersCollection.findOne({
+          _id: new ObjectId(userId)
+        })
+
+        if (user) {
+          // 检查是否需要重置窗口
+          const currentResetTime = user.usage?.resetTime
+            ? new Date(user.usage.resetTime)
+            : null
+          const shouldReset = !currentResetTime || currentResetTime < now
+
+          if (shouldReset) {
+            // 新窗口
+            await usersCollection.updateOne(
+              { _id: new ObjectId(userId) },
+              {
+                $set: {
+                  'usage.used': 1,
+                  'usage.limit': config.maxRequestsUser,
+                  'usage.resetTime': new Date(
+                    now.getTime() + config.windowSeconds * 1000
+                  )
+                },
+                $inc: { totalAnalysisCount: 1 }
+              }
+            )
+          } else {
+            // 现有窗口增加计数
+            await usersCollection.updateOne(
+              { _id: new ObjectId(userId) },
+              {
+                $inc: {
+                  'usage.used': 1,
+                  totalAnalysisCount: 1
+                },
+                // 确保 limit 即使配置变更也是最新的
+                $set: {
+                  'usage.limit': config.maxRequestsUser
+                }
+              }
+            )
+          }
+        }
+      }
+      return
+    }
+
+    // 匿名用户逻辑
+    const collection = db.collection<RateLimitRecord>('rate_limits')
     const windowStart = new Date(now.getTime() - config.windowSeconds * 1000)
 
     // 查找当前用户的记录
-    const record = await collection.findOne({ fingerprint })
+    const record = await collection.findOne({ fingerprint: identifier })
 
     if (!record || record.windowStart < windowStart) {
       // 首次请求或时间窗口已过期，创建新记录
-      if (record && record.windowStart < windowStart) {
-        await collection.deleteOne({ fingerprint })
-      }
-      await collection.insertOne({
-        fingerprint,
+      const newRecord = {
+        fingerprint: identifier,
         lastRequest: now,
         requestCount: 1,
         windowStart: now,
-        maxRequests: config.maxRequests
+        maxRequests: config.maxRequestsGuest
+      }
+
+      if (record && record.windowStart < windowStart) {
+        await collection.deleteOne({ fingerprint: identifier })
+      }
+      await collection.insertOne(newRecord)
+      logger.info('Rate limit record created/reset', {
+        fingerprint: identifier
       })
-      logger.info('Rate limit record created/reset', { fingerprint })
     } else {
       // 增加计数
       await collection.updateOne(
-        { fingerprint },
+        { fingerprint: identifier },
         {
           $set: { lastRequest: now },
           $inc: { requestCount: 1 }
         }
       )
+
       logger.info('Rate limit count incremented', {
-        fingerprint,
+        fingerprint: identifier,
         newCount: record.requestCount + 1
       })
     }

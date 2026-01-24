@@ -32,33 +32,62 @@ export async function GET(req: NextRequest) {
     // Querying manually allows us to just peek without counting a request
     // But checkRateLimit in utils handles config reading.
 
-    const maxRequestsGuest = Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 5
-    const maxRequestsUser =
-      Number(process.env.NEXT_PUBLIC_USER_DAILY_LIMIT) || 10
-    const limit = isLoggedIn ? maxRequestsUser : maxRequestsGuest
+    const maxRequestsGuest = Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 10
+    const maxRequestsUser = Number(process.env.USER_DAILY_LIMIT) || 20
+    // 默认 limit，稍后从 DB 读取更准确的
+    let limit = isLoggedIn ? maxRequestsUser : maxRequestsGuest
 
     const fingerprint = req.headers.get('x-fingerprint') || 'unknown'
-    const identifier = userId ? `user:${userId}` : fingerprint
 
     // Connect DB
     const { db, client } = await getDatabase()
     dbClient = client
-    const collection = db.collection('rate_limits')
-
-    const record = await collection.findOne({ fingerprint: identifier })
 
     const windowSeconds = Number(process.env.RATE_LIMIT_WINDOW_SECONDS) || 86400
     let used = 0
     let resetTime: Date | null = null
+    const now = new Date()
 
-    if (record) {
-      const now = new Date()
-      const windowStart = new Date(record.windowStart)
-      const expiryTime = new Date(windowStart.getTime() + windowSeconds * 1000)
+    if (isLoggedIn && userId) {
+      // Logged-in User: Check users collection
+      const { ObjectId } = await import('mongodb')
+      if (ObjectId.isValid(userId)) {
+        const usersCollection = db.collection('users')
+        const userDoc = await usersCollection.findOne({
+          _id: new ObjectId(userId)
+        })
 
-      if (now < expiryTime) {
-        used = record.requestCount
-        resetTime = expiryTime
+        if (userDoc?.usage) {
+          const userResetTime = userDoc.usage.resetTime
+            ? new Date(userDoc.usage.resetTime)
+            : null
+          if (userResetTime && now < userResetTime) {
+            used = userDoc.usage.used || 0
+            limit = userDoc.usage.limit || limit
+            resetTime = userResetTime
+          } else {
+            // 窗口已过，归零
+            used = 0
+            // 如果 limit 配置变了，这里最好也更新一下 limit，但这里只用来读
+            // limit = maxRequestsUser
+          }
+        }
+      }
+    } else {
+      // Guest: Check rate_limits collection
+      const collection = db.collection('rate_limits')
+      const record = await collection.findOne({ fingerprint })
+
+      if (record) {
+        const windowStart = new Date(record.windowStart)
+        const expiryTime = new Date(
+          windowStart.getTime() + windowSeconds * 1000
+        )
+
+        if (now < expiryTime) {
+          used = record.requestCount
+          resetTime = expiryTime
+        }
       }
     }
 

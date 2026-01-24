@@ -31,28 +31,53 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: '用户不存在' }, { status: 404 })
     }
 
-    // 获取用户使用量信息
-    const rateLimitsCollection = db.collection('rate_limits')
-    const limitRecord = await rateLimitsCollection.findOne({
-      fingerprint: `user:${user._id.toString()}`
+    // 获取分析统计信息
+    const analysisCollection = db.collection('analysis_history')
+    const totalCount = await analysisCollection.countDocuments({
+      userId: user._id.toString()
     })
 
+    // 计算平均分
+    const pipeline = [
+      {
+        $match: {
+          userId: user._id.toString(),
+          score: { $exists: true, $gt: 0 }
+        }
+      },
+      { $group: { _id: null, avgScore: { $avg: '$score' } } }
+    ]
+    const avgResult = await analysisCollection.aggregate(pipeline).toArray()
+    const averageScore =
+      avgResult.length > 0 ? Math.round(avgResult[0].avgScore) : 0
+
     // 获取配额配置
-    const maxRequests = Number(process.env.NEXT_PUBLIC_USER_DAILY_LIMIT) || 10
+    // 注意：USER_DAILY_LIMIT 是后端配置
+    // 这里优先使用用户的 limit 字段，或者环境变量
+    const configMaxRequests = Number(process.env.USER_DAILY_LIMIT) || 20
 
-    // 检查窗口是否过期 (详细逻辑与 rate-limiter 保持一致)
-    const windowSeconds = Number(process.env.RATE_LIMIT_WINDOW_SECONDS) || 86400
     let usedCount = 0
+    let currentLimit = configMaxRequests
     let resetTime: Date | null = null
+    const now = new Date()
 
-    if (limitRecord) {
-      const now = new Date()
-      const windowStart = new Date(limitRecord.windowStart)
-      const expiryTime = new Date(windowStart.getTime() + windowSeconds * 1000)
+    if (user.usage) {
+      // 如果记录存在
+      const userResetTime = user.usage.resetTime
+        ? new Date(user.usage.resetTime)
+        : null
 
-      if (now < expiryTime) {
-        usedCount = limitRecord.requestCount
-        resetTime = expiryTime
+      // 如果未过期，使用记录中的值
+      if (userResetTime && now < userResetTime) {
+        usedCount = user.usage.used || 0
+        currentLimit = user.usage.limit || configMaxRequests
+        resetTime = userResetTime
+      } else {
+        // 已过期，视为0使用量
+        usedCount = 0
+        currentLimit = configMaxRequests
+        // 可以在这里计算下一个重置时间，但显示 null 或者现在+窗口可能更合适用于前端展示 "即将在..."
+        // 前端似乎只关心剩余次数，resetTime 用于倒计时
       }
     }
 
@@ -64,9 +89,13 @@ export async function GET(req: NextRequest) {
         avatar: user.avatar,
         createdAt: user.createdAt,
         lastLoginAt: user.lastLoginAt,
+        stats: {
+          totalCount,
+          averageScore
+        },
         usage: {
           used: usedCount,
-          limit: maxRequests,
+          limit: currentLimit,
           resetTime: resetTime ? resetTime.toISOString() : null
         }
       }

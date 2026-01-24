@@ -62,7 +62,8 @@ export default function RegisterPage() {
         },
         body: JSON.stringify({
           username,
-          password
+          password,
+          turnstileToken
         })
       })
 
@@ -88,13 +89,15 @@ export default function RegisterPage() {
   return (
     <AuthLayout title="Join Ink Battles">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-900">创建账户</h2>
-        <p className="mt-2 text-gray-500">开启您的旅程</p>
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+          创建账户
+        </h2>
+        <p className="mt-2 text-gray-500 dark:text-gray-400">开启您的旅程</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">
+          <div className="p-3 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg">
             {error}
           </div>
         )}
@@ -102,13 +105,13 @@ export default function RegisterPage() {
         <div className="space-y-4">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <User className="h-5 w-5 text-gray-400" />
+              <User className="h-5 w-5 text-gray-400 dark:text-gray-500" />
             </div>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+              className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800 dark:text-white border border-transparent dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-zinc-800 transition-colors"
               placeholder="请输入用户名"
               disabled={loading}
             />
@@ -116,13 +119,13 @@ export default function RegisterPage() {
 
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock className="h-5 w-5 text-gray-400" />
+              <Lock className="h-5 w-5 text-gray-400 dark:text-gray-500" />
             </div>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+              className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800 dark:text-white border border-transparent dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-zinc-800 transition-colors"
               placeholder="请输入密码（至少8位）"
               disabled={loading}
             />
@@ -130,13 +133,13 @@ export default function RegisterPage() {
 
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <KeyRound className="h-5 w-5 text-gray-400" />
+              <KeyRound className="h-5 w-5 text-gray-400 dark:text-gray-500" />
             </div>
             <input
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+              className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800 dark:text-white border border-transparent dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-zinc-800 transition-colors"
               placeholder="请再次输入密码"
               disabled={loading}
             />
@@ -144,14 +147,14 @@ export default function RegisterPage() {
         </div>
 
         {isTurnstileEnabled && (
-          <div className="flex justify-center bg-gray-50 p-2 rounded-lg border border-gray-100">
+          <div className="flex justify-center bg-gray-50 dark:bg-zinc-800 p-2 rounded-lg border border-gray-100 dark:border-zinc-700">
             <Turnstile
               sitekey={
                 process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ||
                 '1x00000000000000000000AA'
               }
               onVerify={(token) => setTurnstileToken(token)}
-              theme="light"
+              theme="auto"
             />
           </div>
         )}
@@ -160,7 +163,7 @@ export default function RegisterPage() {
           <Link href="/login" className="flex-1">
             <Button
               type="button"
-              className="w-full py-6 bg-blue-50 text-blue-600 hover:bg-blue-100 border-none text-base font-normal shadow-none"
+              className="w-full py-6 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 border-none text-base font-normal shadow-none"
               disabled={loading}
             >
               登录

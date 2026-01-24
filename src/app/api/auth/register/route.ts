@@ -31,15 +31,13 @@ async function verifyTurnstile(token: string): Promise<boolean> {
   }
 
   try {
+    const formData = new URLSearchParams()
+    formData.append('secret', secret)
+    formData.append('response', token)
+
     const response = await fetch(TURNSTILE_VERIFY_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        secret,
-        response: token
-      })
+      body: formData
     })
 
     const data = await response.json()

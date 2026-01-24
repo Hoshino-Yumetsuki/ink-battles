@@ -192,6 +192,11 @@ export default function WriterAnalysisPage() {
           headers['x-fingerprint'] = fingerprint
         }
 
+        const token = localStorage.getItem('auth_token')
+        if (token) {
+          headers.Authorization = `Bearer ${token}`
+        }
+
         const response = await fetch('/api/analyze', {
           method: 'POST',
           body: formData,
@@ -341,7 +346,8 @@ export default function WriterAnalysisPage() {
                       },
                       body: JSON.stringify({
                         encryptedResult,
-                        mode: enabledOptions.mode || 'standard'
+                        mode: enabledOptions.mode || 'standard',
+                        score: finalResult.overallScore
                       })
                     })
                   } catch (saveError) {

@@ -50,7 +50,8 @@ export default function LoginPage() {
         },
         body: JSON.stringify({
           username,
-          password
+          password,
+          turnstileToken
         })
       })
 

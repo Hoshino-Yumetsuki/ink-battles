@@ -65,7 +65,7 @@ export default function Navbar() {
       window.removeEventListener('storage', checkLoginStatus)
       window.removeEventListener('auth-change', checkLoginStatus)
     }
-  }, [pathname]) // 依赖 pathname 变化来重新检查登录状态
+  }, []) // 依赖 pathname 变化来重新检查登录状态
 
   const handleLogout = async () => {
     localStorage.removeItem('auth_token')

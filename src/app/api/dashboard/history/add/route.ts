@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     const payload = await verifyToken(token)
     const body = await req.json()
 
-    const { encryptedResult, mode } = body
+    const { encryptedResult, mode, score } = body
 
     if (!encryptedResult || !mode) {
       return NextResponse.json({ error: '缺少必要的数据字段' }, { status: 400 })
@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
       // encryptedContent, // 不再保存文章内容
       encryptedResult,
       mode,
+      score: typeof score === 'number' ? score : 0,
       createdAt: new Date()
     })
 

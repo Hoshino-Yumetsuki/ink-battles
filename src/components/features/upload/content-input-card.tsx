@@ -340,7 +340,7 @@ export default function ContentInputCard({
           <Button
             onClick={onAnalyzeAction}
             disabled={isLoading || (!content && !file)}
-            className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20 px-8"
+            className="px-8"
           >
             {isLoading ? (
               <>
