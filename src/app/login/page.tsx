@@ -68,8 +68,8 @@ export default function LoginPage() {
       // Dispatch event to notify other components to update auth state
       window.dispatchEvent(new Event('auth-change'))
 
-      // 跳转到dashboard
-      router.push('/dashboard')
+      // 跳转到首页
+      router.push('/')
     } catch (err: any) {
       setError(err.message)
     } finally {
