@@ -263,10 +263,22 @@ export default function DashboardPage() {
     )
   }
 
+  const dashboardBackground = process.env.NEXT_PUBLIC_DASHBOARD_BACKGROUND
+
   return (
     <div className="h-screen w-full relative p-0 md:p-4 flex flex-col md:flex-row gap-0 md:gap-4 overflow-hidden font-sans bg-zinc-100 dark:bg-zinc-950">
       <div className="absolute inset-0 z-0">
-        <AnimatedBackground />
+        {dashboardBackground ? (
+          <>
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url('${dashboardBackground}')` }}
+            />
+            <div className="absolute inset-0 bg-white/30 dark:bg-black/40 backdrop-blur-xl" />
+          </>
+        ) : (
+          <AnimatedBackground />
+        )}
       </div>
 
       {/* 桌面端侧边栏 - 仅在 md 以上显示 */}
@@ -306,38 +318,38 @@ export default function DashboardPage() {
           title="返回首页"
         >
           <div className="w-4 h-4 bg-white rounded-sm grid grid-cols-2 gap-0.5">
-              <div className="bg-transparent border border-black w-full h-full"></div>
-              <div className="bg-transparent border border-black w-full h-full"></div>
-              <div className="bg-transparent border border-black w-full h-full"></div>
-              <div className="bg-transparent border border-black w-full h-full"></div>
-            </div>
+            <div className="bg-transparent border border-black w-full h-full"></div>
+            <div className="bg-transparent border border-black w-full h-full"></div>
+            <div className="bg-transparent border border-black w-full h-full"></div>
+            <div className="bg-transparent border border-black w-full h-full"></div>
+          </div>
         </button>
       </aside>
 
       {/* 移动端底部按钮栏 - 仅在 md 以下显示 */}
       <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-2 px-2 py-2 bg-black/90 backdrop-blur-md text-white rounded-full shadow-2xl w-[90%] max-w-sm border border-white/10">
-          <button
-            type="button"
-            className={`flex-1 flex items-center justify-center py-3 rounded-full transition-colors ${activeTab === 'overview' ? 'bg-white/20' : 'hover:bg-white/10'}`}
-            onClick={() => setActiveTab('overview')}
-          >
-             <LayoutDashboard className="w-5 h-5" />
-          </button>
+        <button
+          type="button"
+          className={`flex-1 flex items-center justify-center py-3 rounded-full transition-colors ${activeTab === 'overview' ? 'bg-white/20' : 'hover:bg-white/10'}`}
+          onClick={() => setActiveTab('overview')}
+        >
+          <LayoutDashboard className="w-5 h-5" />
+        </button>
 
-          <div className="w-px h-6 bg-white/20"></div>
+        <div className="w-px h-6 bg-white/20"></div>
 
-          <button
-            type="button"
-            className="flex-1 flex items-center justify-center py-3 rounded-full hover:bg-white/10 transition-colors"
-            onClick={() => router.push('/')}
-          >
-             <div className="w-4 h-4 bg-white rounded-sm grid grid-cols-2 gap-0.5">
-              <div className="bg-transparent border border-black w-full h-full"></div>
-              <div className="bg-transparent border border-black w-full h-full"></div>
-              <div className="bg-transparent border border-black w-full h-full"></div>
-              <div className="bg-transparent border border-black w-full h-full"></div>
-            </div>
-          </button>
+        <button
+          type="button"
+          className="flex-1 flex items-center justify-center py-3 rounded-full hover:bg-white/10 transition-colors"
+          onClick={() => router.push('/')}
+        >
+          <div className="w-4 h-4 bg-white rounded-sm grid grid-cols-2 gap-0.5">
+            <div className="bg-transparent border border-black w-full h-full"></div>
+            <div className="bg-transparent border border-black w-full h-full"></div>
+            <div className="bg-transparent border border-black w-full h-full"></div>
+            <div className="bg-transparent border border-black w-full h-full"></div>
+          </div>
+        </button>
       </div>
 
       {/* 主内容区 */}
@@ -378,8 +390,8 @@ export default function DashboardPage() {
                   {user?.username || '登录'}
                 </span>
                 <span className="text-xs md:hidden inline">
-                   {/* Mobile only simplified text or nothing */}
-                   {user ? '' : '登录'}
+                  {/* Mobile only simplified text or nothing */}
+                  {user ? '' : '登录'}
                 </span>
               </button>
 
