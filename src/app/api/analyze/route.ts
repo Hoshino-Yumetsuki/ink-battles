@@ -8,6 +8,7 @@ import {
   incrementRateLimit
 } from '@/utils/rate-limiter'
 import { getDatabase, closeDatabaseConnection } from '@/utils/mongodb'
+import { verifyToken, extractToken } from '@/utils/jwt'
 import type { Db, MongoClient } from 'mongodb'
 
 interface LlmApiConfig {
@@ -45,10 +46,45 @@ export async function POST(request: NextRequest) {
     db = dbConnection.db
     dbClient = dbConnection.client
 
-    const rateLimitResult = await checkRateLimit(request, {
-      db,
-      client: dbClient
-    })
+    // 1. 先尝试认证用户
+    let userId: string | undefined
+    const authHeader = request.headers.get('authorization')
+
+    if (authHeader) {
+      try {
+        const token = extractToken(authHeader)
+        if (token) {
+          const payload = await verifyToken(token)
+          userId = payload.userId
+        }
+      } catch (_error) {
+        logger.warn('Token verification failed, continuing as anonymous')
+      }
+    }
+
+    let rateLimitResult: {
+      allowed: boolean
+      remainingRequests?: number
+      resetTime?: Date
+      error?: string
+      identifier?: string
+    }
+    let identifier: string | undefined
+
+    if (userId) {
+      // 已登录用户：直接进行限流检查，使用 userId 作为标识
+      rateLimitResult = await checkRateLimit(
+        request,
+        { db, client: dbClient },
+        userId
+      )
+      identifier = rateLimitResult.identifier
+    } else {
+      // 匿名用户：使用指纹进行限流检查
+      rateLimitResult = await checkRateLimit(request, { db, client: dbClient })
+      identifier = rateLimitResult.identifier
+    }
+
     if (!rateLimitResult.allowed) {
       return new Response(
         JSON.stringify({
@@ -70,10 +106,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const fingerprint = request.headers.get('x-fingerprint')
-    if (fingerprint && db && dbClient) {
+    if (!userId && identifier && db && dbClient) {
       await recordVisit(
-        fingerprint,
+        identifier,
         {
           userAgent: request.headers.get('user-agent'),
           timestamp: new Date()
@@ -311,9 +346,11 @@ export async function POST(request: NextRequest) {
           }
 
           // incrementRateLimit 需要独立连接，因为主连接在 stream 返回后会关闭
-          await incrementRateLimit(fingerprint).catch((err) =>
-            logger.error('Failed to increment rate limit', err)
-          )
+          if (identifier) {
+            await incrementRateLimit(identifier).catch((err) =>
+              logger.error('Failed to increment rate limit', err)
+            )
+          }
 
           const resultMsg = `${JSON.stringify({
             type: 'result',

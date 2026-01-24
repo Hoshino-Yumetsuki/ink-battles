@@ -14,6 +14,7 @@ import FeaturesSection from '@/components/sections/features-section'
 import { extractCodeBlock } from '@/utils/markdown-parser'
 import { calculateOverallScore } from '@/utils/score-calculator'
 import { useFingerprint } from '@/hooks/use-fingerprint'
+import { encrypt } from '@/utils/client-crypto'
 
 export interface MermaidDiagram {
   type: string
@@ -48,6 +49,13 @@ export default function WriterAnalysisPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [progress, setProgress] = useState<number>(0)
   const [result, setResult] = useState<WriterAnalysisResult | null>(null)
+  const [usageInfo, setUsageInfo] = useState<{
+    isLoggedIn: boolean
+    username?: string
+    used: number
+    limit: number
+  } | undefined>(undefined)
+
   const [enabledOptions, setEnabledOptions] = useState<{
     [key: string]: boolean
   }>({
@@ -59,6 +67,36 @@ export default function WriterAnalysisPage() {
     antiCapitalism: false,
     speedReview: false
   })
+
+  const fetchLimits = async () => {
+    if (!fingerprint) return
+    const token = localStorage.getItem('auth_token')
+    const headers: any = {
+      'x-fingerprint': fingerprint
+    }
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+
+    try {
+      const res = await fetch('/api/analyze/limits', { headers })
+      if (res.ok) {
+        const data = await res.json()
+        setUsageInfo({
+          isLoggedIn: data.isLoggedIn,
+          username: data.username,
+          used: data.usage.used,
+          limit: data.usage.limit
+        })
+      }
+    } catch (e) {
+      console.error('Failed to fetch limits', e)
+    }
+  }
+
+  useEffect(() => {
+    fetchLimits()
+  }, [fingerprint])
 
   const handleOptionChange = (key: string, value: boolean) => {
     setEnabledOptions({ ...enabledOptions, [key]: value })
@@ -221,10 +259,29 @@ export default function WriterAnalysisPage() {
                   parsedData.dimensions
                 )
 
+                const contentToSave =
+                  analysisType === 'text'
+                    ? content
+                    : isFileModeText
+                      ? uploadedText
+                      : ''
+
+                let autoTitle = '分析结果'
+                if (contentToSave) {
+                  const firstLine = contentToSave
+                    .split('\n')
+                    .find((l) => l.trim().length > 0)
+                  if (firstLine) {
+                    autoTitle =
+                      firstLine.substring(0, 15) +
+                      (firstLine.length > 15 ? '...' : '')
+                  }
+                }
+
                 const defaultResult: WriterAnalysisResult = {
                   overallScore: overallScore,
                   overallAssessment: '暂无整体评估',
-                  title: '分析结果',
+                  title: autoTitle,
                   ratingTag: '未知',
                   dimensions: [],
                   strengths: [],
@@ -235,9 +292,44 @@ export default function WriterAnalysisPage() {
 
                 const finalResult = { ...defaultResult, ...parsedData }
 
+                if (
+                  finalResult.title === '分析结果' &&
+                  autoTitle !== '分析结果'
+                ) {
+                  finalResult.title = autoTitle
+                }
+
                 clearInterval(progressInterval)
                 setProgress(100)
                 setResult(finalResult)
+                fetchLimits() // 刷新用量
+
+                // 如果用户已登录，加密并保存分析记录
+                const token = localStorage.getItem('auth_token')
+                const password = localStorage.getItem('user_password')
+
+                if (token && password) {
+                  try {
+                    const encryptedResult = await encrypt(
+                      JSON.stringify(finalResult),
+                      password
+                    )
+
+                    await fetch('/api/dashboard/history/add', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                      },
+                      body: JSON.stringify({
+                        encryptedResult,
+                        mode: enabledOptions.mode || 'standard'
+                      })
+                    })
+                  } catch (saveError) {
+                    console.error('Failed to save history:', saveError)
+                  }
+                }
               } else if (message.type === 'error') {
                 clearInterval(progressInterval)
                 setProgress(0)
@@ -300,6 +392,7 @@ export default function WriterAnalysisPage() {
                 analysisType={analysisType}
                 setAnalysisTypeAction={(t) => setAnalysisType(t)}
                 setUploadedTextAction={setUploadedText}
+                usageInfo={usageInfo}
               />
             </motion.div>
 

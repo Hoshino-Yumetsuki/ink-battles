@@ -1,19 +1,19 @@
 import { MongoClient } from 'mongodb'
 import { logger } from './logger'
 
-export async function connectToDatabase() {
-  const mongoUrl = process.env.MONGODB_URI
-  if (!mongoUrl) {
-    throw new Error('MONGODB_URI is not defined in environment variables')
-  }
+const mongoUrl = process.env.MONGODB_URI
 
+if (!mongoUrl) {
+  throw new Error('MONGODB_URI is not defined in environment variables')
+}
+
+export async function connectToDatabase() {
   try {
-    const client = new MongoClient(mongoUrl, {
+    const client = new MongoClient(mongoUrl as string, {
       maxPoolSize: 10,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000
     })
-
     await client.connect()
     logger.info('MongoDB connection established')
     return client

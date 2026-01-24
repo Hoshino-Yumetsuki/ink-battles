@@ -54,12 +54,14 @@ function formatWaitTime(seconds: number): string {
 
 export async function checkRateLimit(
   request: NextRequest,
-  sharedDb?: { db: Db; client: MongoClient }
+  sharedDb?: { db: Db; client: MongoClient },
+  userId?: string
 ): Promise<{
   allowed: boolean
   remainingRequests?: number
   resetTime?: Date
   error?: string
+  identifier?: string
 }> {
   const config = getRateLimitConfig()
 
@@ -67,9 +69,15 @@ export async function checkRateLimit(
     return { allowed: true }
   }
 
-  const fingerprint = extractFingerprint(request)
-  if (!fingerprint) {
-    logger.warn('Rate limit enabled but no fingerprint provided')
+  let identifier: string | null = null
+  if (userId) {
+    identifier = `user:${userId}`
+  } else {
+    identifier = extractFingerprint(request)
+  }
+
+  if (!identifier) {
+    logger.warn('Rate limit enabled but no identifier provided')
     return {
       allowed: false,
       error: '缺少用户标识，请刷新页面后重试'
@@ -106,29 +114,31 @@ export async function checkRateLimit(
     // 检查并调整配额（如果配置变化）
     await adjustQuotaIfConfigChanged(db, config.maxRequests)
 
-    // 查找当前用户的速率限制记录
-    const record = await collection.findOne({ fingerprint })
+    // 查找当前用户的速率限制记录 (使用 fingerprint 字段存储标识符)
+    const record = await collection.findOne({ fingerprint: identifier })
 
     if (!record) {
       // 首次请求，先不创建记录，等待请求成功后再创建
       return {
         allowed: true,
         remainingRequests: config.maxRequests - 1,
-        resetTime: new Date(now.getTime() + config.windowSeconds * 1000)
+        resetTime: new Date(now.getTime() + config.windowSeconds * 1000),
+        identifier
       }
     }
 
     // 检查是否需要重置时间窗口
     if (record.windowStart < windowStart) {
       // 时间窗口已过期，删除旧记录，等待请求成功后再创建新记录
-      await collection.deleteOne({ fingerprint })
+      await collection.deleteOne({ fingerprint: identifier })
 
-      logger.info('Rate limit record expired and cleaned', { fingerprint })
+      logger.info('Rate limit record expired and cleaned', { identifier })
 
       return {
         allowed: true,
         remainingRequests: config.maxRequests - 1,
-        resetTime: new Date(now.getTime() + config.windowSeconds * 1000)
+        resetTime: new Date(now.getTime() + config.windowSeconds * 1000),
+        identifier
       }
     }
 
@@ -143,7 +153,7 @@ export async function checkRateLimit(
       )
 
       logger.warn('Rate limit exceeded', {
-        fingerprint,
+        identifier,
         requestCount: record.requestCount,
         maxRequests: config.maxRequests
       })
@@ -162,7 +172,8 @@ export async function checkRateLimit(
       remainingRequests: config.maxRequests - record.requestCount - 1,
       resetTime: new Date(
         record.windowStart.getTime() + config.windowSeconds * 1000
-      )
+      ),
+      identifier
     }
   } catch (error) {
     logger.error('Error checking rate limit', error)

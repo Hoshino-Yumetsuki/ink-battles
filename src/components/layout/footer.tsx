@@ -1,4 +1,22 @@
+'use client'
+
+import { usePathname } from 'next/navigation'
+
 export default function Footer() {
+  const pathname = usePathname()
+  const hideFooterPaths = ['/login', '/register', '/dashboard']
+
+  // 检查当前路径是否以需要隐藏 footer 的路径开头
+  // 对于 /dashboard 是必须的，因为它是子路由
+  // 对于 /login 和 /register 是精确匹配或子路由
+  const shouldHideFooter = hideFooterPaths.some((path) =>
+    pathname?.startsWith(path)
+  )
+
+  if (shouldHideFooter) {
+    return null
+  }
+
   return (
     <footer className="border-t bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 py-8 mt-12">
       <div className="container mx-auto px-4">

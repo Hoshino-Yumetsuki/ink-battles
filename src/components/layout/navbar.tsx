@@ -1,16 +1,28 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import Image from 'next/image'
+import { usePathname, useRouter } from 'next/navigation'
 import { ThemeSwitcher } from '@/components/common/theme-switcher'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion'
-import { useId, useState } from 'react'
+import { useId, useState, useEffect } from 'react'
+import { User, LogOut, LayoutDashboard, Settings } from 'lucide-react'
 
 export default function Navbar() {
   const pathname = usePathname()
+  const router = useRouter()
   const { scrollY } = useScroll()
   const [hidden, setHidden] = useState(false)
   const [lastScrollY, setLastScrollY] = useState(0)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [avatar, setAvatar] = useState<string | null>(null)
   const logoTitleId = useId()
 
   const navItems = [
@@ -18,7 +30,61 @@ export default function Navbar() {
     { label: '使用指南', path: '/guide' }
   ]
 
+  useEffect(() => {
+    // 检查登录状态
+    const checkLoginStatus = async () => {
+      const token = localStorage.getItem('auth_token')
+      if (token) {
+        setIsLoggedIn(true)
+        // 获取用户信息以显示头像
+        try {
+          const res = await fetch('/api/auth/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+          if (res.ok) {
+            const data = await res.json()
+            if (data.user?.avatar) {
+              setAvatar(data.user.avatar)
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch user info', error)
+        }
+      } else {
+        setIsLoggedIn(false)
+        setAvatar(null)
+      }
+    }
+
+    checkLoginStatus()
+    // 监听 storage 事件以响应登录/登出变化（可选）
+    window.addEventListener('storage', checkLoginStatus)
+    return () => window.removeEventListener('storage', checkLoginStatus)
+  }, [pathname]) // 依赖 pathname 变化来重新检查登录状态
+
+  const handleLogout = async () => {
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('username')
+    localStorage.removeItem('user_password')
+    await fetch('/api/auth/logout', { method: 'POST' })
+    setIsLoggedIn(false)
+    setAvatar(null)
+
+    // 如果当前不是需要保护的页面，不跳转到登录页，而是保持在当前页面
+    // 比如在首页点击退出，就留在首页
+    if (pathname?.startsWith('/dashboard')) {
+      router.push('/login')
+    } else {
+      router.refresh() // 刷新页面以更新服务器组件状态（如果有的话）
+    }
+  }
+
   useMotionValueEvent(scrollY, 'change', (latest) => {
+    // Dashboard 页面不隐藏
+    if (pathname?.startsWith('/dashboard')) {
+      return
+    }
+
     // 向下滚动超过10px时隐藏，向上滚动时显示
     if (latest > lastScrollY && latest > 80) {
       setHidden(true)
@@ -28,6 +94,15 @@ export default function Navbar() {
 
     setLastScrollY(latest)
   })
+
+  // 在登录和注册页面以及 Dashboard 页面隐藏 Navbar
+  if (
+    pathname === '/login' ||
+    pathname === '/register' ||
+    pathname?.startsWith('/dashboard')
+  ) {
+    return null
+  }
 
   return (
     <motion.header
@@ -84,7 +159,52 @@ export default function Navbar() {
                 </li>
               ))}
             </ul>
+
             <ThemeSwitcher />
+
+            {isLoggedIn ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="relative h-10 w-10 rounded-full p-0 overflow-hidden"
+                  >
+                    {avatar ? (
+                      <Image
+                        src={avatar}
+                        alt="User Avatar"
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-muted">
+                        <User className="h-6 w-6" />
+                      </div>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => router.push('/dashboard')}>
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    仪表盘
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => router.push('/dashboard?tab=settings')}
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    设置
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    退出登录
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button onClick={() => router.push('/login')} size="sm">
+                登录
+              </Button>
+            )}
           </div>
         </nav>
       </div>
