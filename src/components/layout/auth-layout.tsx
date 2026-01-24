@@ -15,31 +15,60 @@ export function AuthLayout({
   title = 'Ink Battles',
   image = 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200&q=80'
 }: AuthLayoutProps) {
+  const authBackground = process.env.NEXT_PUBLIC_AUTH_BACKGROUND
+
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 dark:bg-black p-4 relative">
+    <div
+      className={`min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden ${!authBackground ? 'bg-gray-50 dark:bg-black' : ''}`}
+    >
+      {/* 全局背景壁纸（如果有配置） */}
+      {authBackground && (
+        <div className="absolute inset-0 z-0">
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url('${authBackground}')` }}
+          />
+          {/* 亚克力效果遮罩 */}
+          <div className="absolute inset-0 bg-white/30 dark:bg-black/40 backdrop-blur-xl" />
+        </div>
+      )}
+
       <Link
         href="/"
         className="absolute top-8 left-8 z-50 transition-transform hover:-translate-x-1"
       >
         <Button
           variant="ghost"
-          className="gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+          className={`gap-2 ${
+            authBackground
+              ? 'bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm border border-white/10'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+          }`}
         >
           <ArrowLeft className="h-5 w-5" />
           <span className="font-medium">返回首页</span>
         </Button>
       </Link>
 
-      <div className="w-full max-w-5xl bg-white dark:bg-zinc-900 rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row min-h-150">
+      <div className="w-full max-w-5xl bg-white dark:bg-zinc-900 rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row min-h-150 z-10 relative">
         <div className="hidden md:block w-1/2 relative bg-gray-900">
-          <div
-            className="absolute inset-0 bg-cover bg-center opacity-80"
-            style={{
-              backgroundImage: `url('${image}')`
-            }}
-          >
-            <div className="absolute inset-0 bg-linear-to-br from-blue-900/60 to-purple-900/60" />
-          </div>
+          {authBackground ? (
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{
+                backgroundImage: `url('${authBackground}')`
+              }}
+            />
+          ) : (
+            <div
+              className="absolute inset-0 bg-cover bg-center opacity-80"
+              style={{
+                backgroundImage: `url('${image}')`
+              }}
+            >
+              <div className="absolute inset-0 bg-linear-to-br from-blue-900/60 to-purple-900/60" />
+            </div>
+          )}
           <div className="absolute top-8 left-8 text-white z-10 w-full pr-8">
             <h1 className="text-3xl font-medium tracking-wide">{title}</h1>
             <p className="mt-4 text-gray-200 text-lg opacity-90">
