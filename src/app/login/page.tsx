@@ -3,11 +3,15 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Turnstile from 'react-turnstile'
+import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/button'
 import { useFingerprint } from '@/hooks/use-fingerprint'
 import { AuthLayout } from '@/components/layout/auth-layout'
 import { User, Lock } from 'lucide-react'
+
+const Turnstile = dynamic(() => import('react-turnstile'), {
+  ssr: false
+})
 
 const isTurnstileEnabled = process.env.NEXT_PUBLIC_TURNSTILE_ENABLED === 'true'
 
