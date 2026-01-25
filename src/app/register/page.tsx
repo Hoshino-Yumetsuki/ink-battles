@@ -21,9 +21,15 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [turnstileToken, setTurnstileToken] = useState('')
+  const [turnstileKey, setTurnstileKey] = useState(0)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [countdown, setCountdown] = useState(0)
+
+  const resetTurnstile = () => {
+    setTurnstileToken('')
+    setTurnstileKey((prev) => prev + 1)
+  }
 
   const handleSendCode = async () => {
     if (!email) {
@@ -115,6 +121,7 @@ export default function RegisterPage() {
       const data = await response.json()
 
       if (!response.ok) {
+        if (isTurnstileEnabled) resetTurnstile()
         throw new Error(data.error || '注册失败')
       }
 
@@ -233,6 +240,7 @@ export default function RegisterPage() {
         {isTurnstileEnabled && (
           <div className="flex justify-center bg-gray-50 dark:bg-zinc-800 p-2 rounded-lg border border-gray-100 dark:border-zinc-700">
             <Turnstile
+              key={turnstileKey}
               sitekey={
                 process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ||
                 '1x00000000000000000000AA'
