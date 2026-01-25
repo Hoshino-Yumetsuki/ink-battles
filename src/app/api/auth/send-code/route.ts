@@ -49,13 +49,19 @@ export async function POST(request: NextRequest) {
     const { type, email: inputEmail, turnstileToken } = result.data
 
     // 检查是否启用Turnstile验证
-    if (isTurnstileEnabled() && !turnstileToken) {
+    const turnstileEnabled = isTurnstileEnabled()
+    logger.info(`[send-code] Turnstile enabled: ${turnstileEnabled}, Token provided: ${!!turnstileToken}`)
+
+    if (turnstileEnabled && !turnstileToken) {
+      logger.warn('[send-code] Turnstile enabled but no token provided')
       return NextResponse.json({ error: '请完成人机验证' }, { status: 400 })
     }
 
     // 如果启用了Turnstile，验证token
-    if (isTurnstileEnabled()) {
+    if (turnstileEnabled) {
+      logger.info('[send-code] Verifying Turnstile token...')
       const isTurnstileValid = await verifyTurnstile(turnstileToken as string)
+      logger.info('[send-code] Turnstile verification result', { valid: isTurnstileValid })
       if (!isTurnstileValid) {
         return NextResponse.json(
           { error: '人机验证失败，请重试' },
