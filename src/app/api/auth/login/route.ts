@@ -1,12 +1,12 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { compare } from 'bcryptjs'
-import { getDatabase, closeDatabaseConnection } from '@/utils/mongodb'
+import { withDatabase } from '@/lib/db/middleware'
 import { signToken } from '@/utils/jwt'
 import { cookies } from 'next/headers'
-import type { MongoClient } from 'mongodb'
 import { z } from 'zod'
 import sanitize from 'mongo-sanitize'
 import { verifyTurnstile, isTurnstileEnabled } from '@/utils/turnstile'
+import { logger } from '@/utils/logger'
 
 const loginSchema = z.object({
   username: z.string().min(1, '用户名不能为空').trim(),
@@ -14,8 +14,7 @@ const loginSchema = z.object({
   turnstileToken: z.string().optional()
 })
 
-export async function POST(req: NextRequest) {
-  let dbClient: MongoClient | null = null
+export const POST = withDatabase(async (req: NextRequest, db) => {
   try {
     const json = await req.json()
 
@@ -47,9 +46,6 @@ export async function POST(req: NextRequest) {
     // 进一步清理输入 (防止 $ 符号开头的键)
     const username = sanitize(rawUsername)
 
-    // 连接数据库
-    const { db, client } = await getDatabase()
-    dbClient = client
     const usersCollection = db.collection('users')
 
     // 查找用户 (使用精确匹配，注意 MongoDB 默认区分大小写)
@@ -99,11 +95,7 @@ export async function POST(req: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('Login error:', error)
+    logger.error('Login error:', error)
     return NextResponse.json({ error: '登录失败，请稍后重试' }, { status: 500 })
-  } finally {
-    if (dbClient) {
-      await closeDatabaseConnection(dbClient)
-    }
   }
-}
+})

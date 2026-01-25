@@ -83,7 +83,7 @@ export default function WriterAnalysisPage() {
 
     try {
       // Create a URL with timestamp to prevent caching
-      const url = new URL('/api/analyze/limits', window.location.origin)
+      const url = new URL('/api/limits', window.location.origin)
       url.searchParams.append('_t', Date.now().toString())
 
       const res = await fetch(url.toString(), { headers })

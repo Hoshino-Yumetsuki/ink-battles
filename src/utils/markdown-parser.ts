@@ -1,6 +1,7 @@
 import { unified } from 'unified'
 import remarkParse from 'remark-parse'
 import type { Code } from 'mdast'
+import { logger } from './logger'
 
 export function extractCodeBlock(markdown: string, language?: string): string {
   try {
@@ -17,7 +18,7 @@ export function extractCodeBlock(markdown: string, language?: string): string {
 
     return markdown.trim()
   } catch (error) {
-    console.error('Failed to parse markdown:', error)
+    logger.error('Failed to parse markdown:', error)
     return markdown.trim()
   }
 }
@@ -41,7 +42,7 @@ export function extractAllCodeBlocks(
 
     return codeBlocks
   } catch (error) {
-    console.error('Failed to parse markdown:', error)
+    logger.error('Failed to parse markdown:', error)
     return []
   }
 }

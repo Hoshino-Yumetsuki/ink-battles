@@ -1,10 +1,10 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { ObjectId, type MongoClient } from 'mongodb'
-import { getDatabase, closeDatabaseConnection } from '@/utils/mongodb'
+import { ObjectId } from 'mongodb'
+import { withDatabase } from '@/lib/db/middleware'
 import { verifyToken, extractToken } from '@/utils/jwt'
+import { logger } from '@/utils/logger'
 
-export async function POST(req: NextRequest) {
-  let dbClient: MongoClient | null = null
+export const POST = withDatabase(async (req: NextRequest, db) => {
   try {
     // 提取并验证token
     const token =
@@ -32,8 +32,6 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { db, client } = await getDatabase()
-    dbClient = client
     const usersCollection = db.collection('users')
 
     await usersCollection.updateOne(
@@ -43,14 +41,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Update avatar error:', error)
+    logger.error('Update avatar error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     )
-  } finally {
-    if (dbClient) {
-      await closeDatabaseConnection(dbClient)
-    }
   }
-}
+})

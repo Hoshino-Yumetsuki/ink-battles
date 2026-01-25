@@ -1,4 +1,5 @@
 import { Jimp } from 'jimp'
+import { logger } from './logger'
 
 export interface CompressImageOptions {
   targetSize?: number
@@ -85,7 +86,7 @@ export async function compressImage(
       compressedSize: compressedFile.size
     }
   } catch (error) {
-    console.error('图片压缩失败:', error)
+    logger.error('图片压缩失败:', error)
     return {
       file,
       compressed: false,

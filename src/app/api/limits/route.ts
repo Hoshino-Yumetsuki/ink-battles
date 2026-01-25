@@ -1,12 +1,13 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { getDatabase, closeDatabaseConnection } from '@/utils/mongodb'
+import { ObjectId } from 'mongodb'
+import { withDatabase } from '@/lib/db/middleware'
 import { verifyToken, extractToken } from '@/utils/jwt'
-import type { MongoClient } from 'mongodb'
+import { rateLimitConfig } from '@/config/rate-limit'
+import { logger } from '@/utils/logger'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(req: NextRequest) {
-  let dbClient: MongoClient | null = null
+export const GET = withDatabase(async (req: NextRequest, db) => {
   try {
     // 1. Determine Identity (User or Guest)
     const token =
@@ -30,29 +31,20 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 2. Get Limits (We can reuse checkRateLimit logic or query manually)
-    // Querying manually allows us to just peek without counting a request
-    // But checkRateLimit in utils handles config reading.
-
-    const maxRequestsGuest = Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 10
-    const maxRequestsUser = Number(process.env.USER_DAILY_LIMIT) || 20
-    // 默认 limit，稍后从 DB 读取更准确的
+    // 2. Get Limits
+    const maxRequestsGuest = rateLimitConfig.maxRequestsGuest
+    const maxRequestsUser = rateLimitConfig.maxRequestsUser
     let limit = isLoggedIn ? maxRequestsUser : maxRequestsGuest
 
     const fingerprint = req.headers.get('x-fingerprint') || 'unknown'
 
-    // Connect DB
-    const { db, client } = await getDatabase()
-    dbClient = client
-
-    const windowSeconds = Number(process.env.RATE_LIMIT_WINDOW_SECONDS) || 86400
+    const windowSeconds = rateLimitConfig.windowSeconds
     let used = 0
     let resetTime: Date | null = null
     const now = new Date()
 
     if (isLoggedIn && userId) {
       // Logged-in User: Check users collection
-      const { ObjectId } = await import('mongodb')
       if (ObjectId.isValid(userId)) {
         const usersCollection = db.collection('users')
         const userDoc = await usersCollection.findOne({
@@ -70,8 +62,6 @@ export async function GET(req: NextRequest) {
           } else {
             // 窗口已过，归零
             used = 0
-            // 如果 limit 配置变了，这里最好也更新一下 limit，但这里只用来读
-            // limit = maxRequestsUser
           }
         }
       }
@@ -103,14 +93,10 @@ export async function GET(req: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('Limit check error:', error)
+    logger.error('Limit check error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch limits' },
       { status: 500 }
     )
-  } finally {
-    if (dbClient) {
-      await closeDatabaseConnection(dbClient)
-    }
   }
-}
+})

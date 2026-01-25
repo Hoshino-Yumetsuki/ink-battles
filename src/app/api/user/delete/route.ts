@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { getDatabase } from '@/utils/mongodb'
+import { withDatabase } from '@/lib/db/middleware'
 import { compare } from 'bcryptjs'
 import { extractToken, verifyToken } from '@/utils/jwt'
 import { ObjectId } from 'mongodb'
@@ -10,7 +10,7 @@ const deleteAccountSchema = z.object({
   password: z.string().min(1, '请输入密码')
 })
 
-export async function POST(request: NextRequest) {
+export const POST = withDatabase(async (request: NextRequest, db) => {
   try {
     const token =
       extractToken(request.headers.get('Authorization')) ||
@@ -41,7 +41,6 @@ export async function POST(request: NextRequest) {
 
     const { password } = result.data
 
-    const { db } = await getDatabase()
     const usersCollection = db.collection('users')
 
     // 查找用户
@@ -78,4 +77,4 @@ export async function POST(request: NextRequest) {
     logger.error('Account deletion error:', error)
     return NextResponse.json({ error: '服务器内部错误' }, { status: 500 })
   }
-}
+})

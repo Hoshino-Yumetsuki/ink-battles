@@ -1,10 +1,9 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { getDatabase, closeDatabaseConnection } from '@/utils/mongodb'
+import { withDatabase } from '@/lib/db/middleware'
 import { verifyToken, extractToken } from '@/utils/jwt'
-import type { MongoClient } from 'mongodb'
+import { logger } from '@/utils/logger'
 
-export async function GET(req: NextRequest) {
-  let dbClient: MongoClient | null = null
+export const GET = withDatabase(async (req: NextRequest, db) => {
   try {
     // 提取并验证token
     const token =
@@ -24,9 +23,6 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10', 10)
     const skip = (page - 1) * limit
 
-    // 连接数据库
-    const { db, client } = await getDatabase()
-    dbClient = client
     const analysisCollection = db.collection('analysis_history')
 
     // 查询总数
@@ -61,11 +57,7 @@ export async function GET(req: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('Get history error:', error)
+    logger.error('Get history error:', error)
     return NextResponse.json({ error: '获取历史记录失败' }, { status: 500 })
-  } finally {
-    if (dbClient) {
-      await closeDatabaseConnection(dbClient)
-    }
   }
-}
+})

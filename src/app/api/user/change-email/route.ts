@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { getDatabase } from '@/utils/mongodb'
+import { withDatabase } from '@/lib/db/middleware'
 import { z } from 'zod'
 import { logger } from '@/utils/logger'
 import { extractToken, verifyToken } from '@/utils/jwt'
@@ -12,7 +12,7 @@ const changeEmailSchema = z.object({
   code: z.string().length(6, '验证码错误')
 })
 
-export async function POST(request: NextRequest) {
+export const POST = withDatabase(async (request: NextRequest, db) => {
   try {
     const token =
       extractToken(request.headers.get('Authorization')) ||
@@ -38,7 +38,6 @@ export async function POST(request: NextRequest) {
     const { password, email, code } = result.data
     const { userId } = payload
 
-    const { db } = await getDatabase()
     const usersCollection = db.collection('users')
     const verificationsCollection = db.collection('email_verifications')
 
@@ -90,4 +89,4 @@ export async function POST(request: NextRequest) {
     logger.error('Error changing email:', error)
     return NextResponse.json({ error: '操作失败' }, { status: 500 })
   }
-}
+})

@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server'
 import { type Db, type MongoClient, ObjectId } from 'mongodb'
 import { getDatabase, closeDatabaseConnection } from './mongodb'
 import { logger } from './logger'
+import { rateLimitConfig } from '@/config/rate-limit'
 
 interface RateLimitRecord {
   fingerprint: string
@@ -9,27 +10,6 @@ interface RateLimitRecord {
   requestCount: number
   windowStart: Date
   maxRequests: number
-}
-
-interface RateLimitConfig {
-  enabled: boolean
-  windowSeconds: number
-  maxRequestsGuest: number
-  maxRequestsUser: number
-}
-
-function getRateLimitConfig(): RateLimitConfig {
-  const enabled = process.env.FINGERPRINT_RATE_LIMIT_ENABLED === 'true'
-  const windowSeconds = Number(process.env.RATE_LIMIT_WINDOW_SECONDS) || 86400
-  const maxRequestsGuest = Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 10
-  const maxRequestsUser = Number(process.env.USER_DAILY_LIMIT) || 20
-
-  return {
-    enabled,
-    windowSeconds,
-    maxRequestsGuest,
-    maxRequestsUser
-  }
 }
 
 function extractFingerprint(request: NextRequest): string | null {
@@ -66,9 +46,7 @@ export async function checkRateLimit(
   error?: string
   identifier?: string
 }> {
-  const config = getRateLimitConfig()
-
-  if (!config.enabled) {
+  if (!rateLimitConfig.enabled) {
     return { allowed: true }
   }
 
@@ -87,7 +65,9 @@ export async function checkRateLimit(
     }
 
     const now = new Date()
-    const windowStart = new Date(now.getTime() - config.windowSeconds * 1000)
+    const windowStart = new Date(
+      now.getTime() - rateLimitConfig.windowSeconds * 1000
+    )
 
     // 如果是登录用户，检查 users 集合
     if (userId && ObjectId.isValid(userId)) {
@@ -101,35 +81,37 @@ export async function checkRateLimit(
 
       const usage = user.usage || {
         used: 0,
-        limit: config.maxRequestsUser,
-        resetTime: new Date(now.getTime() + config.windowSeconds * 1000)
+        limit: rateLimitConfig.maxRequestsUser,
+        resetTime: new Date(
+          now.getTime() + rateLimitConfig.windowSeconds * 1000
+        )
       }
 
       // 检查配额配置是否变化 (Lazy Update)
-      const currentLimit = usage.limit || config.maxRequestsUser
-      if (currentLimit !== config.maxRequestsUser) {
+      const currentLimit = usage.limit || rateLimitConfig.maxRequestsUser
+      if (currentLimit !== rateLimitConfig.maxRequestsUser) {
         // 配额变动：更新 limit，同时调整 used 以避免不公平截断
-        const quotaDiff = config.maxRequestsUser - currentLimit
+        const quotaDiff = rateLimitConfig.maxRequestsUser - currentLimit
         let newUsed = usage.used
 
         if (quotaDiff < 0) {
-          newUsed = Math.min(usage.used, config.maxRequestsUser)
+          newUsed = Math.min(usage.used, rateLimitConfig.maxRequestsUser)
         }
 
         await usersCollection.updateOne(
           { _id: user._id },
           {
             $set: {
-              'usage.limit': config.maxRequestsUser,
+              'usage.limit': rateLimitConfig.maxRequestsUser,
               'usage.used': newUsed
             }
           }
         )
 
-        usage.limit = config.maxRequestsUser
+        usage.limit = rateLimitConfig.maxRequestsUser
         usage.used = newUsed
         logger.info(
-          `Lazy adjusted quota for user ${userId}: ${currentLimit} -> ${config.maxRequestsUser}`
+          `Lazy adjusted quota for user ${userId}: ${currentLimit} -> ${rateLimitConfig.maxRequestsUser}`
         )
       }
 
@@ -137,16 +119,18 @@ export async function checkRateLimit(
       if (usage.resetTime && new Date(usage.resetTime) < now) {
         return {
           allowed: true,
-          remainingRequests: config.maxRequestsUser - 1,
-          resetTime: new Date(now.getTime() + config.windowSeconds * 1000),
+          remainingRequests: rateLimitConfig.maxRequestsUser - 1,
+          resetTime: new Date(
+            now.getTime() + rateLimitConfig.windowSeconds * 1000
+          ),
           identifier
         }
       }
 
-      if (usage.used >= (usage.limit || config.maxRequestsUser)) {
+      if (usage.used >= (usage.limit || rateLimitConfig.maxRequestsUser)) {
         const resetTime = usage.resetTime
           ? new Date(usage.resetTime)
-          : new Date(now.getTime() + config.windowSeconds * 1000)
+          : new Date(now.getTime() + rateLimitConfig.windowSeconds * 1000)
         const waitSeconds = Math.ceil(
           (resetTime.getTime() - now.getTime()) / 1000
         )
@@ -162,10 +146,10 @@ export async function checkRateLimit(
       return {
         allowed: true,
         remainingRequests:
-          (usage.limit || config.maxRequestsUser) - usage.used - 1,
+          (usage.limit || rateLimitConfig.maxRequestsUser) - usage.used - 1,
         resetTime: usage.resetTime
           ? new Date(usage.resetTime)
-          : new Date(now.getTime() + config.windowSeconds * 1000),
+          : new Date(now.getTime() + rateLimitConfig.windowSeconds * 1000),
         identifier
       }
     }
@@ -184,22 +168,24 @@ export async function checkRateLimit(
     await collection.createIndex({ fingerprint: 1 })
     await collection.createIndex(
       { windowStart: 1 },
-      { expireAfterSeconds: config.windowSeconds * 2 }
+      { expireAfterSeconds: rateLimitConfig.windowSeconds * 2 }
     )
 
     // 清理所有过期的速率限制记录
     await cleanExpiredRecords(db, windowStart)
 
     // 检查并调整配额（如果配置变化）(仅针对匿名用户记录)
-    await adjustQuotaIfConfigChanged(db, config.maxRequestsGuest)
+    await adjustQuotaIfConfigChanged(db, rateLimitConfig.maxRequestsGuest)
 
     const record = await collection.findOne({ fingerprint: identifier })
 
     if (!record) {
       return {
         allowed: true,
-        remainingRequests: config.maxRequestsGuest - 1,
-        resetTime: new Date(now.getTime() + config.windowSeconds * 1000),
+        remainingRequests: rateLimitConfig.maxRequestsGuest - 1,
+        resetTime: new Date(
+          now.getTime() + rateLimitConfig.windowSeconds * 1000
+        ),
         identifier
       }
     }
@@ -209,15 +195,17 @@ export async function checkRateLimit(
       logger.info('Rate limit record expired and cleaned', { identifier })
       return {
         allowed: true,
-        remainingRequests: config.maxRequestsGuest - 1,
-        resetTime: new Date(now.getTime() + config.windowSeconds * 1000),
+        remainingRequests: rateLimitConfig.maxRequestsGuest - 1,
+        resetTime: new Date(
+          now.getTime() + rateLimitConfig.windowSeconds * 1000
+        ),
         identifier
       }
     }
 
-    if (record.requestCount >= config.maxRequestsGuest) {
+    if (record.requestCount >= rateLimitConfig.maxRequestsGuest) {
       const resetTime = new Date(
-        record.windowStart.getTime() + config.windowSeconds * 1000
+        record.windowStart.getTime() + rateLimitConfig.windowSeconds * 1000
       )
       const waitSeconds = Math.ceil(
         (resetTime.getTime() - now.getTime()) / 1000
@@ -226,7 +214,7 @@ export async function checkRateLimit(
       logger.warn('Rate limit exceeded', {
         identifier,
         requestCount: record.requestCount,
-        maxRequests: config.maxRequestsGuest
+        maxRequests: rateLimitConfig.maxRequestsGuest
       })
 
       return {
@@ -239,9 +227,10 @@ export async function checkRateLimit(
 
     return {
       allowed: true,
-      remainingRequests: config.maxRequestsGuest - record.requestCount - 1,
+      remainingRequests:
+        rateLimitConfig.maxRequestsGuest - record.requestCount - 1,
       resetTime: new Date(
-        record.windowStart.getTime() + config.windowSeconds * 1000
+        record.windowStart.getTime() + rateLimitConfig.windowSeconds * 1000
       ),
       identifier
     }
@@ -259,9 +248,7 @@ export async function incrementRateLimit(
   descriptor: string | null,
   sharedDb?: { db: Db; client: MongoClient }
 ): Promise<void> {
-  const config = getRateLimitConfig()
-
-  if (!config.enabled) {
+  if (!rateLimitConfig.enabled) {
     return
   }
 
@@ -311,9 +298,9 @@ export async function incrementRateLimit(
               {
                 $set: {
                   'usage.used': 1,
-                  'usage.limit': config.maxRequestsUser,
+                  'usage.limit': rateLimitConfig.maxRequestsUser,
                   'usage.resetTime': new Date(
-                    now.getTime() + config.windowSeconds * 1000
+                    now.getTime() + rateLimitConfig.windowSeconds * 1000
                   )
                 },
                 $inc: { totalAnalysisCount: 1 }
@@ -330,7 +317,7 @@ export async function incrementRateLimit(
                 },
                 // 确保 limit 即使配置变更也是最新的
                 $set: {
-                  'usage.limit': config.maxRequestsUser
+                  'usage.limit': rateLimitConfig.maxRequestsUser
                 }
               }
             )
@@ -342,7 +329,9 @@ export async function incrementRateLimit(
 
     // 匿名用户逻辑
     const collection = db.collection<RateLimitRecord>('rate_limits')
-    const windowStart = new Date(now.getTime() - config.windowSeconds * 1000)
+    const windowStart = new Date(
+      now.getTime() - rateLimitConfig.windowSeconds * 1000
+    )
 
     // 查找当前用户的记录
     const record = await collection.findOne({ fingerprint: identifier })
@@ -354,7 +343,7 @@ export async function incrementRateLimit(
         lastRequest: now,
         requestCount: 1,
         windowStart: now,
-        maxRequests: config.maxRequestsGuest
+        maxRequests: rateLimitConfig.maxRequestsGuest
       }
 
       if (record && record.windowStart < windowStart) {

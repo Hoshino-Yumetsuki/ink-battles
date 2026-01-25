@@ -2,6 +2,7 @@ import chardet from 'chardet'
 import iconv from 'iconv-lite'
 import 'iconv-lite/encodings'
 import mammoth from 'mammoth'
+import { logger } from './logger'
 
 export async function decodeTextFromFile(file: File): Promise<string> {
   const buf = await file.arrayBuffer()
@@ -17,7 +18,7 @@ export async function decodeTextFromFile(file: File): Promise<string> {
       }
       return result.value
     } catch (e) {
-      console.error('docx解析失败:', e)
+      logger.error('docx解析失败:', e)
       throw new Error('docx 文件解析失败')
     }
   }

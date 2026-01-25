@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { getDatabase } from '@/utils/mongodb'
+import { withDatabase } from '@/lib/db/middleware'
 import { z } from 'zod'
 import { logger } from '@/utils/logger'
 import { extractToken, verifyToken } from '@/utils/jwt'
@@ -11,7 +11,7 @@ const changePasswordSchema = z.object({
   newPassword: z.string().min(8, '新密码长度至少8位')
 })
 
-export async function POST(request: NextRequest) {
+export const POST = withDatabase(async (request: NextRequest, db) => {
   try {
     const token =
       extractToken(request.headers.get('Authorization')) ||
@@ -37,7 +37,6 @@ export async function POST(request: NextRequest) {
     const { code, newPassword } = result.data
     const { userId } = payload
 
-    const { db } = await getDatabase()
     const usersCollection = db.collection('users')
     const verificationsCollection = db.collection('email_verifications')
 
@@ -84,4 +83,4 @@ export async function POST(request: NextRequest) {
     logger.error('Error changing password:', error)
     return NextResponse.json({ error: '操作失败' }, { status: 500 })
   }
-}
+})

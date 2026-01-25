@@ -1,4 +1,6 @@
 // Turnstile验证端点
+import { logger } from './logger'
+
 const TURNSTILE_VERIFY_URL =
   'https://challenges.cloudflare.com/turnstile/v0/siteverify'
 
@@ -6,7 +8,7 @@ export async function verifyTurnstile(token: string): Promise<boolean> {
   const secret = process.env.TURNSTILE_SECRET_KEY
 
   if (!secret) {
-    console.error('TURNSTILE_SECRET_KEY not configured')
+    logger.error('TURNSTILE_SECRET_KEY not configured')
     return false
   }
 
@@ -23,18 +25,16 @@ export async function verifyTurnstile(token: string): Promise<boolean> {
     const data = await response.json()
     return data.success === true
   } catch (error) {
-    console.error('Turnstile verification failed:', error)
+    logger.error('Turnstile verification failed:', error)
     return false
   }
 }
 
 export function isTurnstileEnabled(): boolean {
   const enabled = process.env.TURNSTILE_ENABLED === 'true'
-  console.log(
-    '[Turnstile] TURNSTILE_ENABLED:',
-    process.env.TURNSTILE_ENABLED,
-    '=> enabled:',
+  logger.info('[Turnstile] TURNSTILE_ENABLED:', {
+    env: process.env.TURNSTILE_ENABLED,
     enabled
-  )
+  })
   return enabled
 }

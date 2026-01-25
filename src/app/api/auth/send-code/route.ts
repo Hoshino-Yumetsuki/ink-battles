@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { getDatabase } from '@/utils/mongodb'
+import { withDatabase } from '@/lib/db/middleware'
 import { sendVerificationEmail } from '@/utils/email'
 import { z } from 'zod'
 import { logger } from '@/utils/logger'
@@ -14,7 +14,7 @@ const sendCodeSchema = z.object({
   turnstileToken: z.string().optional()
 })
 
-export async function POST(request: NextRequest) {
+export const POST = withDatabase(async (request: NextRequest, db) => {
   try {
     // 1. 验证用户身份
     const token =
@@ -74,7 +74,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const { db } = await getDatabase()
     const usersCollection = db.collection('users')
 
     // 获取当前用户信息
@@ -162,4 +161,4 @@ export async function POST(request: NextRequest) {
     logger.error('Error in send-code route:', error)
     return NextResponse.json({ error: '服务器内部错误' }, { status: 500 })
   }
-}
+})

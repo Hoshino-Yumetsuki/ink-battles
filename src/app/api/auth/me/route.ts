@@ -1,10 +1,11 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { ObjectId, type MongoClient } from 'mongodb'
-import { getDatabase, closeDatabaseConnection } from '@/utils/mongodb'
+import { ObjectId } from 'mongodb'
+import { withDatabase } from '@/lib/db/middleware'
 import { verifyToken, extractToken } from '@/utils/jwt'
+import { rateLimitConfig } from '@/config/rate-limit'
+import { logger } from '@/utils/logger'
 
-export async function GET(req: NextRequest) {
-  let dbClient: MongoClient | null = null
+export const GET = withDatabase(async (req: NextRequest, db) => {
   try {
     // 提取并验证token
     const token =
@@ -18,9 +19,6 @@ export async function GET(req: NextRequest) {
 
     const payload = await verifyToken(token)
 
-    // 连接数据库
-    const { db, client } = await getDatabase()
-    dbClient = client
     const usersCollection = db.collection('users')
 
     // 查找用户
@@ -54,9 +52,7 @@ export async function GET(req: NextRequest) {
       avgResult.length > 0 ? Math.round(avgResult[0].avgScore) : 0
 
     // 获取配额配置
-    // 注意：USER_DAILY_LIMIT 是后端配置
-    // 这里优先使用用户的 limit 字段，或者环境变量
-    const configMaxRequests = Number(process.env.USER_DAILY_LIMIT) || 20
+    const configMaxRequests = rateLimitConfig.maxRequestsUser
 
     let usedCount = 0
     let currentLimit = configMaxRequests
@@ -78,8 +74,6 @@ export async function GET(req: NextRequest) {
         // 已过期，视为0使用量
         usedCount = 0
         currentLimit = configMaxRequests
-        // 可以在这里计算下一个重置时间，但显示 null 或者现在+窗口可能更合适用于前端展示 "即将在..."
-        // 前端似乎只关心剩余次数，resetTime 用于倒计时
       }
     }
 
@@ -104,11 +98,7 @@ export async function GET(req: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('Get user error:', error)
+    logger.error('Get user error:', error)
     return NextResponse.json({ error: '认证失败' }, { status: 401 })
-  } finally {
-    if (dbClient) {
-      await closeDatabaseConnection(dbClient)
-    }
   }
-}
+})

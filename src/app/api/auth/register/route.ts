@@ -1,12 +1,12 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { hash } from 'bcryptjs'
-import { getDatabase, closeDatabaseConnection } from '@/utils/mongodb'
+import { withDatabase } from '@/lib/db/middleware'
 import { signToken } from '@/utils/jwt'
 import { cookies } from 'next/headers'
-import type { MongoClient } from 'mongodb'
 import { z } from 'zod'
 import sanitize from 'mongo-sanitize'
 import { verifyTurnstile, isTurnstileEnabled } from '@/utils/turnstile'
+import { logger } from '@/utils/logger'
 
 const registerSchema = z.object({
   username: z
@@ -21,8 +21,7 @@ const registerSchema = z.object({
   turnstileToken: z.string().optional()
 })
 
-export async function POST(req: NextRequest) {
-  let dbClient: MongoClient | null = null
+export const POST = withDatabase(async (req: NextRequest, db) => {
   try {
     const json = await req.json()
 
@@ -60,9 +59,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 连接数据库
-    const { db, client } = await getDatabase()
-    dbClient = client
     const usersCollection = db.collection('users')
     const verificationsCollection = db.collection('email_verifications')
 
@@ -133,11 +129,7 @@ export async function POST(req: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('Registration error:', error)
+    logger.error('Registration error:', error)
     return NextResponse.json({ error: '注册失败，请稍后重试' }, { status: 500 })
-  } finally {
-    if (dbClient) {
-      await closeDatabaseConnection(dbClient)
-    }
   }
-}
+})

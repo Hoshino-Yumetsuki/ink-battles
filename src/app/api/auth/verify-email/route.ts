@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { getDatabase } from '@/utils/mongodb'
+import { withDatabase } from '@/lib/db/middleware'
 import { sendVerificationEmail } from '@/utils/email'
 import { z } from 'zod'
 import { logger } from '@/utils/logger'
@@ -11,7 +11,7 @@ const verifyEmailSchema = z.object({
   turnstileToken: z.string().optional()
 })
 
-export async function POST(request: NextRequest) {
+export const POST = withDatabase(async (request: NextRequest, db) => {
   try {
     const body = await request.json()
     const result = verifyEmailSchema.safeParse(body)
@@ -50,8 +50,6 @@ export async function POST(request: NextRequest) {
         )
       }
     }
-
-    const { db } = await getDatabase()
 
     // 检查邮箱是否已被注册
     const existingUser = await db.collection('users').findOne({ email })
@@ -100,4 +98,4 @@ export async function POST(request: NextRequest) {
     logger.error('Error in verify-email route:', error)
     return NextResponse.json({ error: '发送验证码时发生错误' }, { status: 500 })
   }
-}
+})

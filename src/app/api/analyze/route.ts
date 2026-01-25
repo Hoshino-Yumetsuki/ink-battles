@@ -7,10 +7,11 @@ import {
   recordVisit,
   incrementRateLimit
 } from '@/utils/rate-limiter'
-import { getDatabase, closeDatabaseConnection } from '@/utils/mongodb'
+import { withDatabase } from '@/lib/db/middleware'
 import { verifyToken, extractToken } from '@/utils/jwt'
 import { encryptObject } from '@/utils/crypto'
 import { calculateOverallScore } from '@/utils/score-calculator'
+import { llmConfig } from '@/config/llm'
 import type { Db, MongoClient } from 'mongodb'
 
 interface LlmApiConfig {
@@ -22,32 +23,14 @@ interface LlmApiConfig {
   useStructuredOutput: boolean
 }
 
-function getLlmApiConfig(): LlmApiConfig {
-  return {
-    baseUrl: String(process.env.OPENAI_BASE_URL),
-    apiKey: String(process.env.OPENAI_API_KEY),
-    model: String(process.env.MODEL),
-    temperature: Number(process.env.TEMPERATURE) || 1.2,
-    useStreaming: process.env.USE_STREAMING === 'true',
-    useStructuredOutput: process.env.USE_STRUCTURED_OUTPUT !== 'false' // 默认为true
-  }
-}
-
 function isValidLlmApiConfig(config: LlmApiConfig): boolean {
   return Boolean(config.apiKey)
 }
 
 export const maxDuration = 300 // 最大执行时间 5 分钟
 
-export async function POST(request: NextRequest) {
-  let dbClient: MongoClient | undefined
-  let db: Db | undefined
-
-  try {
-    const dbConnection = await getDatabase()
-    db = dbConnection.db
-    dbClient = dbConnection.client
-
+export const POST = withDatabase(
+  async (request: NextRequest, db: Db, dbClient: MongoClient) => {
     // 1. 先尝试认证用户
     let userId: string | undefined
     const token =
@@ -164,7 +147,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const apiConfig = getLlmApiConfig()
+    const apiConfig = llmConfig
     if (!isValidLlmApiConfig(apiConfig)) {
       return new Response(
         JSON.stringify({
@@ -359,7 +342,6 @@ export async function POST(request: NextRequest) {
 
           // 加密并存储结果 (仅对已登录用户)
           if (userId && password) {
-            let saveClient: MongoClient | undefined
             try {
               const parsedResult = JSON.parse(generatedText)
               const score = calculateOverallScore(parsedResult.dimensions)
@@ -368,11 +350,7 @@ export async function POST(request: NextRequest) {
                 password
               )
 
-              const dbResult = await getDatabase()
-              const saveDb = dbResult.db
-              saveClient = dbResult.client
-
-              const historyCollection = saveDb.collection('analysis_history')
+              const historyCollection = db.collection('analysis_history')
 
               await historyCollection.insertOne({
                 userId,
@@ -383,10 +361,6 @@ export async function POST(request: NextRequest) {
               })
             } catch (error) {
               logger.error('Failed to save analysis history', error)
-            } finally {
-              if (saveClient) {
-                await closeDatabaseConnection(saveClient)
-              }
             }
           } else if (userId && !password) {
             logger.warn(
@@ -428,15 +402,5 @@ export async function POST(request: NextRequest) {
         Connection: 'keep-alive'
       }
     })
-  } catch (error: any) {
-    logger.error('Error in analyze API route', error)
-    return new Response(
-      JSON.stringify({ success: false, error: '处理请求时出错' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    )
-  } finally {
-    if (dbClient) {
-      await closeDatabaseConnection(dbClient)
-    }
   }
-}
+)
