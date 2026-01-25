@@ -11,7 +11,6 @@ import AnalysisOptions from '@/components/features/analysis/analysis-options'
 import WriterScoreResult from '@/components/features/analysis/score-result'
 import AnimatedBackground from '@/components/common/animated-background'
 import FeaturesSection from '@/components/sections/features-section'
-import { extractCodeBlock } from '@/utils/markdown-parser'
 import { calculateOverallScore } from '@/utils/score-calculator'
 import { useFingerprint } from '@/hooks/use-fingerprint'
 
@@ -254,27 +253,13 @@ export default function WriterAnalysisPage() {
               } else if (message.type === 'progress') {
                 console.log('进度:', message.message)
               } else if (message.type === 'result' && message.success) {
-                const rawText = message.data
-                if (!rawText || typeof rawText !== 'string') {
+                // 后端已经处理好 JSON，直接使用
+                const parsedData = message.data
+                if (!parsedData || typeof parsedData !== 'object') {
                   throw new Error('返回的分析结果格式无效')
                 }
 
-                const jsonText = extractCodeBlock(rawText, 'json')
-
-                let parsedData: any
-                try {
-                  parsedData = JSON.parse(jsonText)
-                } catch (parseError: any) {
-                  console.error('JSON 解析失败:', parseError)
-                  console.error('原始文本:', rawText)
-                  console.error('提取的文本:', jsonText)
-                  throw new Error(`无法解析分析结果: ${parseError.message}`)
-                }
-
-                if (!parsedData || typeof parsedData !== 'object') {
-                  throw new Error('分析结果格式无效')
-                }
-
+                // 验证和补充数据
                 if (
                   !('dimensions' in parsedData) ||
                   !Array.isArray(parsedData.dimensions)

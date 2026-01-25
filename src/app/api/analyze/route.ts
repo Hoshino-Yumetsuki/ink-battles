@@ -11,6 +11,8 @@ import { withDatabase } from '@/lib/db/middleware'
 import { verifyToken, extractToken } from '@/utils/jwt'
 import { encryptObject } from '@/utils/crypto'
 import { calculateOverallScore } from '@/utils/score-calculator'
+import { extractCodeBlock } from '@/utils/markdown-parser'
+import { getDatabase, closeDatabaseConnection } from '@/utils/mongodb'
 import { llmConfig } from '@/config/llm'
 import type { Db, MongoClient } from 'mongodb'
 
@@ -333,6 +335,32 @@ export const POST = withDatabase(
             throw new Error('分析失败，未能获取有效结果')
           }
 
+          // 在后端提取和验证 JSON
+          let parsedResult: any
+          try {
+            // 使用 markdown-parser 提取 JSON
+            const jsonText = extractCodeBlock(generatedText, 'json')
+            parsedResult = JSON.parse(jsonText)
+
+            // 验证必要字段
+            if (!parsedResult || typeof parsedResult !== 'object') {
+              throw new Error('分析结果格式无效')
+            }
+
+            if (
+              !('dimensions' in parsedResult) ||
+              !Array.isArray(parsedResult.dimensions)
+            ) {
+              parsedResult.dimensions = []
+            }
+          } catch (parseError: any) {
+            logger.error('Failed to parse analysis result', {
+              error: parseError.message,
+              rawText: generatedText
+            })
+            throw new Error(`无法解析分析结果: ${parseError.message}`)
+          }
+
           // incrementRateLimit 需要独立连接，因为主连接在 stream 返回后会关闭
           if (identifier) {
             await incrementRateLimit(identifier).catch((err) =>
@@ -344,14 +372,12 @@ export const POST = withDatabase(
           if (userId && password) {
             let saveClient: MongoClient | undefined
             try {
-              const parsedResult = JSON.parse(generatedText)
               const score = calculateOverallScore(parsedResult.dimensions)
               const encryptedResult = await encryptObject(
                 parsedResult,
                 password
               )
 
-              const { getDatabase } = await import('@/utils/mongodb')
               const dbResult = await getDatabase()
               const saveDb = dbResult.db
               saveClient = dbResult.client
@@ -369,9 +395,6 @@ export const POST = withDatabase(
               logger.error('Failed to save analysis history', error)
             } finally {
               if (saveClient) {
-                const { closeDatabaseConnection } = await import(
-                  '@/utils/mongodb'
-                )
                 await closeDatabaseConnection(saveClient)
               }
             }
@@ -382,10 +405,11 @@ export const POST = withDatabase(
             )
           }
 
+          // 返回纯净的 JSON 对象给前端
           const resultMsg = `${JSON.stringify({
             type: 'result',
             success: true,
-            data: generatedText
+            data: parsedResult
           })}\n`
           controller.enqueue(encoder.encode(resultMsg))
         } catch (error: any) {
