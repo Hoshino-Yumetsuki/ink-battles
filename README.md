@@ -57,6 +57,9 @@ $ docker run -p 3000:3000 \
   ink-battles
 ```
 
+## TODO
+等待 opennextjs 适配 Next 16 的 proxy
+
 ## 许可证
 本项目基于 **MIT License** 开源
 
