@@ -342,6 +342,7 @@ export const POST = withDatabase(
 
           // 加密并存储结果 (仅对已登录用户)
           if (userId && password) {
+            let saveClient: MongoClient | undefined
             try {
               const parsedResult = JSON.parse(generatedText)
               const score = calculateOverallScore(parsedResult.dimensions)
@@ -350,7 +351,12 @@ export const POST = withDatabase(
                 password
               )
 
-              const historyCollection = db.collection('analysis_history')
+              const { getDatabase } = await import('@/utils/mongodb')
+              const dbResult = await getDatabase()
+              const saveDb = dbResult.db
+              saveClient = dbResult.client
+
+              const historyCollection = saveDb.collection('analysis_history')
 
               await historyCollection.insertOne({
                 userId,
@@ -361,6 +367,13 @@ export const POST = withDatabase(
               })
             } catch (error) {
               logger.error('Failed to save analysis history', error)
+            } finally {
+              if (saveClient) {
+                const { closeDatabaseConnection } = await import(
+                  '@/utils/mongodb'
+                )
+                await closeDatabaseConnection(saveClient)
+              }
             }
           } else if (userId && !password) {
             logger.warn(

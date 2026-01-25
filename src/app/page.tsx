@@ -186,6 +186,12 @@ export default function WriterAnalysisPage() {
         formData.append('analysisType', isFileModeText ? 'text' : analysisType)
         formData.append('options', JSON.stringify(enabledOptions))
 
+        // 添加用户密码用于加密历史记录
+        const userPassword = localStorage.getItem('user_password')
+        if (userPassword) {
+          formData.append('password', userPassword)
+        }
+
         const headers: HeadersInit = {}
         if (fingerprint) {
           headers['x-fingerprint'] = fingerprint
