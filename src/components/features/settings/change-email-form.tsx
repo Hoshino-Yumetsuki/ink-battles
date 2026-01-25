@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Loader2, Mail, Lock, ShieldCheck } from 'lucide-react'
+import Turnstile from 'react-turnstile'
+
+const isTurnstileEnabled = process.env.NEXT_PUBLIC_TURNSTILE_ENABLED !== 'false'
 
 interface ChangeEmailFormProps {
   hasEmail: boolean
@@ -14,15 +17,26 @@ export function ChangeEmailForm({ hasEmail, onSuccess }: ChangeEmailFormProps) {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [countdown, setCountdown] = useState(0)
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const [turnstileKey, setTurnstileKey] = useState(0)
 
   // Form states
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [code, setCode] = useState('')
 
+  const resetTurnstile = () => {
+    setTurnstileToken('')
+    setTurnstileKey((prev) => prev + 1)
+  }
+
   const handleSendCode = async () => {
     if (!email) {
       setError('请输入新邮箱地址')
+      return
+    }
+    if (isTurnstileEnabled && !turnstileToken) {
+      setError('请完成人机验证')
       return
     }
     setError('')
@@ -36,16 +50,22 @@ export function ChangeEmailForm({ hasEmail, onSuccess }: ChangeEmailFormProps) {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('auth_token') || ''}`
         },
-        body: JSON.stringify({ type: 'bind_email', email })
+        body: JSON.stringify({
+          type: 'bind_email',
+          email,
+          turnstileToken
+        })
       })
       const data = await res.json()
 
       if (!res.ok) {
         setCountdown(0)
+        if (isTurnstileEnabled) resetTurnstile()
         throw new Error(data.error || '发送验证码失败')
       }
 
       setSuccess('验证码已发送至您的新邮箱')
+      if (isTurnstileEnabled) resetTurnstile()
 
       const timer = setInterval(() => {
         setCountdown((prev) => {
@@ -172,6 +192,17 @@ export function ChangeEmailForm({ hasEmail, onSuccess }: ChangeEmailFormProps) {
           </Button>
         </div>
       </div>
+
+      {isTurnstileEnabled && (
+        <div className="flex justify-center">
+          <Turnstile
+            key={turnstileKey}
+            sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''}
+            onVerify={(token) => setTurnstileToken(token)}
+            theme="auto"
+          />
+        </div>
+      )}
 
       <Button type="submit" className="w-full" disabled={loading}>
         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

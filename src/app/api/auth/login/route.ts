@@ -6,42 +6,13 @@ import { cookies } from 'next/headers'
 import type { MongoClient } from 'mongodb'
 import { z } from 'zod'
 import sanitize from 'mongo-sanitize'
+import { verifyTurnstile, isTurnstileEnabled } from '@/utils/turnstile'
 
 const loginSchema = z.object({
   username: z.string().min(1, '用户名不能为空').trim(),
   password: z.string().min(1, '密码不能为空'),
   turnstileToken: z.string().optional()
 })
-
-// Turnstile验证端点
-const TURNSTILE_VERIFY_URL =
-  'https://challenges.cloudflare.com/turnstile/v0/siteverify'
-
-async function verifyTurnstile(token: string): Promise<boolean> {
-  const secret = process.env.TURNSTILE_SECRET_KEY
-
-  if (!secret) {
-    console.error('TURNSTILE_SECRET_KEY not configured')
-    return false
-  }
-
-  try {
-    const formData = new URLSearchParams()
-    formData.append('secret', secret)
-    formData.append('response', token)
-
-    const response = await fetch(TURNSTILE_VERIFY_URL, {
-      method: 'POST',
-      body: formData
-    })
-
-    const data = await response.json()
-    return data.success === true
-  } catch (error) {
-    console.error('Turnstile verification failed:', error)
-    return false
-  }
-}
 
 export async function POST(req: NextRequest) {
   let dbClient: MongoClient | null = null
@@ -57,15 +28,12 @@ export async function POST(req: NextRequest) {
     const { username: rawUsername, password, turnstileToken } = result.data
 
     // 检查是否启用Turnstile验证
-    const isTurnstileEnabled = process.env.TURNSTILE_ENABLED !== 'false'
-
-    // 如果启用了Turnstile，验证token
-    if (isTurnstileEnabled && !turnstileToken) {
+    if (isTurnstileEnabled() && !turnstileToken) {
       return NextResponse.json({ error: '请完成人机验证' }, { status: 400 })
     }
 
     // 如果启用了Turnstile，验证token
-    if (isTurnstileEnabled) {
+    if (isTurnstileEnabled()) {
       // turnstileToken 已经被 zod 验证为 string | undefined，非空检查在上面
       const isTurnstileValid = await verifyTurnstile(turnstileToken as string)
       if (!isTurnstileValid) {

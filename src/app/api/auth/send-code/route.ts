@@ -6,10 +6,12 @@ import { logger } from '@/utils/logger'
 import { extractToken, verifyToken } from '@/utils/jwt'
 import { ObjectId } from 'mongodb'
 import { randomInt } from 'node:crypto'
+import { verifyTurnstile, isTurnstileEnabled } from '@/utils/turnstile'
 
 const sendCodeSchema = z.object({
   type: z.enum(['bind_email', 'change_password']),
-  email: z.email().trim().toLowerCase().optional() // Required only for bind_email
+  email: z.email().trim().toLowerCase().optional(), // Required only for bind_email
+  turnstileToken: z.string().optional()
 })
 
 export async function POST(request: NextRequest) {
@@ -44,7 +46,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { type, email: inputEmail } = result.data
+    const { type, email: inputEmail, turnstileToken } = result.data
+
+    // 检查是否启用Turnstile验证
+    if (isTurnstileEnabled() && !turnstileToken) {
+      return NextResponse.json({ error: '请完成人机验证' }, { status: 400 })
+    }
+
+    // 如果启用了Turnstile，验证token
+    if (isTurnstileEnabled()) {
+      const isTurnstileValid = await verifyTurnstile(turnstileToken as string)
+      if (!isTurnstileValid) {
+        return NextResponse.json(
+          { error: '人机验证失败，请重试' },
+          { status: 400 }
+        )
+      }
+    }
+
     const { db } = await getDatabase()
     const usersCollection = db.collection('users')
 
