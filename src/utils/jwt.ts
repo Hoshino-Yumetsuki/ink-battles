@@ -46,6 +46,7 @@ export async function verifyToken(token: string): Promise<JWTPayload> {
 
 /**
  * 从请求头中提取token
+ * 必须符合 "Bearer <token>" 格式
  */
 export function extractToken(authHeader: string | null): string | null {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {

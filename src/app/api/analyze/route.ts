@@ -48,17 +48,19 @@ export async function POST(request: NextRequest) {
 
     // 1. 先尝试认证用户
     let userId: string | undefined
-    const authHeader = request.headers.get('authorization')
+    const token =
+      extractToken(request.headers.get('authorization')) ||
+      request.cookies.get('auth_token')?.value ||
+      null
 
-    if (authHeader) {
+    if (token) {
       try {
-        const token = extractToken(authHeader)
-        if (token) {
-          const payload = await verifyToken(token)
-          userId = payload.userId
-        }
+        const payload = await verifyToken(token)
+        userId = payload.userId
       } catch (_error) {
-        logger.warn('Token verification failed, continuing as anonymous')
+        // Token无效仅作为日志记录，不强制阻断，后续逻辑可能会根据有无userId做区分 (例如不同限流策略)
+        // 但如果本意是API如果带Token必须正确，则这里应该处理
+        logger.warn('Invalid token provided for analysis request')
       }
     }
 

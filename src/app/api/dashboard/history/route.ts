@@ -7,8 +7,10 @@ export async function GET(req: NextRequest) {
   let dbClient: MongoClient | null = null
   try {
     // 提取并验证token
-    const authHeader = req.headers.get('authorization')
-    const token = extractToken(authHeader)
+    const token =
+      extractToken(req.headers.get('authorization')) ||
+      req.cookies.get('auth_token')?.value ||
+      null
 
     if (!token) {
       return NextResponse.json({ error: '未提供认证令牌' }, { status: 401 })

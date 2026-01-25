@@ -72,19 +72,9 @@ export default function Navbar() {
     localStorage.removeItem('username')
     localStorage.removeItem('user_password')
     await fetch('/api/auth/logout', { method: 'POST' })
-    setIsLoggedIn(false)
-    setAvatar(null)
 
-    // Dispatch event to notify other components (like home page) to update auth state
-    window.dispatchEvent(new Event('auth-change'))
-
-    // 如果当前不是需要保护的页面，不跳转到登录页，而是保持在当前页面
-    // 比如在首页点击退出，就留在首页
-    if (pathname?.startsWith('/dashboard')) {
-      router.push('/login')
-    } else {
-      router.refresh() // 刷新页面以更新服务器组件状态（如果有的话）
-    }
+    // 直接刷新页面以更新状态
+    window.location.href = '/'
   }
 
   useMotionValueEvent(scrollY, 'change', (latest) => {

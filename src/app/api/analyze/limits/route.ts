@@ -9,8 +9,10 @@ export async function GET(req: NextRequest) {
   let dbClient: MongoClient | null = null
   try {
     // 1. Determine Identity (User or Guest)
-    const authHeader = req.headers.get('authorization')
-    const token = extractToken(authHeader)
+    const token =
+      extractToken(req.headers.get('authorization')) ||
+      req.cookies.get('auth_token')?.value ||
+      null
 
     let userId: string | undefined
     let isLoggedIn = false

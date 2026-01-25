@@ -7,6 +7,10 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { compressImage } from '@/utils/image-compressor'
 import { decrypt } from '@/utils/client-crypto'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ChangeEmailForm } from '@/components/features/settings/change-email-form'
+import { ChangePasswordForm } from '@/components/features/settings/change-password-form'
+import { DeleteAccountForm } from '@/components/features/settings/delete-account-form'
 import {
   User,
   LogOut,
@@ -29,6 +33,7 @@ import WriterScoreResult from '@/components/features/analysis/score-result'
 
 interface UserInfo {
   username: string
+  email?: string
   avatar?: string
   createdAt: string
   lastLoginAt: string
@@ -247,9 +252,9 @@ export default function DashboardPage() {
     localStorage.removeItem('username')
     localStorage.removeItem('user_password')
     await fetch('/api/auth/logout', { method: 'POST' })
-    // Dispatch event to notify other components to update auth state
-    window.dispatchEvent(new Event('auth-change'))
-    router.push('/login')
+
+    // 直接刷新并跳转首页
+    window.location.href = '/'
   }
 
   if (loading) {
@@ -736,15 +741,55 @@ export default function DashboardPage() {
                 </Card>
 
                 <Card className="p-6">
-                  <h2 className="text-xl font-bold mb-4">安全设置</h2>
-                  <div className="space-y-4">
-                    <Button variant="outline" className="w-full justify-start">
-                      修改密码
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start">
-                      双因素认证
-                    </Button>
-                  </div>
+                  <h2 className="text-xl font-bold mb-4">账户安全设置</h2>
+                  <Tabs defaultValue="email" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3 max-w-100 mb-6">
+                      <TabsTrigger value="email">邮箱设置</TabsTrigger>
+                      <TabsTrigger value="password">修改密码</TabsTrigger>
+                      <TabsTrigger
+                        value="danger"
+                        className="text-red-500 data-[state=active]:text-red-600 data-[state=active]:bg-red-50 dark:data-[state=active]:bg-red-950/20"
+                      >
+                        注销账户
+                      </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="email">
+                      <div className="space-y-4">
+                        <div className="p-4 bg-muted/50 rounded-lg">
+                          <p className="text-sm">
+                            {user?.email ? (
+                              <span className="flex items-center gap-2">
+                                <span className="font-semibold text-green-600 dark:text-green-400">
+                                  已绑定邮箱:
+                                </span>
+                                <span>{user.email}</span>
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+                                尚未绑定邮箱
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                        <ChangeEmailForm
+                          hasEmail={!!user?.email}
+                          onSuccess={() => {
+                            // Reload dashboard to fetch updated user info
+                            loadDashboard()
+                          }}
+                        />
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="password">
+                      <ChangePasswordForm onSuccess={() => {}} />
+                    </TabsContent>
+
+                    <TabsContent value="danger">
+                      <DeleteAccountForm />
+                    </TabsContent>
+                  </Tabs>
                 </Card>
               </div>
             )}
