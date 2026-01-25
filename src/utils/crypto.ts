@@ -4,18 +4,22 @@
 // AES-256-GCM (16 byte IV, 16 byte Auth Tag)
 // Format: Salt (32) + IV (16) + Auth Tag (16) + Ciphertext
 
-import { webcrypto } from 'node:crypto'
-
-// 统一的 crypto 接口 - 根据环境自动选择
-// 在浏览器环境中使用 window.crypto，在 Node.js 中使用 webcrypto
-const getCrypto = () => {
+const getCrypto = async (): Promise<Crypto> => {
   if (typeof window !== 'undefined' && window.crypto) {
     return window.crypto
   }
-  return webcrypto as any
+  const nodeCrypto = await import('node:crypto')
+  return nodeCrypto.webcrypto as Crypto
 }
 
-const crypto = getCrypto()
+let cryptoInstance: Crypto | null = null
+
+const getCryptoInstance = async (): Promise<Crypto> => {
+  if (!cryptoInstance) {
+    cryptoInstance = await getCrypto()
+  }
+  return cryptoInstance
+}
 
 const ALGORITHM = 'AES-GCM'
 const KEY_LENGTH = 256
@@ -60,6 +64,7 @@ async function deriveKey(
   password: string,
   salt: Uint8Array
 ): Promise<CryptoKey> {
+  const crypto = await getCryptoInstance()
   const encoder = new TextEncoder()
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
@@ -72,7 +77,7 @@ async function deriveKey(
   return crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt,
+      salt: salt as BufferSource,
       iterations: ITERATIONS,
       hash: 'SHA-256'
     },
@@ -90,6 +95,7 @@ async function deriveKey(
  * @returns 加密后的字符串 (base64编码)
  */
 export async function encrypt(text: string, password: string): Promise<string> {
+  const crypto = await getCryptoInstance()
   const encoder = new TextEncoder()
   const data = encoder.encode(text)
   const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH))
@@ -135,6 +141,7 @@ export async function decrypt(
   password: string
 ): Promise<string> {
   try {
+    const crypto = await getCryptoInstance()
     const buffer = base64ToArrayBuffer(encryptedText)
     const bytes = new Uint8Array(buffer)
 
