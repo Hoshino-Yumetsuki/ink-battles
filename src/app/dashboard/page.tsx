@@ -167,15 +167,11 @@ export default function DashboardPage() {
         const decryptedHistories = await Promise.all(
           rawHistories.map(async (h: any) => {
             try {
-              const content = h.encryptedContent
-                ? await decrypt(h.encryptedContent, password)
-                : null
               const resultStr = h.encryptedResult
                 ? await decrypt(h.encryptedResult, password)
                 : null
               return {
                 id: h.id,
-                content,
                 result: resultStr ? JSON.parse(resultStr) : null,
                 mode: h.mode,
                 createdAt: h.createdAt
@@ -642,10 +638,6 @@ export default function DashboardPage() {
                             {history.error ? (
                               <p className="text-sm text-red-600">
                                 {history.error}
-                              </p>
-                            ) : history.content ? (
-                              <p className="text-sm text-muted-foreground line-clamp-2">
-                                {history.content}
                               </p>
                             ) : null}
                           </Card>
