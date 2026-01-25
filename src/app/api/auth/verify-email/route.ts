@@ -4,9 +4,11 @@ import { sendVerificationEmail } from '@/utils/email'
 import { z } from 'zod'
 import { logger } from '@/utils/logger'
 import { randomInt } from 'node:crypto'
+import { verifyTurnstile, isTurnstileEnabled } from '@/utils/turnstile'
 
 const verifyEmailSchema = z.object({
-  email: z.email({ message: '请输入有效的邮箱地址' }).trim().toLowerCase()
+  email: z.email({ message: '请输入有效的邮箱地址' }).trim().toLowerCase(),
+  turnstileToken: z.string().optional()
 })
 
 export async function POST(request: NextRequest) {
@@ -21,7 +23,34 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { email } = result.data
+    const { email, turnstileToken } = result.data
+
+    // 检查是否启用Turnstile验证
+    const turnstileEnabled = isTurnstileEnabled()
+    logger.info(
+      `[verify-email] Turnstile enabled: ${turnstileEnabled}, Token provided: ${!!turnstileToken}`
+    )
+
+    if (turnstileEnabled && !turnstileToken) {
+      logger.warn('[verify-email] Turnstile enabled but no token provided')
+      return NextResponse.json({ error: '请完成人机验证' }, { status: 400 })
+    }
+
+    // 如果启用了Turnstile，验证token
+    if (turnstileEnabled) {
+      logger.info('[verify-email] Verifying Turnstile token...')
+      const isTurnstileValid = await verifyTurnstile(turnstileToken as string)
+      logger.info('[verify-email] Turnstile verification result', {
+        valid: isTurnstileValid
+      })
+      if (!isTurnstileValid) {
+        return NextResponse.json(
+          { error: '人机验证失败，请重试' },
+          { status: 400 }
+        )
+      }
+    }
+
     const { db } = await getDatabase()
 
     // 检查邮箱是否已被注册

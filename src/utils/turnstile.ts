@@ -30,6 +30,11 @@ export async function verifyTurnstile(token: string): Promise<boolean> {
 
 export function isTurnstileEnabled(): boolean {
   const enabled = process.env.TURNSTILE_ENABLED === 'true'
-  console.log('[Turnstile] TURNSTILE_ENABLED:', process.env.TURNSTILE_ENABLED, '=> enabled:', enabled)
+  console.log(
+    '[Turnstile] TURNSTILE_ENABLED:',
+    process.env.TURNSTILE_ENABLED,
+    '=> enabled:',
+    enabled
+  )
   return enabled
 }

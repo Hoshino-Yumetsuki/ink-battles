@@ -40,20 +40,27 @@ export default function RegisterPage() {
       setError('请输入有效的邮箱地址')
       return
     }
+    if (isTurnstileEnabled && !turnstileToken) {
+      setError('请完成人机验证')
+      return
+    }
 
     try {
       setCountdown(60)
       const res = await fetch('/api/auth/verify-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email, turnstileToken })
       })
       const data = await res.json()
 
       if (!res.ok) {
         setCountdown(0)
+        if (isTurnstileEnabled) resetTurnstile()
         throw new Error(data.error || '发送失败')
       }
+
+      if (isTurnstileEnabled) resetTurnstile()
 
       const timer = setInterval(() => {
         setCountdown((prev) => {
