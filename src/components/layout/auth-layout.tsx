@@ -56,14 +56,18 @@ export function AuthLayout({
             <div
               className="absolute inset-0 bg-cover bg-center"
               style={{
-                backgroundImage: `url('${authBackground}')`
+                backgroundImage: `url('${authBackground}')`,
+                height: '100%',
+                minHeight: '100%'
               }}
             />
           ) : (
             <div
               className="absolute inset-0 bg-cover bg-center opacity-80"
               style={{
-                backgroundImage: `url('${image}')`
+                backgroundImage: `url('${image}')`,
+                height: '100%',
+                minHeight: '100%'
               }}
             >
               <div className="absolute inset-0 bg-linear-to-br from-blue-900/60 to-purple-900/60" />

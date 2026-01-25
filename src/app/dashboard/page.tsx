@@ -319,7 +319,9 @@ export default function DashboardPage() {
         <button
           type="button"
           className="mt-auto p-3 hover:bg-white/10 rounded-full cursor-pointer transition-colors"
-          onClick={() => router.push('/')}
+          onClick={() => {
+            window.location.href = '/'
+          }}
           title="返回首页"
         >
           <div className="w-4 h-4 bg-white rounded-sm grid grid-cols-2 gap-0.5">
@@ -346,7 +348,9 @@ export default function DashboardPage() {
         <button
           type="button"
           className="flex-1 flex items-center justify-center py-3 rounded-full hover:bg-white/10 transition-colors"
-          onClick={() => router.push('/')}
+          onClick={() => {
+            window.location.href = '/'
+          }}
         >
           <div className="w-4 h-4 bg-white rounded-sm grid grid-cols-2 gap-0.5">
             <div className="bg-transparent border border-black w-full h-full"></div>
@@ -575,7 +579,9 @@ export default function DashboardPage() {
                   <h2 className="text-lg font-bold mb-3">快速操作</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
                     <Button
-                      onClick={() => router.push('/')}
+                      onClick={() => {
+                        window.location.href = '/'
+                      }}
                       className="h-full text-base"
                     >
                       新建分析

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
+import { Toaster, toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { useFingerprint } from '@/hooks/use-fingerprint'
 import { AuthLayout } from '@/components/layout/auth-layout'
@@ -26,7 +27,6 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [turnstileToken, setTurnstileToken] = useState('')
   const [turnstileKey, setTurnstileKey] = useState(0)
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [countdown, setCountdown] = useState(0)
 
@@ -37,15 +37,15 @@ export default function RegisterPage() {
 
   const handleSendCode = async () => {
     if (!email) {
-      setError('请输入邮箱地址')
+      toast.error('请输入邮箱地址')
       return
     }
     if (!/\S+@\S+\.\S+/.test(email)) {
-      setError('请输入有效的邮箱地址')
+      toast.error('请输入有效的邮箱地址')
       return
     }
     if (isTurnstileEnabled && !turnstileToken) {
-      setError('请完成人机验证')
+      toast.error('请完成人机验证')
       return
     }
 
@@ -76,41 +76,35 @@ export default function RegisterPage() {
         })
       }, 1000)
 
-      setError('')
+      toast.success('验证码已发送至邮箱')
     } catch (err: any) {
-      setError(err.message)
+      toast.error(err.message)
     }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
 
     // 验证表单
     if (!username || !email || !code || !password || !confirmPassword) {
-      setError('请填写所有字段')
+      toast.error('请填写所有字段')
       return
     }
 
     if (password !== confirmPassword) {
-      setError('两次输入的密码不一致')
+      toast.error('两次输入的密码不一致')
       return
     }
 
     if (password.length < 8) {
-      setError('密码长度至少为8个字符')
+      toast.error('密码长度至少为8个字符')
       return
     }
 
     if (isTurnstileEnabled && !turnstileToken) {
-      setError('请完成人机验证')
+      toast.error('请完成人机验证')
       return
     }
-
-    // if (!fingerprint) {
-    //   setError('浏览器指纹获取失败，请刷新页面重试');
-    //   return;
-    // }
 
     setLoading(true)
 
@@ -143,7 +137,7 @@ export default function RegisterPage() {
       // 跳转到dashboard
       router.push('/dashboard')
     } catch (err: any) {
-      setError(err.message)
+      toast.error(err.message)
     } finally {
       setLoading(false)
     }
@@ -151,7 +145,7 @@ export default function RegisterPage() {
 
   return (
     <AuthLayout title="Join Ink Battles">
-      <div className="mb-8">
+      <div className="mb-8 mt-4">
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
           创建账户
         </h2>
@@ -159,12 +153,6 @@ export default function RegisterPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {error && (
-          <div className="p-3 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg">
-            {error}
-          </div>
-        )}
-
         <div className="space-y-4">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -281,6 +269,7 @@ export default function RegisterPage() {
           </Button>
         </div>
       </form>
+      <Toaster position="top-right" />
     </AuthLayout>
   )
 }
