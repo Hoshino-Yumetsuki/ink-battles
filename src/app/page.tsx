@@ -14,7 +14,6 @@ import FeaturesSection from '@/components/sections/features-section'
 import { extractCodeBlock } from '@/utils/markdown-parser'
 import { calculateOverallScore } from '@/utils/score-calculator'
 import { useFingerprint } from '@/hooks/use-fingerprint'
-import { encrypt } from '@/utils/client-crypto'
 
 export interface MermaidDiagram {
   type: string
@@ -326,34 +325,6 @@ export default function WriterAnalysisPage() {
                 setProgress(100)
                 setResult(finalResult)
                 fetchLimits() // 刷新用量
-
-                // 如果用户已登录，加密并保存分析记录
-                const token = localStorage.getItem('auth_token')
-                const password = localStorage.getItem('user_password')
-
-                if (token && password) {
-                  try {
-                    const encryptedResult = await encrypt(
-                      JSON.stringify(finalResult),
-                      password
-                    )
-
-                    await fetch('/api/dashboard/history/add', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`
-                      },
-                      body: JSON.stringify({
-                        encryptedResult,
-                        mode: enabledOptions.mode || 'standard',
-                        score: finalResult.overallScore
-                      })
-                    })
-                  } catch (saveError) {
-                    console.error('Failed to save history:', saveError)
-                  }
-                }
               } else if (message.type === 'error') {
                 clearInterval(progressInterval)
                 setProgress(0)

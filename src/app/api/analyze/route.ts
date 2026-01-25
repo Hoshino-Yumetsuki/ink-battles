@@ -9,7 +9,7 @@ import {
 } from '@/utils/rate-limiter'
 import { getDatabase, closeDatabaseConnection } from '@/utils/mongodb'
 import { verifyToken, extractToken } from '@/utils/jwt'
-import { encryptObject } from '@/utils/encryption'
+import { encryptObject } from '@/utils/crypto'
 import { calculateOverallScore } from '@/utils/score-calculator'
 import type { Db, MongoClient } from 'mongodb'
 
@@ -363,7 +363,10 @@ export async function POST(request: NextRequest) {
             try {
               const parsedResult = JSON.parse(generatedText)
               const score = calculateOverallScore(parsedResult.dimensions)
-              const encryptedResult = encryptObject(parsedResult, password)
+              const encryptedResult = await encryptObject(
+                parsedResult,
+                password
+              )
 
               const dbResult = await getDatabase()
               const saveDb = dbResult.db
