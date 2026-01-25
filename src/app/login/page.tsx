@@ -142,7 +142,7 @@ export default function LoginPage() {
         </div>
 
         {isTurnstileEnabled && (
-          <div className="flex justify-center bg-gray-50 dark:bg-zinc-800 p-2 rounded-lg border border-gray-100 dark:border-zinc-700">
+          <div className="flex justify-center">
             <Turnstile
               sitekey={
                 process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ||

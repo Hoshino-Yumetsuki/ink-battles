@@ -237,7 +237,7 @@ export default function RegisterPage() {
         </div>
 
         {isTurnstileEnabled && (
-          <div className="flex justify-center bg-gray-50 dark:bg-zinc-800 p-2 rounded-lg border border-gray-100 dark:border-zinc-700">
+          <div className="flex justify-center">
             <Turnstile
               key={turnstileKey}
               sitekey={
