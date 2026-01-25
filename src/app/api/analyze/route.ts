@@ -9,6 +9,8 @@ import {
 } from '@/utils/rate-limiter'
 import { getDatabase, closeDatabaseConnection } from '@/utils/mongodb'
 import { verifyToken, extractToken } from '@/utils/jwt'
+import { encryptObject } from '@/utils/encryption'
+import { calculateOverallScore } from '@/utils/score-calculator'
 import type { Db, MongoClient } from 'mongodb'
 
 interface LlmApiConfig {
@@ -121,6 +123,7 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData()
     const content = formData.get('content') as string | null
+    const password = formData.get('password') as string | null
     const file = formData.get('file') as File | null
     const analysisType = formData.get('analysisType') as 'text' | 'file'
     const optionsJson = formData.get('options') as string | null
@@ -351,6 +354,41 @@ export async function POST(request: NextRequest) {
           if (identifier) {
             await incrementRateLimit(identifier).catch((err) =>
               logger.error('Failed to increment rate limit', err)
+            )
+          }
+
+          // 加密并存储结果 (仅对已登录用户)
+          if (userId && password) {
+            let saveClient: MongoClient | undefined
+            try {
+              const parsedResult = JSON.parse(generatedText)
+              const score = calculateOverallScore(parsedResult.dimensions)
+              const encryptedResult = encryptObject(parsedResult, password)
+
+              const dbResult = await getDatabase()
+              const saveDb = dbResult.db
+              saveClient = dbResult.client
+
+              const historyCollection = saveDb.collection('analysis_history')
+
+              await historyCollection.insertOne({
+                userId,
+                encryptedResult,
+                mode: analysisType,
+                score,
+                createdAt: new Date()
+              })
+            } catch (error) {
+              logger.error('Failed to save analysis history', error)
+            } finally {
+              if (saveClient) {
+                await closeDatabaseConnection(saveClient)
+              }
+            }
+          } else if (userId && !password) {
+            logger.warn(
+              'User logged in but no password provided for encryption, history not saved',
+              { userId }
             )
           }
 
