@@ -9,7 +9,7 @@ import { useFingerprint } from '@/hooks/use-fingerprint'
 import { AuthLayout } from '@/components/layout/auth-layout'
 import { User, Lock } from 'lucide-react'
 
-const isTurnstileEnabled = process.env.NEXT_PUBLIC_TURNSTILE_ENABLED !== 'false'
+const isTurnstileEnabled = process.env.NEXT_PUBLIC_TURNSTILE_ENABLED === 'true'
 
 export default function LoginPage() {
   const router = useRouter()

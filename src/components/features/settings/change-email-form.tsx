@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Loader2, Mail, Lock, ShieldCheck } from 'lucide-react'
 import Turnstile from 'react-turnstile'
 
-const isTurnstileEnabled = process.env.NEXT_PUBLIC_TURNSTILE_ENABLED !== 'false'
+const isTurnstileEnabled = process.env.NEXT_PUBLIC_TURNSTILE_ENABLED === 'true'
 
 interface ChangeEmailFormProps {
   hasEmail: boolean
