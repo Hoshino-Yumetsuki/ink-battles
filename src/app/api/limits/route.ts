@@ -59,6 +59,35 @@ export const GET = withDatabase(async (req: NextRequest, db) => {
             used = userDoc.usage.used || 0
             limit = userDoc.usage.limit || limit
             resetTime = userResetTime
+
+            // Lazy Update: 检查限制配置是否变化
+            const currentLimit = userDoc.usage.limit || maxRequestsUser
+            if (currentLimit !== maxRequestsUser) {
+              const quotaDiff = maxRequestsUser - currentLimit
+              let newUsed = used
+
+              if (quotaDiff < 0) {
+                // 配额减少，调整已使用数不超过新配额
+                newUsed = Math.min(used, maxRequestsUser)
+              }
+              // 如果配额增加，保持当前使用数不变
+
+              await usersCollection.updateOne(
+                { _id: userDoc._id },
+                {
+                  $set: {
+                    'usage.limit': maxRequestsUser,
+                    'usage.used': newUsed
+                  }
+                }
+              )
+
+              limit = maxRequestsUser
+              used = newUsed
+              logger.info(
+                `Lazy adjusted quota for user ${userId}: ${currentLimit} -> ${maxRequestsUser}, used: ${userDoc.usage.used} -> ${newUsed}`
+              )
+            }
           } else {
             // 窗口已过，归零
             used = 0
@@ -79,6 +108,35 @@ export const GET = withDatabase(async (req: NextRequest, db) => {
         if (now < expiryTime) {
           used = record.requestCount
           resetTime = expiryTime
+
+          // Lazy Update: 检查限制配置是否变化
+          const recordMaxRequests = record.maxRequests || maxRequestsGuest
+          if (recordMaxRequests !== maxRequestsGuest) {
+            const quotaDiff = maxRequestsGuest - recordMaxRequests
+            let newRequestCount = used
+
+            if (quotaDiff < 0) {
+              // 配额减少，调整计数确保不超过新配额
+              newRequestCount = Math.min(used, maxRequestsGuest)
+            }
+            // 如果配额增加，保持当前计数不变
+
+            await collection.updateOne(
+              { fingerprint },
+              {
+                $set: {
+                  maxRequests: maxRequestsGuest,
+                  requestCount: newRequestCount
+                }
+              }
+            )
+
+            limit = maxRequestsGuest
+            used = newRequestCount
+            logger.info(
+              `Lazy adjusted quota for guest ${fingerprint}: ${recordMaxRequests} -> ${maxRequestsGuest}, count: ${record.requestCount} -> ${newRequestCount}`
+            )
+          }
         }
       }
     }

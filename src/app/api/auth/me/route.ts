@@ -70,6 +70,35 @@ export const GET = withDatabase(async (req: NextRequest, db) => {
         usedCount = user.usage.used || 0
         currentLimit = user.usage.limit || configMaxRequests
         resetTime = userResetTime
+
+        // Lazy Update: 检查限制配置是否变化
+        const oldLimit = user.usage.limit || configMaxRequests
+        if (oldLimit !== configMaxRequests) {
+          const quotaDiff = configMaxRequests - oldLimit
+          let newUsed = usedCount
+
+          if (quotaDiff < 0) {
+            // 配额减少，调整已使用数不超过新配额
+            newUsed = Math.min(usedCount, configMaxRequests)
+          }
+          // 如果配额增加，保持当前使用数不变
+
+          await usersCollection.updateOne(
+            { _id: user._id },
+            {
+              $set: {
+                'usage.limit': configMaxRequests,
+                'usage.used': newUsed
+              }
+            }
+          )
+
+          currentLimit = configMaxRequests
+          usedCount = newUsed
+          logger.info(
+            `Lazy adjusted quota for user ${user._id.toString()}: ${oldLimit} -> ${configMaxRequests}, used: ${user.usage.used} -> ${newUsed}`
+          )
+        }
       } else {
         // 已过期，视为0使用量
         usedCount = 0
