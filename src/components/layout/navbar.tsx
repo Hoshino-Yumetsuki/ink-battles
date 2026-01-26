@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion'
 import { useId, useState, useEffect } from 'react'
-import { User, LogOut, LayoutDashboard, Settings } from 'lucide-react'
+import { User, LogOut, LayoutDashboard } from 'lucide-react'
 
 export default function Navbar() {
   const pathname = usePathname()
@@ -184,13 +184,7 @@ export default function Navbar() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => router.push('/dashboard')}>
                     <LayoutDashboard className="mr-2 h-4 w-4" />
-                    仪表盘
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => router.push('/dashboard?tab=settings')}
-                  >
-                    <Settings className="mr-2 h-4 w-4" />
-                    设置
+                    控制台
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
