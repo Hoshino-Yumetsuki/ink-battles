@@ -1,10 +1,6 @@
-// Server-side encryption utility using Web Crypto API
-// Works in Node.js (15+) environments
 // PBKDF2 (SHA-256, 100000 iterations, 32 byte key)
 // AES-256-GCM (16 byte IV, 16 byte Auth Tag)
 // Format: Salt (32) + IV (16) + Auth Tag (16) + Ciphertext
-
-import { webcrypto } from 'node:crypto'
 
 const ALGORITHM = 'AES-GCM'
 const KEY_LENGTH = 256
@@ -15,23 +11,28 @@ const ITERATIONS = 100000
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer)
-  return Buffer.from(bytes).toString('base64')
+  let binary = ''
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i])
+  }
+  return globalThis.btoa(binary)
 }
 
 function base64ToArrayBuffer(base64: string): ArrayBuffer {
-  const buffer = Buffer.from(base64, 'base64')
-  return buffer.buffer.slice(
-    buffer.byteOffset,
-    buffer.byteOffset + buffer.byteLength
-  )
+  const binary = globalThis.atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return bytes.buffer
 }
 
 async function deriveKey(
   password: string,
   salt: Uint8Array
-): Promise<webcrypto.CryptoKey> {
+): Promise<CryptoKey> {
   const encoder = new TextEncoder()
-  const keyMaterial = await webcrypto.subtle.importKey(
+  const keyMaterial = await globalThis.crypto.subtle.importKey(
     'raw',
     encoder.encode(password),
     { name: 'PBKDF2' },
@@ -39,13 +40,13 @@ async function deriveKey(
     ['deriveKey']
   )
 
-  return webcrypto.subtle.deriveKey(
+  return globalThis.crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt: salt as any,
+      salt: salt,
       iterations: ITERATIONS,
       hash: 'SHA-256'
-    },
+    } as Pbkdf2Params,
     keyMaterial,
     { name: ALGORITHM, length: KEY_LENGTH },
     false,
@@ -62,18 +63,18 @@ async function deriveKey(
 export async function encrypt(text: string, password: string): Promise<string> {
   const encoder = new TextEncoder()
   const data = encoder.encode(text)
-  const salt = webcrypto.getRandomValues(new Uint8Array(SALT_LENGTH))
-  const iv = webcrypto.getRandomValues(new Uint8Array(IV_LENGTH))
+  const salt = globalThis.crypto.getRandomValues(new Uint8Array(SALT_LENGTH))
+  const iv = globalThis.crypto.getRandomValues(new Uint8Array(IV_LENGTH))
 
   const key = await deriveKey(password, salt)
 
-  const encryptedContent = await webcrypto.subtle.encrypt(
+  const encryptedContent = await globalThis.crypto.subtle.encrypt(
     {
       name: ALGORITHM,
-      iv: iv as any
+      iv
     },
     key,
-    data as any
+    data
   )
 
   // Web Crypto AES-GCM returns ciphertext appended with authentication tag (last 16 bytes)
@@ -123,13 +124,13 @@ export async function decrypt(
     encryptedContent.set(tag, ciphertext.length)
 
     const key = await deriveKey(password, salt)
-    const decryptedContent = await webcrypto.subtle.decrypt(
+    const decryptedContent = await globalThis.crypto.subtle.decrypt(
       {
         name: ALGORITHM,
-        iv: iv as any
+        iv
       },
       key,
-      encryptedContent as any
+      encryptedContent
     )
 
     return new TextDecoder().decode(decryptedContent)
