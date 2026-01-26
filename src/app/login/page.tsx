@@ -135,7 +135,6 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800 dark:text-white border border-transparent dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-zinc-800 transition-colors"
               placeholder="请输入您的密码"
-              key={turnstileKey}
               disabled={loading}
             />
           </div>
@@ -144,6 +143,7 @@ export default function LoginPage() {
         {isTurnstileEnabled && (
           <div className="flex justify-center">
             <Turnstile
+              key={turnstileKey}
               sitekey={
                 process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ||
                 '1x00000000000000000000AA'
