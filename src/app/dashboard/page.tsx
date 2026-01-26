@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { compressImage } from '@/utils/image-compressor'
@@ -283,7 +284,17 @@ export default function DashboardPage() {
       </div>
 
       {/* 桌面端侧边栏 - 仅在 md 以上显示 */}
-      <aside className="hidden md:flex flex-col items-center justify-between z-20 transition-all duration-300 bg-black text-white shadow-2xl h-full w-20 rounded-2xl py-8 shrink-0">
+      <motion.aside
+        initial={{ x: -20, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{
+          type: 'spring',
+          stiffness: 100,
+          damping: 15,
+          delay: 0.1
+        }}
+        className="hidden md:flex flex-col items-center justify-between z-20 transition-all duration-300 bg-black text-white shadow-2xl h-full w-20 rounded-2xl py-8 shrink-0"
+      >
         <div className="mb-8 p-3 rounded-full bg-white/10 backdrop-blur-md">
           <svg
             className="w-6 h-6 text-white"
@@ -327,10 +338,20 @@ export default function DashboardPage() {
             <div className="bg-transparent border border-black w-full h-full"></div>
           </div>
         </button>
-      </aside>
+      </motion.aside>
 
       {/* 移动端底部按钮栏 - 仅在 md 以下显示 */}
-      <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-2 px-2 py-2 bg-black/90 backdrop-blur-md text-white rounded-full shadow-2xl w-[90%] max-w-sm border border-white/10">
+      <motion.div
+        initial={{ y: 20, opacity: 0, x: '-50%' }}
+        animate={{ y: 0, opacity: 1, x: '-50%' }}
+        transition={{
+          type: 'spring',
+          stiffness: 100,
+          damping: 15,
+          delay: 0.2
+        }}
+        className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-2 px-2 py-2 bg-black/90 backdrop-blur-md text-white rounded-full shadow-2xl w-[90%] max-w-sm border border-white/10"
+      >
         <button
           type="button"
           className={`flex-1 flex items-center justify-center py-3 rounded-full transition-colors ${activeTab === 'overview' ? 'bg-white/20' : 'hover:bg-white/10'}`}
@@ -355,10 +376,19 @@ export default function DashboardPage() {
             <div className="bg-transparent border border-black w-full h-full"></div>
           </div>
         </button>
-      </div>
+      </motion.div>
 
       {/* 主内容区 */}
-      <main className="flex-1 bg-white dark:bg-zinc-800/80 rounded-none md:rounded-2xl px-4 pt-4 pb-24 md:pb-8 md:px-8 md:pt-6 overflow-hidden shadow-2xl relative h-full flex flex-col backdrop-blur-3xl border-x-0 md:border border-white/50 dark:border-white/10">
+      <motion.main
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{
+          type: 'spring',
+          stiffness: 100,
+          damping: 15
+        }}
+        className="flex-1 bg-white dark:bg-zinc-800/80 rounded-none md:rounded-2xl px-4 pt-4 pb-24 md:pb-8 md:px-8 md:pt-6 overflow-hidden shadow-2xl relative h-full flex flex-col backdrop-blur-3xl border-x-0 md:border border-white/50 dark:border-white/10"
+      >
         <div className="max-w-7xl mx-auto w-full h-full flex flex-col">
           {/* 顶部栏 - 模仿参考图 */}
           <div className="flex justify-between items-start mb-6 shrink-0">
@@ -423,377 +453,426 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex-1 overflow-auto pr-1">
-            {activeTab === 'overview' && (
-              <div className="flex flex-col min-h-full gap-4">
-                {/* 顶部使用情况卡片 - 紧凑且风格统一 */}
-                <Card className="p-6 shrink-0">
-                  <div className="flex flex-col h-full">
-                    <div className="flex justify-between items-center mb-4">
-                      <h2 className="text-lg font-bold flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center">
-                          <Zap className="w-4 h-4" />
-                        </div>
-                        当前使用状态
-                      </h2>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground font-medium">
-                          刷新倒计时
-                        </span>
-                        <span className="text-sm font-mono font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                          {timeLeft}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-8 mb-4">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-xs text-muted-foreground font-medium">
-                          已用次数
-                        </span>
-                        <span className="text-3xl font-bold">
-                          {user?.usage?.used || 0}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col gap-1">
-                        <span className="text-xs text-muted-foreground font-medium">
-                          剩余可用
-                        </span>
-                        <span className="text-3xl font-bold">
-                          {(user?.usage?.limit || 0) - (user?.usage?.used || 0)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="mb-4">
-                      <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-black dark:bg-white rounded-full transition-all duration-500"
-                          style={{
-                            width: `${Math.min(((user?.usage?.used || 0) / (user?.usage?.limit || 1)) * 100, 100)}%`
-                          }}
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-2 text-right">
-                        总额度: {user?.usage?.limit || 10} 次/天
-                      </p>
-                    </div>
-
-                    {/* 底部按钮栏 - 更加紧凑 */}
-                    <div className="flex flex-wrap gap-2 pt-4 border-t mt-auto">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 text-xs gap-1.5"
-                        asChild
-                      >
-                        <a
-                          href="https://github.com/Hoshino-Yumetsuki/ink-battles"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <Github className="w-3.5 h-3.5" />
-                          GitHub
-                        </a>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 text-xs gap-1.5"
-                        asChild
-                      >
-                        <a href="/guide">
-                          <ExternalLink className="w-3.5 h-3.5" />
-                          指南
-                        </a>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 text-xs gap-1.5 text-pink-600 hover:text-pink-700 hover:bg-pink-50 dark:hover:bg-pink-900/20"
-                        asChild
-                      >
-                        <a
-                          href="https://afdian.com/a/q78kg"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <Heart className="w-3.5 h-3.5" />
-                          支持
-                        </a>
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
-                  <Card className="p-4 flex flex-col items-center justify-center gap-2 text-center h-full">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center shrink-0">
-                      <FileText className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">
-                        总分析次数
-                      </p>
-                      <p className="text-xl font-bold">
-                        {user?.stats?.totalCount || totalCount}
-                      </p>
-                    </div>
-                  </Card>
-
-                  <Card className="p-4 flex flex-col items-center justify-center gap-2 text-center h-full">
-                    <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center shrink-0">
-                      <TrendingUp className="w-5 h-5 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">平均分数</p>
-                      <p className="text-xl font-bold">
-                        {user?.stats?.averageScore || 0}
-                      </p>
-                    </div>
-                  </Card>
-
-                  <Card className="p-4 flex flex-col items-center justify-center gap-2 text-center h-full">
-                    <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center shrink-0">
-                      <Clock className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">账户年龄</p>
-                      <p className="text-xl font-bold">
-                        {user?.createdAt &&
-                          Math.floor(
-                            (Date.now() - new Date(user.createdAt).getTime()) /
-                              (1000 * 60 * 60 * 24)
-                          )}
-                        天
-                      </p>
-                    </div>
-                  </Card>
-                </div>
-
-                <Card className="p-6 flex-1 flex flex-col justify-center min-h-50 md:min-h-30">
-                  <h2 className="text-lg font-bold mb-3">快速操作</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
-                    <Button
-                      onClick={() => {
-                        window.location.href = '/'
-                      }}
-                      className="h-full text-base"
-                    >
-                      新建分析
-                    </Button>
-                    <Button
-                      onClick={() => setActiveTab('history')}
-                      variant="outline"
-                      className="h-full text-base"
-                    >
-                      查看历史记录
-                    </Button>
-                  </div>
-                </Card>
-              </div>
-            )}
-
-            {/* 历史记录标签 */}
-            {activeTab === 'history' && (
-              <div className="space-y-6">
-                <Card className="p-6">
-                  <h2 className="text-xl font-bold mb-4">分析历史</h2>
-                  {histories.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-12">
-                      暂无分析记录
-                    </p>
-                  ) : (
-                    <div className="flex flex-col h-[calc(100vh-280px)] min-h-100">
-                      <div className="flex-1 overflow-y-auto pr-2 space-y-4">
-                        {histories.map((history) => (
-                          <Card key={history.id} className="p-4">
-                            <div className="flex justify-between items-start mb-2">
-                              <button
-                                type="button"
-                                className="flex-1 cursor-pointer text-left appearance-none bg-transparent border-0 p-0"
-                                onClick={() => setSelectedHistory(history)}
-                              >
-                                <p className="font-medium hover:text-blue-600 transition-colors">
-                                  {history.result?.title || '分析结果'}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  {new Date(history.createdAt).toLocaleString(
-                                    'zh-CN'
-                                  )}
-                                </p>
-                              </button>
-                              {history.result && (
-                                <div className="text-right">
-                                  <p className="text-2xl font-bold text-blue-600">
-                                    {history.result.overallScore ||
-                                      history.result.score}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground">
-                                    分数
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                            {history.error ? (
-                              <p className="text-sm text-red-600">
-                                {history.error}
-                              </p>
-                            ) : null}
-                          </Card>
-                        ))}
-                      </div>
-
-                      {/* Pagination Controls */}
-                      {totalPages > 1 && (
-                        <div className="shrink-0 flex items-center justify-center gap-4 pt-4 mt-4 border-t">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePageChange(page - 1)}
-                            disabled={page <= 1}
-                          >
-                            <ChevronLeft className="w-4 h-4 mr-2" />
-                            上一页
-                          </Button>
-                          <span className="text-sm text-muted-foreground">
-                            第 {page} 页 / 共 {totalPages} 页
+            <AnimatePresence mode="wait">
+              {activeTab === 'overview' && (
+                <motion.div
+                  key="overview"
+                  initial={{ opacity: 0, y: 20, filter: 'blur(4px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, y: -20, filter: 'blur(4px)' }}
+                  transition={{
+                    duration: 0.4,
+                    ease: [0.23, 1, 0.32, 1]
+                  }}
+                  className="flex flex-col min-h-full gap-4"
+                >
+                  {/* 顶部使用情况卡片 - 紧凑且风格统一 */}
+                  <Card className="p-4 shrink-0">
+                    <div className="flex flex-col h-full">
+                      <div className="flex justify-between items-center mb-3">
+                        <h2 className="text-lg font-bold flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center">
+                            <Zap className="w-4 h-4" />
+                          </div>
+                          当前使用状态
+                        </h2>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground font-medium">
+                            刷新倒计时
                           </span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePageChange(page + 1)}
-                            disabled={page >= totalPages}
-                          >
-                            下一页
-                            <ChevronRight className="w-4 h-4 ml-2" />
-                          </Button>
+                          <span className="text-sm font-mono font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                            {timeLeft}
+                          </span>
                         </div>
-                      )}
-                    </div>
-                  )}
-                </Card>
-              </div>
-            )}
+                      </div>
 
-            {/* 设置标签 */}
-            {activeTab === 'settings' && (
-              <div className="space-y-6">
-                <Card className="p-6">
-                  <h2 className="text-xl font-bold mb-4">账户信息</h2>
-                  <div className="flex flex-col md:flex-row items-center md:items-start gap-6 pt-2">
-                    <div className="relative group shrink-0">
-                      <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border-2 border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-                        {user?.avatar ? (
-                          <Image
-                            src={user.avatar}
-                            alt={user.username}
-                            fill
-                            className="object-cover"
+                      <div className="grid grid-cols-2 gap-8 mb-3">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs text-muted-foreground font-medium">
+                            已用次数
+                          </span>
+                          <span className="text-2xl font-bold">
+                            {user?.usage?.used || 0}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs text-muted-foreground font-medium">
+                            剩余可用
+                          </span>
+                          <span className="text-2xl font-bold">
+                            {(user?.usage?.limit || 0) -
+                              (user?.usage?.used || 0)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mb-3">
+                        <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-black dark:bg-white rounded-full transition-all duration-500"
+                            style={{
+                              width: `${Math.min(((user?.usage?.used || 0) / (user?.usage?.limit || 1)) * 100, 100)}%`
+                            }}
                           />
-                        ) : (
-                          <User className="w-12 h-12 text-gray-400" />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2 text-right">
+                          总额度: {user?.usage?.limit || 10} 次/天
+                        </p>
+                      </div>
+
+                      {/* 底部按钮栏 - 更加紧凑 */}
+                      <div className="flex flex-wrap gap-2 pt-3 border-t mt-auto">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 text-xs gap-1.5"
+                          asChild
+                        >
+                          <a
+                            href="https://github.com/Hoshino-Yumetsuki/ink-battles"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Github className="w-3.5 h-3.5" />
+                            GitHub
+                          </a>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 text-xs gap-1.5"
+                          asChild
+                        >
+                          <a href="/guide">
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            指南
+                          </a>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 text-xs gap-1.5 text-pink-600 hover:text-pink-700 hover:bg-pink-50 dark:hover:bg-pink-900/20"
+                          asChild
+                        >
+                          <a
+                            href="https://afdian.com/a/q78kg"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Heart className="w-3.5 h-3.5" />
+                            支持
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 shrink-0">
+                    <Card className="p-3 flex flex-col items-center justify-center gap-1.5 text-center h-full">
+                      <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center shrink-0">
+                        <FileText className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">
+                          总分析次数
+                        </p>
+                        <p className="text-lg font-bold">
+                          {user?.stats?.totalCount || totalCount}
+                        </p>
+                      </div>
+                    </Card>
+
+                    <Card className="p-3 flex flex-col items-center justify-center gap-1.5 text-center h-full">
+                      <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center shrink-0">
+                        <TrendingUp className="w-4 h-4 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">
+                          平均分数
+                        </p>
+                        <p className="text-lg font-bold">
+                          {user?.stats?.averageScore || 0}
+                        </p>
+                      </div>
+                    </Card>
+
+                    <Card className="p-3 flex flex-col items-center justify-center gap-1.5 text-center h-full">
+                      <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center shrink-0">
+                        <Clock className="w-4 h-4 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">
+                          账户年龄
+                        </p>
+                        <p className="text-lg font-bold">
+                          {user?.createdAt &&
+                            Math.floor(
+                              (Date.now() -
+                                new Date(user.createdAt).getTime()) /
+                                (1000 * 60 * 60 * 24)
+                            )}
+                          天
+                        </p>
+                      </div>
+                    </Card>
+                  </div>
+
+                  <Card className="p-4 flex-1 flex flex-col justify-center">
+                    <h2 className="text-base font-bold mb-2">快速操作</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <Button
+                        onClick={() => {
+                          window.location.href = '/'
+                        }}
+                        className="h-full text-base"
+                      >
+                        新建分析
+                      </Button>
+                      <Button
+                        onClick={() => setActiveTab('history')}
+                        variant="outline"
+                        className="h-full text-base"
+                      >
+                        查看历史记录
+                      </Button>
+                    </div>
+                  </Card>
+                </motion.div>
+              )}
+
+              {/* 历史记录标签 */}
+              {activeTab === 'history' && (
+                <motion.div
+                  key="history"
+                  initial={{ opacity: 0, y: 20, filter: 'blur(4px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, y: -20, filter: 'blur(4px)' }}
+                  transition={{
+                    duration: 0.4,
+                    ease: [0.23, 1, 0.32, 1]
+                  }}
+                  className="space-y-6"
+                >
+                  <Card className="p-6">
+                    <h2 className="text-xl font-bold mb-4">分析历史</h2>
+                    {histories.length === 0 ? (
+                      <p className="text-center text-muted-foreground py-12">
+                        暂无分析记录
+                      </p>
+                    ) : (
+                      <div className="flex flex-col h-[calc(100vh-280px)] min-h-100">
+                        <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+                          {histories.map((history, index) => (
+                            <motion.div
+                              key={history.id}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.05 }}
+                            >
+                              <Card className="p-4">
+                                <div className="flex justify-between items-start mb-2">
+                                  <button
+                                    type="button"
+                                    className="flex-1 cursor-pointer text-left appearance-none bg-transparent border-0 p-0"
+                                    onClick={() => setSelectedHistory(history)}
+                                  >
+                                    <p className="font-medium hover:text-blue-600 transition-colors">
+                                      {history.result?.title || '分析结果'}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {new Date(
+                                        history.createdAt
+                                      ).toLocaleString('zh-CN')}
+                                    </p>
+                                  </button>
+                                  {history.result && (
+                                    <div className="text-right">
+                                      <p className="text-2xl font-bold text-blue-600">
+                                        {history.result.overallScore ||
+                                          history.result.score}
+                                      </p>
+                                      <p className="text-sm text-muted-foreground">
+                                        分数
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                                {history.error ? (
+                                  <p className="text-sm text-red-600">
+                                    {history.error}
+                                  </p>
+                                ) : null}
+                              </Card>
+                            </motion.div>
+                          ))}
+                        </div>
+
+                        {/* Pagination Controls */}
+                        {totalPages > 1 && (
+                          <div className="shrink-0 flex items-center justify-center gap-4 pt-4 mt-4 border-t">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handlePageChange(page - 1)}
+                              disabled={page <= 1}
+                            >
+                              <ChevronLeft className="w-4 h-4 mr-2" />
+                              上一页
+                            </Button>
+                            <span className="text-sm text-muted-foreground">
+                              第 {page} 页 / 共 {totalPages} 页
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handlePageChange(page + 1)}
+                              disabled={page >= totalPages}
+                            >
+                              下一页
+                              <ChevronRight className="w-4 h-4 ml-2" />
+                            </Button>
+                          </div>
                         )}
                       </div>
-                      <label className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-full cursor-pointer">
-                        <Camera className="w-6 h-6" />
-                        <input
-                          type="file"
-                          className="hidden"
-                          accept="image/*"
-                          onChange={handleAvatarUpload}
-                          disabled={avatarLoading}
-                        />
-                      </label>
-                      {avatarLoading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-white/50 rounded-full">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+                    )}
+                  </Card>
+                </motion.div>
+              )}
+
+              {/* 设置标签 */}
+              {activeTab === 'settings' && (
+                <motion.div
+                  key="settings"
+                  initial={{ opacity: 0, y: 20, filter: 'blur(4px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, y: -20, filter: 'blur(4px)' }}
+                  transition={{
+                    duration: 0.4,
+                    ease: [0.23, 1, 0.32, 1]
+                  }}
+                  className="space-y-6"
+                >
+                  <Card className="p-6">
+                    <h2 className="text-xl font-bold mb-4">账户信息</h2>
+                    <div className="flex flex-col md:flex-row items-center md:items-start gap-6 pt-2">
+                      <div className="relative group shrink-0">
+                        <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border-2 border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+                          {user?.avatar ? (
+                            <Image
+                              src={user.avatar}
+                              alt={user.username}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <User className="w-12 h-12 text-gray-400" />
+                          )}
                         </div>
-                      )}
-                    </div>
-                    <div className="space-y-4 w-full">
-                      <div>
-                        <p className="text-sm text-muted-foreground">用户名</p>
-                        <p className="font-medium">{user?.username}</p>
+                        <label className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-full cursor-pointer">
+                          <Camera className="w-6 h-6" />
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept="image/*"
+                            onChange={handleAvatarUpload}
+                            disabled={avatarLoading}
+                          />
+                        </label>
+                        {avatarLoading && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-white/50 rounded-full">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+                          </div>
+                        )}
                       </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          注册时间
-                        </p>
-                        <p className="font-medium">
-                          {user?.createdAt &&
-                            new Date(user.createdAt).toLocaleString('zh-CN')}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          上次登录
-                        </p>
-                        <p className="font-medium">
-                          {user?.lastLoginAt &&
-                            new Date(user.lastLoginAt).toLocaleString('zh-CN')}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-
-                <Card className="p-6">
-                  <h2 className="text-xl font-bold mb-4">账户安全设置</h2>
-                  <Tabs defaultValue="email" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 max-w-100 mb-6">
-                      <TabsTrigger value="email">邮箱设置</TabsTrigger>
-                      <TabsTrigger value="password">修改密码</TabsTrigger>
-                      <TabsTrigger
-                        value="danger"
-                        className="text-red-500 data-[state=active]:text-red-600 data-[state=active]:bg-red-50 dark:data-[state=active]:bg-red-950/20"
-                      >
-                        注销账户
-                      </TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="email">
-                      <div className="space-y-4">
-                        <div className="p-4 bg-muted/50 rounded-lg">
-                          <p className="text-sm">
-                            {user?.email ? (
-                              <span className="flex items-center gap-2">
-                                <span className="font-semibold text-green-600 dark:text-green-400">
-                                  已绑定邮箱:
-                                </span>
-                                <span>{user.email}</span>
-                              </span>
-                            ) : (
-                              <span className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
-                                尚未绑定邮箱
-                              </span>
-                            )}
+                      <div className="space-y-4 w-full">
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            用户名
+                          </p>
+                          <p className="font-medium">{user?.username}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            注册时间
+                          </p>
+                          <p className="font-medium">
+                            {user?.createdAt &&
+                              new Date(user.createdAt).toLocaleString('zh-CN')}
                           </p>
                         </div>
-                        <ChangeEmailForm
-                          hasEmail={!!user?.email}
-                          onSuccess={() => {
-                            // Reload dashboard to fetch updated user info
-                            loadDashboard()
-                          }}
-                        />
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            上次登录
+                          </p>
+                          <p className="font-medium">
+                            {user?.lastLoginAt &&
+                              new Date(user.lastLoginAt).toLocaleString(
+                                'zh-CN'
+                              )}
+                          </p>
+                        </div>
                       </div>
-                    </TabsContent>
+                    </div>
+                  </Card>
 
-                    <TabsContent value="password">
-                      <ChangePasswordForm onSuccess={() => {}} />
-                    </TabsContent>
+                  <Card className="p-6">
+                    <h2 className="text-xl font-bold mb-4">账户安全设置</h2>
+                    <Tabs defaultValue="email" className="w-full">
+                      <TabsList className="grid w-full grid-cols-3 max-w-100 mb-6">
+                        <TabsTrigger value="email">邮箱设置</TabsTrigger>
+                        <TabsTrigger value="password">修改密码</TabsTrigger>
+                        <TabsTrigger
+                          value="danger"
+                          className="text-red-500 data-[state=active]:text-red-600 data-[state=active]:bg-red-50 dark:data-[state=active]:bg-red-950/20"
+                        >
+                          注销账户
+                        </TabsTrigger>
+                      </TabsList>
 
-                    <TabsContent value="danger">
-                      <DeleteAccountForm />
-                    </TabsContent>
-                  </Tabs>
-                </Card>
-              </div>
-            )}
+                      <TabsContent value="email">
+                        <div className="space-y-4">
+                          <div className="p-4 bg-muted/50 rounded-lg">
+                            <p className="text-sm">
+                              {user?.email ? (
+                                <span className="flex items-center gap-2">
+                                  <span className="font-semibold text-green-600 dark:text-green-400">
+                                    已绑定邮箱:
+                                  </span>
+                                  <span>{user.email}</span>
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+                                  尚未绑定邮箱
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                          <ChangeEmailForm
+                            hasEmail={!!user?.email}
+                            onSuccess={() => {
+                              // Reload dashboard to fetch updated user info
+                              loadDashboard()
+                            }}
+                          />
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="password">
+                        <ChangePasswordForm onSuccess={() => {}} />
+                      </TabsContent>
+
+                      <TabsContent value="danger">
+                        <DeleteAccountForm />
+                      </TabsContent>
+                    </Tabs>
+                  </Card>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
-      </main>
+      </motion.main>
 
       {/* 分析结果弹窗 */}
       {selectedHistory?.result && (
