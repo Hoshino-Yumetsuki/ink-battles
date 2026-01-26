@@ -424,7 +424,7 @@ export default function DashboardPage() {
 
           <div className="flex-1 overflow-auto pr-1">
             {activeTab === 'overview' && (
-              <div className="flex flex-col h-full gap-4">
+              <div className="flex flex-col min-h-full gap-4">
                 {/* 顶部使用情况卡片 - 紧凑且风格统一 */}
                 <Card className="p-6 shrink-0">
                   <div className="flex flex-col h-full">
@@ -571,7 +571,7 @@ export default function DashboardPage() {
                   </Card>
                 </div>
 
-                <Card className="p-6 flex-1 flex flex-col justify-center min-h-30">
+                <Card className="p-6 flex-1 flex flex-col justify-center min-h-50 md:min-h-30">
                   <h2 className="text-lg font-bold mb-3">快速操作</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
                     <Button
