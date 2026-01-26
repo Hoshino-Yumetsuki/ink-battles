@@ -10067,6 +10067,7 @@ __metadata:
     bcryptjs: "npm:^3.0.3"
     chardet: "npm:^2.1.1"
     class-variance-authority: "npm:^0.7.1"
+    clsx: "npm:^2.1.1"
     file-type: "npm:^21.3.0"
     framer-motion: "npm:^12.27.5"
     geist: "npm:^1.5.1"
