@@ -30,6 +30,7 @@
     "bcryptjs": "^3.0.3",
     "chardet": "^2.1.1",
     "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "file-type": "^21.3.0",
     "framer-motion": "^12.27.5",
     "geist": "^1.5.1",

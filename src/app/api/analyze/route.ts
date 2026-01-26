@@ -368,11 +368,14 @@ export const POST = withDatabase(
             )
           }
 
+          // 计算总评分并添加到结果中
+          const score = calculateOverallScore(parsedResult.dimensions)
+          parsedResult.overallScore = score
+
           // 加密并存储结果 (仅对已登录用户)
           if (userId && password) {
             let saveClient: MongoClient | undefined
             try {
-              const score = calculateOverallScore(parsedResult.dimensions)
               const encryptedResult = await encryptObject(
                 parsedResult,
                 password

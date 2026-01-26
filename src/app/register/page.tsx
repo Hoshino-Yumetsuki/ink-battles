@@ -130,9 +130,10 @@ export default function RegisterPage() {
         throw new Error(data.error || '注册失败')
       }
 
-      // 保存token
+      // 保存token和密码
       localStorage.setItem('auth_token', data.token)
       localStorage.setItem('username', data.user.username)
+      localStorage.setItem('user_password', password)
 
       // 跳转到dashboard
       router.push('/dashboard')

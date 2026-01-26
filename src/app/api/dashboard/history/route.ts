@@ -40,7 +40,6 @@ export const GET = withDatabase(async (req: NextRequest, db) => {
     // 返回加密的记录
     const resultHistories = histories.map((history: any) => ({
       id: history._id.toString(),
-      encryptedContent: history.encryptedContent,
       encryptedResult: history.encryptedResult,
       mode: history.mode,
       createdAt: history.createdAt
