@@ -95,8 +95,10 @@ export async function checkRateLimit(
         let newUsed = usage.used
 
         if (quotaDiff < 0) {
+          // 配额减少，调整已使用数不超过新配额
           newUsed = Math.min(usage.used, rateLimitConfig.maxRequestsUser)
         }
+        // 如果配额增加，保持当前使用数不变
 
         await usersCollection.updateOne(
           { _id: user._id },
@@ -111,12 +113,15 @@ export async function checkRateLimit(
         usage.limit = rateLimitConfig.maxRequestsUser
         usage.used = newUsed
         logger.info(
-          `Lazy adjusted quota for user ${userId}: ${currentLimit} -> ${rateLimitConfig.maxRequestsUser}`
+          `Lazy adjusted quota for user ${userId}: ${currentLimit} -> ${rateLimitConfig.maxRequestsUser}, used: ${usage.used} -> ${newUsed}`
         )
       }
 
       // 检查 resetTime 是否过期
       if (usage.resetTime && new Date(usage.resetTime) < now) {
+        // 重置时间已过，允许请求但不立即递增计数
+        // 注意：此时不修改数据库，因为可能用户并不会真正发起请求
+        // 实际的重置会在 incrementRateLimit 中完成
         return {
           allowed: true,
           remainingRequests: rateLimitConfig.maxRequestsUser - 1,
@@ -127,6 +132,7 @@ export async function checkRateLimit(
         }
       }
 
+      // 检查是否超限（使用更新后的 usage.limit 和 usage.used）
       if (usage.used >= (usage.limit || rateLimitConfig.maxRequestsUser)) {
         const resetTime = usage.resetTime
           ? new Date(usage.resetTime)
@@ -174,9 +180,6 @@ export async function checkRateLimit(
     // 清理所有过期的速率限制记录
     await cleanExpiredRecords(db, windowStart)
 
-    // 检查并调整配额（如果配置变化）(仅针对匿名用户记录)
-    await adjustQuotaIfConfigChanged(db, rateLimitConfig.maxRequestsGuest)
-
     const record = await collection.findOne({ fingerprint: identifier })
 
     if (!record) {
@@ -188,6 +191,41 @@ export async function checkRateLimit(
         ),
         identifier
       }
+    }
+
+    // Lazy Update: 检查配额配置是否变化
+    const recordMaxRequests =
+      record.maxRequests || rateLimitConfig.maxRequestsGuest
+    if (recordMaxRequests !== rateLimitConfig.maxRequestsGuest) {
+      const quotaDiff = rateLimitConfig.maxRequestsGuest - recordMaxRequests
+      let newRequestCount = record.requestCount
+
+      if (quotaDiff < 0) {
+        // 配额减少，调整计数确保不超过新配额
+        newRequestCount = Math.min(
+          record.requestCount,
+          rateLimitConfig.maxRequestsGuest
+        )
+      }
+      // 如果配额增加，保持当前计数不变
+
+      await collection.updateOne(
+        { fingerprint: identifier },
+        {
+          $set: {
+            maxRequests: rateLimitConfig.maxRequestsGuest,
+            requestCount: newRequestCount
+          }
+        }
+      )
+
+      // 更新内存中的record对象以便后续检查
+      record.maxRequests = rateLimitConfig.maxRequestsGuest
+      record.requestCount = newRequestCount
+
+      logger.info(
+        `Lazy adjusted quota for guest ${identifier}: ${recordMaxRequests} -> ${rateLimitConfig.maxRequestsGuest}, count: ${record.requestCount} -> ${newRequestCount}`
+      )
     }
 
     if (record.windowStart < windowStart) {
@@ -203,7 +241,10 @@ export async function checkRateLimit(
       }
     }
 
-    if (record.requestCount >= rateLimitConfig.maxRequestsGuest) {
+    const currentMaxRequests =
+      record.maxRequests || rateLimitConfig.maxRequestsGuest
+
+    if (record.requestCount >= currentMaxRequests) {
       const resetTime = new Date(
         record.windowStart.getTime() + rateLimitConfig.windowSeconds * 1000
       )
@@ -214,7 +255,7 @@ export async function checkRateLimit(
       logger.warn('Rate limit exceeded', {
         identifier,
         requestCount: record.requestCount,
-        maxRequests: rateLimitConfig.maxRequestsGuest
+        maxRequests: currentMaxRequests
       })
 
       return {
@@ -227,8 +268,7 @@ export async function checkRateLimit(
 
     return {
       allowed: true,
-      remainingRequests:
-        rateLimitConfig.maxRequestsGuest - record.requestCount - 1,
+      remainingRequests: currentMaxRequests - record.requestCount - 1,
       resetTime: new Date(
         record.windowStart.getTime() + rateLimitConfig.windowSeconds * 1000
       ),
@@ -374,62 +414,6 @@ export async function incrementRateLimit(
     if (shouldCloseConnection && client) {
       await closeDatabaseConnection(client)
     }
-  }
-}
-
-/**
- * 检查并调整配额（如果配置变化）
- */
-async function adjustQuotaIfConfigChanged(db: Db, currentMaxRequests: number) {
-  try {
-    const collection = db.collection<RateLimitRecord>('rate_limits')
-
-    // 查找所有 maxRequests 与当前配置不同的记录
-    const recordsToUpdate = await collection
-      .find({
-        maxRequests: { $exists: true, $ne: currentMaxRequests }
-      })
-      .toArray()
-
-    if (recordsToUpdate.length > 0) {
-      logger.info(
-        `Quota config changed. Adjusting ${recordsToUpdate.length} user records from various limits to ${currentMaxRequests}`
-      )
-
-      // 批量更新所有记录
-      for (const record of recordsToUpdate) {
-        const oldMaxRequests = record.maxRequests || 10
-        const quotaDiff = currentMaxRequests - oldMaxRequests
-
-        // 计算新的 requestCount，确保不为负数
-        // 如果配额增加，用户可以继续使用
-        // 如果配额减少，用户可能立即超限
-        let newRequestCount = record.requestCount
-        if (quotaDiff > 0) {
-          // 配额增加，保持当前计数不变，这样用户就可以使用新增的配额
-          newRequestCount = record.requestCount
-        } else if (quotaDiff < 0) {
-          // 配额减少，如果当前计数超过新配额，调整为新配额
-          newRequestCount = Math.min(record.requestCount, currentMaxRequests)
-        }
-
-        await collection.updateOne(
-          { _id: record._id },
-          {
-            $set: {
-              maxRequests: currentMaxRequests,
-              requestCount: newRequestCount
-            }
-          }
-        )
-
-        logger.info(
-          `Adjusted quota for ${record.fingerprint}: ${oldMaxRequests} -> ${currentMaxRequests}, count: ${record.requestCount} -> ${newRequestCount}`
-        )
-      }
-    }
-  } catch (error) {
-    logger.error('Error adjusting quota for config change', error)
   }
 }
 
