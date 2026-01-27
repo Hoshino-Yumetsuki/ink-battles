@@ -350,7 +350,7 @@ export default function DashboardPage() {
           damping: 15,
           delay: 0.2
         }}
-        className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-2 px-2 py-2 bg-black/90 backdrop-blur-md text-white rounded-full shadow-2xl w-[90%] max-w-sm border border-white/10"
+        className="md:hidden fixed bottom-6 left-1/2 z-50 flex items-center justify-between gap-2 px-2 py-2 bg-black/90 backdrop-blur-md text-white rounded-full shadow-2xl w-[90%] max-w-sm border border-white/10"
       >
         <button
           type="button"
