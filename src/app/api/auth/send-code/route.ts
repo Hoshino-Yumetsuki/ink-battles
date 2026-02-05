@@ -6,7 +6,7 @@ import { logger } from '@/utils/logger'
 import { extractToken, verifyToken } from '@/utils/jwt'
 import { ObjectId } from 'mongodb'
 import { randomInt } from 'node:crypto'
-import { verifyCaptcha, isCaptchaEnabled } from '@/utils/captcha'
+import { verifyCaptchaWithDb, isCaptchaEnabled } from '@/utils/captcha'
 
 const sendCodeSchema = z.object({
   type: z.enum(['bind_email', 'change_password']),
@@ -62,7 +62,10 @@ export const POST = withDatabase(async (request: NextRequest, db) => {
     // 如果启用了 CAPTCHA，验证 token
     if (captchaEnabled) {
       logger.info('[send-code] Verifying CAPTCHA token...')
-      const isCaptchaValid = await verifyCaptcha(captchaToken as string)
+      const isCaptchaValid = await verifyCaptchaWithDb(
+        captchaToken as string,
+        db
+      )
       logger.info('[send-code] CAPTCHA verification result', {
         valid: isCaptchaValid
       })

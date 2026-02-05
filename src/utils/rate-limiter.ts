@@ -425,17 +425,13 @@ async function cleanExpiredRecords(db: Db, windowStart: Date) {
     // 批量清理过期记录：速率限制记录和访问记录
     const [rateLimitResult, visitsResult] = await Promise.all([
       // 清理过期的速率限制记录
-      db
-        .collection('rate_limits')
-        .deleteMany({
-          windowStart: { $lt: windowStart }
-        }),
+      db.collection('rate_limits').deleteMany({
+        windowStart: { $lt: windowStart }
+      }),
       // 清理超过时间窗口的访问记录（与速率限制使用相同的过期时间）
-      db
-        .collection('visits')
-        .deleteMany({
-          timestamp: { $lt: windowStart }
-        })
+      db.collection('visits').deleteMany({
+        timestamp: { $lt: windowStart }
+      })
     ])
 
     if (rateLimitResult.deletedCount > 0) {

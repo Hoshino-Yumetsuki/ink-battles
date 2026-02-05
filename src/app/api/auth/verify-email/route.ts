@@ -4,7 +4,7 @@ import { sendVerificationEmail } from '@/utils/email'
 import { z } from 'zod'
 import { logger } from '@/utils/logger'
 import { randomInt } from 'node:crypto'
-import { verifyCaptcha, isCaptchaEnabled } from '@/utils/captcha'
+import { verifyCaptchaWithDb, isCaptchaEnabled } from '@/utils/captcha'
 
 const verifyEmailSchema = z.object({
   email: z.email({ message: '请输入有效的邮箱地址' }).trim().toLowerCase(),
@@ -39,7 +39,10 @@ export const POST = withDatabase(async (request: NextRequest, db) => {
     // 如果启用了 CAPTCHA，验证 token
     if (captchaEnabled) {
       logger.info('[verify-email] Verifying CAPTCHA token...')
-      const isCaptchaValid = await verifyCaptcha(captchaToken as string)
+      const isCaptchaValid = await verifyCaptchaWithDb(
+        captchaToken as string,
+        db
+      )
       logger.info('[verify-email] CAPTCHA verification result', {
         valid: isCaptchaValid
       })

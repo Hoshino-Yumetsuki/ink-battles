@@ -5,7 +5,7 @@ import { signToken } from '@/utils/jwt'
 import { cookies } from 'next/headers'
 import { z } from 'zod'
 import sanitize from 'mongo-sanitize'
-import { verifyCaptcha, isCaptchaEnabled } from '@/utils/captcha'
+import { verifyCaptchaWithDb, isCaptchaEnabled } from '@/utils/captcha'
 import { logger } from '@/utils/logger'
 
 const registerSchema = z.object({
@@ -50,7 +50,10 @@ export const POST = withDatabase(async (req: NextRequest, db) => {
     // 如果启用了 CAPTCHA，验证 token
     if (isCaptchaEnabled()) {
       // captchaToken 已经被 zod 验证为 string | undefined，非空检查在上面
-      const isCaptchaValid = await verifyCaptcha(captchaToken as string)
+      const isCaptchaValid = await verifyCaptchaWithDb(
+        captchaToken as string,
+        db
+      )
       if (!isCaptchaValid) {
         return NextResponse.json(
           { error: '人机验证失败，请重试' },

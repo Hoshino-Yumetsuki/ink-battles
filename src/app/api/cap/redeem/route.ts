@@ -1,7 +1,8 @@
-import { type NextRequest, NextResponse } from 'next/server'
-import { getCapInstance } from '@/utils/captcha'
+import { NextResponse } from 'next/server'
+import { withDatabase } from '@/lib/db/middleware'
+import { createCapInstance } from '@/utils/captcha'
 
-export async function POST(req: NextRequest) {
+export const POST = withDatabase(async (req, db) => {
   try {
     const { token, solutions } = await req.json()
 
@@ -12,7 +13,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const cap = getCapInstance()
+    const cap = createCapInstance(db)
     const result = await cap.redeemChallenge({ token, solutions })
 
     return NextResponse.json(result)
@@ -23,4 +24,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     )
   }
-}
+})
