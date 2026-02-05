@@ -5,7 +5,7 @@ import { signToken } from '@/utils/jwt'
 import { cookies } from 'next/headers'
 import { z } from 'zod'
 import sanitize from 'mongo-sanitize'
-import { verifyTurnstile, isTurnstileEnabled } from '@/utils/turnstile'
+import { verifyCaptcha, isCaptchaEnabled } from '@/utils/captcha'
 import { logger } from '@/utils/logger'
 
 const registerSchema = z.object({
@@ -18,7 +18,7 @@ const registerSchema = z.object({
   email: z.email({ message: '请输入有效的邮箱地址' }).trim().toLowerCase(),
   code: z.string().length(6, '验证码必须是6位数字'),
   password: z.string().min(8, '密码长度至少为8个字符'),
-  turnstileToken: z.string().optional()
+  captchaToken: z.string().optional()
 })
 
 export const POST = withDatabase(async (req: NextRequest, db) => {
@@ -38,20 +38,20 @@ export const POST = withDatabase(async (req: NextRequest, db) => {
       password,
       email,
       code,
-      turnstileToken
+      captchaToken
     } = result.data
     const username = sanitize(rawUsername)
 
-    // 检查是否启用Turnstile验证
-    if (isTurnstileEnabled() && !turnstileToken) {
+    // 检查是否启用 CAPTCHA 验证
+    if (isCaptchaEnabled() && !captchaToken) {
       return NextResponse.json({ error: '请完成人机验证' }, { status: 400 })
     }
 
-    // 如果启用了Turnstile，验证token
-    if (isTurnstileEnabled()) {
-      // turnstileToken 已经被 zod 验证为 string | undefined，非空检查在上面
-      const isTurnstileValid = await verifyTurnstile(turnstileToken as string)
-      if (!isTurnstileValid) {
+    // 如果启用了 CAPTCHA，验证 token
+    if (isCaptchaEnabled()) {
+      // captchaToken 已经被 zod 验证为 string | undefined，非空检查在上面
+      const isCaptchaValid = await verifyCaptcha(captchaToken as string)
+      if (!isCaptchaValid) {
         return NextResponse.json(
           { error: '人机验证失败，请重试' },
           { status: 400 }

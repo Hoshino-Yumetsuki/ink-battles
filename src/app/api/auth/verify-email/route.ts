@@ -4,11 +4,11 @@ import { sendVerificationEmail } from '@/utils/email'
 import { z } from 'zod'
 import { logger } from '@/utils/logger'
 import { randomInt } from 'node:crypto'
-import { verifyTurnstile, isTurnstileEnabled } from '@/utils/turnstile'
+import { verifyCaptcha, isCaptchaEnabled } from '@/utils/captcha'
 
 const verifyEmailSchema = z.object({
   email: z.email({ message: '请输入有效的邮箱地址' }).trim().toLowerCase(),
-  turnstileToken: z.string().optional()
+  captchaToken: z.string().optional()
 })
 
 export const POST = withDatabase(async (request: NextRequest, db) => {
@@ -23,27 +23,27 @@ export const POST = withDatabase(async (request: NextRequest, db) => {
       )
     }
 
-    const { email, turnstileToken } = result.data
+    const { email, captchaToken } = result.data
 
-    // 检查是否启用Turnstile验证
-    const turnstileEnabled = isTurnstileEnabled()
+    // 检查是否启用 CAPTCHA 验证
+    const captchaEnabled = isCaptchaEnabled()
     logger.info(
-      `[verify-email] Turnstile enabled: ${turnstileEnabled}, Token provided: ${!!turnstileToken}`
+      `[verify-email] CAPTCHA enabled: ${captchaEnabled}, Token provided: ${!!captchaToken}`
     )
 
-    if (turnstileEnabled && !turnstileToken) {
-      logger.warn('[verify-email] Turnstile enabled but no token provided')
+    if (captchaEnabled && !captchaToken) {
+      logger.warn('[verify-email] CAPTCHA enabled but no token provided')
       return NextResponse.json({ error: '请完成人机验证' }, { status: 400 })
     }
 
-    // 如果启用了Turnstile，验证token
-    if (turnstileEnabled) {
-      logger.info('[verify-email] Verifying Turnstile token...')
-      const isTurnstileValid = await verifyTurnstile(turnstileToken as string)
-      logger.info('[verify-email] Turnstile verification result', {
-        valid: isTurnstileValid
+    // 如果启用了 CAPTCHA，验证 token
+    if (captchaEnabled) {
+      logger.info('[verify-email] Verifying CAPTCHA token...')
+      const isCaptchaValid = await verifyCaptcha(captchaToken as string)
+      logger.info('[verify-email] CAPTCHA verification result', {
+        valid: isCaptchaValid
       })
-      if (!isTurnstileValid) {
+      if (!isCaptchaValid) {
         return NextResponse.json(
           { error: '人机验证失败，请重试' },
           { status: 400 }

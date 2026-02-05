@@ -1,41 +1,32 @@
 'use client'
 
-import { useState } from 'react'
-import dynamic from 'next/dynamic'
+import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Loader2, Lock, ShieldCheck } from 'lucide-react'
+import { CapWidget, type CapWidgetRef } from '@/components/wed/cap-widget'
 
-const Turnstile = dynamic(() => import('react-turnstile'), {
-  ssr: false
-})
-
-const isTurnstileEnabled = process.env.NEXT_PUBLIC_TURNSTILE_ENABLED === 'true'
+const isCaptchaEnabled = process.env.NEXT_PUBLIC_CAP_ENABLED === 'true'
 
 interface ChangePasswordFormProps {
   onSuccess: () => void
 }
 
 export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
+  const capWidgetRef = useRef<CapWidgetRef>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [countdown, setCountdown] = useState(0)
-  const [turnstileToken, setTurnstileToken] = useState('')
-  const [turnstileKey, setTurnstileKey] = useState(0)
+  const [captchaToken, setCaptchaToken] = useState('')
 
   const [newPassword, setNewPassword] = useState('')
   const [code, setCode] = useState('')
-
-  const resetTurnstile = () => {
-    setTurnstileToken('')
-    setTurnstileKey((prev) => prev + 1)
-  }
 
   const handleSendCode = async () => {
     setError('')
     setSuccess('')
 
-    if (isTurnstileEnabled && !turnstileToken) {
+    if (isCaptchaEnabled && !captchaToken) {
       setError('请完成人机验证')
       return
     }
@@ -50,19 +41,23 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
         },
         body: JSON.stringify({
           type: 'change_password',
-          turnstileToken
+          captchaToken
         }) // Backend uses current user email
       })
       const data = await res.json()
 
       if (!res.ok) {
         setCountdown(0)
-        if (isTurnstileEnabled) resetTurnstile()
+        setCaptchaToken('')
+        // Reset the Cap widget to allow user to solve again
+        if (isCaptchaEnabled) {
+          capWidgetRef.current?.reset()
+        }
         throw new Error(data.error || '发送验证码失败')
       }
 
       setSuccess('验证码已发送至您的绑定邮箱')
-      if (isTurnstileEnabled) resetTurnstile()
+      setCaptchaToken('')
 
       const timer = setInterval(() => {
         setCountdown((prev) => {
@@ -172,13 +167,14 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
         </div>
       </div>
 
-      {isTurnstileEnabled && (
+      {isCaptchaEnabled && (
         <div className="flex justify-center">
-          <Turnstile
-            key={turnstileKey}
-            sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''}
-            onVerify={(token) => setTurnstileToken(token)}
-            theme="auto"
+          <CapWidget
+            ref={capWidgetRef}
+            endpoint="/api/cap"
+            onSolve={(token) => setCaptchaToken(token)}
+            onError={(message) => setError(message)}
+            onReset={() => setCaptchaToken('')}
           />
         </div>
       )}

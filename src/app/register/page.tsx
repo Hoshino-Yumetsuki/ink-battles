@@ -1,39 +1,28 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
 import { Toaster, toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { useFingerprint } from '@/hooks/use-fingerprint'
 import { AuthLayout } from '@/components/layout/auth-layout'
 import { User, Lock, KeyRound, Mail, ShieldCheck } from 'lucide-react'
+import { CapWidget, type CapWidgetRef } from '@/components/wed/cap-widget'
 
-const Turnstile = dynamic(() => import('react-turnstile'), {
-  ssr: false
-})
-
-const isTurnstileEnabled = process.env.NEXT_PUBLIC_TURNSTILE_ENABLED === 'true'
+const isCaptchaEnabled = process.env.NEXT_PUBLIC_CAP_ENABLED === 'true'
 
 export default function RegisterPage() {
   const router = useRouter()
-  const _fingerprint = useFingerprint()
+  const capWidgetRef = useRef<CapWidgetRef>(null)
 
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [turnstileToken, setTurnstileToken] = useState('')
-  const [turnstileKey, setTurnstileKey] = useState(0)
+  const [captchaToken, setCaptchaToken] = useState('')
   const [loading, setLoading] = useState(false)
   const [countdown, setCountdown] = useState(0)
-
-  const resetTurnstile = () => {
-    setTurnstileToken('')
-    setTurnstileKey((prev) => prev + 1)
-  }
 
   const handleSendCode = async () => {
     if (!email) {
@@ -44,7 +33,7 @@ export default function RegisterPage() {
       toast.error('请输入有效的邮箱地址')
       return
     }
-    if (isTurnstileEnabled && !turnstileToken) {
+    if (isCaptchaEnabled && !captchaToken) {
       toast.error('请完成人机验证')
       return
     }
@@ -54,17 +43,21 @@ export default function RegisterPage() {
       const res = await fetch('/api/auth/verify-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, turnstileToken })
+        body: JSON.stringify({ email, captchaToken })
       })
       const data = await res.json()
 
       if (!res.ok) {
         setCountdown(0)
-        if (isTurnstileEnabled) resetTurnstile()
+        setCaptchaToken('')
+        // Reset the Cap widget to allow user to solve again
+        if (isCaptchaEnabled) {
+          capWidgetRef.current?.reset()
+        }
         throw new Error(data.error || '发送失败')
       }
 
-      if (isTurnstileEnabled) resetTurnstile()
+      setCaptchaToken('')
 
       const timer = setInterval(() => {
         setCountdown((prev) => {
@@ -101,7 +94,7 @@ export default function RegisterPage() {
       return
     }
 
-    if (isTurnstileEnabled && !turnstileToken) {
+    if (isCaptchaEnabled && !captchaToken) {
       toast.error('请完成人机验证')
       return
     }
@@ -119,14 +112,18 @@ export default function RegisterPage() {
           email,
           code,
           password,
-          turnstileToken
+          captchaToken
         })
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        if (isTurnstileEnabled) resetTurnstile()
+        setCaptchaToken('')
+        // Reset the Cap widget to allow user to solve again
+        if (isCaptchaEnabled) {
+          capWidgetRef.current?.reset()
+        }
         throw new Error(data.error || '注册失败')
       }
 
@@ -237,16 +234,14 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {isTurnstileEnabled && (
+        {isCaptchaEnabled && (
           <div className="flex justify-center">
-            <Turnstile
-              key={turnstileKey}
-              sitekey={
-                process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ||
-                '1x00000000000000000000AA'
-              }
-              onVerify={(token) => setTurnstileToken(token)}
-              theme="auto"
+            <CapWidget
+              ref={capWidgetRef}
+              endpoint="/api/cap"
+              onSolve={(token) => setCaptchaToken(token)}
+              onError={(message) => toast.error(message)}
+              onReset={() => setCaptchaToken('')}
             />
           </div>
         )}

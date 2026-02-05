@@ -6,12 +6,12 @@ import { logger } from '@/utils/logger'
 import { extractToken, verifyToken } from '@/utils/jwt'
 import { ObjectId } from 'mongodb'
 import { randomInt } from 'node:crypto'
-import { verifyTurnstile, isTurnstileEnabled } from '@/utils/turnstile'
+import { verifyCaptcha, isCaptchaEnabled } from '@/utils/captcha'
 
 const sendCodeSchema = z.object({
   type: z.enum(['bind_email', 'change_password']),
   email: z.email().trim().toLowerCase().optional(), // Required only for bind_email
-  turnstileToken: z.string().optional()
+  captchaToken: z.string().optional()
 })
 
 export const POST = withDatabase(async (request: NextRequest, db) => {
@@ -46,27 +46,27 @@ export const POST = withDatabase(async (request: NextRequest, db) => {
       )
     }
 
-    const { type, email: inputEmail, turnstileToken } = result.data
+    const { type, email: inputEmail, captchaToken } = result.data
 
-    // 检查是否启用Turnstile验证
-    const turnstileEnabled = isTurnstileEnabled()
+    // 检查是否启用 CAPTCHA 验证
+    const captchaEnabled = isCaptchaEnabled()
     logger.info(
-      `[send-code] Turnstile enabled: ${turnstileEnabled}, Token provided: ${!!turnstileToken}`
+      `[send-code] CAPTCHA enabled: ${captchaEnabled}, Token provided: ${!!captchaToken}`
     )
 
-    if (turnstileEnabled && !turnstileToken) {
-      logger.warn('[send-code] Turnstile enabled but no token provided')
+    if (captchaEnabled && !captchaToken) {
+      logger.warn('[send-code] CAPTCHA enabled but no token provided')
       return NextResponse.json({ error: '请完成人机验证' }, { status: 400 })
     }
 
-    // 如果启用了Turnstile，验证token
-    if (turnstileEnabled) {
-      logger.info('[send-code] Verifying Turnstile token...')
-      const isTurnstileValid = await verifyTurnstile(turnstileToken as string)
-      logger.info('[send-code] Turnstile verification result', {
-        valid: isTurnstileValid
+    // 如果启用了 CAPTCHA，验证 token
+    if (captchaEnabled) {
+      logger.info('[send-code] Verifying CAPTCHA token...')
+      const isCaptchaValid = await verifyCaptcha(captchaToken as string)
+      logger.info('[send-code] CAPTCHA verification result', {
+        valid: isCaptchaValid
       })
-      if (!isTurnstileValid) {
+      if (!isCaptchaValid) {
         return NextResponse.json(
           { error: '人机验证失败，请重试' },
           { status: 400 }

@@ -1,35 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/button'
-import { useFingerprint } from '@/hooks/use-fingerprint'
 import { AuthLayout } from '@/components/layout/auth-layout'
 import { User, Lock } from 'lucide-react'
+import { CapWidget, type CapWidgetRef } from '@/components/wed/cap-widget'
 
-const Turnstile = dynamic(() => import('react-turnstile'), {
-  ssr: false
-})
-
-const isTurnstileEnabled = process.env.NEXT_PUBLIC_TURNSTILE_ENABLED === 'true'
+const isCaptchaEnabled = process.env.NEXT_PUBLIC_CAP_ENABLED === 'true'
 
 export default function LoginPage() {
   const router = useRouter()
-  const _fingerprint = useFingerprint()
+  const capWidgetRef = useRef<CapWidgetRef>(null)
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [turnstileToken, setTurnstileToken] = useState('')
-  const [turnstileKey, setTurnstileKey] = useState(0) // Used to reset Turnstile
+  const [captchaToken, setCaptchaToken] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-
-  const resetTurnstile = () => {
-    setTurnstileToken('')
-    setTurnstileKey((prev) => prev + 1)
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,7 +29,7 @@ export default function LoginPage() {
       return
     }
 
-    if (isTurnstileEnabled && !turnstileToken) {
+    if (isCaptchaEnabled && !captchaToken) {
       setError('请完成人机验证')
       return
     }
@@ -61,7 +50,7 @@ export default function LoginPage() {
         body: JSON.stringify({
           username,
           password,
-          turnstileToken
+          captchaToken
         })
       })
 
@@ -69,7 +58,11 @@ export default function LoginPage() {
 
       if (!response.ok) {
         // If login failed, the token is likely invalid/consumed, so reset it
-        if (isTurnstileEnabled) resetTurnstile()
+        setCaptchaToken('')
+        // Reset the Cap widget to allow user to solve again
+        if (isCaptchaEnabled) {
+          capWidgetRef.current?.reset()
+        }
         throw new Error(data.error || '登录失败')
       }
 
@@ -135,21 +128,20 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800 dark:text-white border border-transparent dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-zinc-800 transition-colors"
               placeholder="请输入您的密码"
+              ref={capWidgetRef as any}
               disabled={loading}
             />
           </div>
         </div>
 
-        {isTurnstileEnabled && (
+        {isCaptchaEnabled && (
           <div className="flex justify-center">
-            <Turnstile
-              key={turnstileKey}
-              sitekey={
-                process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ||
-                '1x00000000000000000000AA'
-              }
-              onVerify={(token) => setTurnstileToken(token)}
-              theme="auto"
+            <CapWidget
+              ref={capWidgetRef}
+              endpoint="/api/cap"
+              onSolve={(token) => setCaptchaToken(token)}
+              onError={(message) => setError(message)}
+              onReset={() => setCaptchaToken('')}
             />
           </div>
         )}

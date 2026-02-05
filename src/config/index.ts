@@ -28,8 +28,5 @@ export const config = {
     user: process.env.EMAIL_USER || '',
     password: process.env.EMAIL_PASSWORD || '',
     from: process.env.EMAIL_FROM || ''
-  },
-  turnstile: {
-    secretKey: process.env.TURNSTILE_SECRET_KEY || ''
   }
 } as const

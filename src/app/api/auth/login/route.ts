@@ -5,13 +5,13 @@ import { signToken } from '@/utils/jwt'
 import { cookies } from 'next/headers'
 import { z } from 'zod'
 import sanitize from 'mongo-sanitize'
-import { verifyTurnstile, isTurnstileEnabled } from '@/utils/turnstile'
+import { verifyCaptcha, isCaptchaEnabled } from '@/utils/captcha'
 import { logger } from '@/utils/logger'
 
 const loginSchema = z.object({
   username: z.string().min(1, '用户名不能为空').trim(),
   password: z.string().min(1, '密码不能为空'),
-  turnstileToken: z.string().optional()
+  captchaToken: z.string().optional()
 })
 
 export const POST = withDatabase(async (req: NextRequest, db) => {
@@ -24,18 +24,17 @@ export const POST = withDatabase(async (req: NextRequest, db) => {
       return NextResponse.json({ error: '无效的输入格式' }, { status: 400 })
     }
 
-    const { username: rawUsername, password, turnstileToken } = result.data
+    const { username: rawUsername, password, captchaToken } = result.data
 
-    // 检查是否启用Turnstile验证
-    if (isTurnstileEnabled() && !turnstileToken) {
+    // 检查是否启用 CAPTCHA 验证
+    if (isCaptchaEnabled() && !captchaToken) {
       return NextResponse.json({ error: '请完成人机验证' }, { status: 400 })
     }
 
-    // 如果启用了Turnstile，验证token
-    if (isTurnstileEnabled()) {
-      // turnstileToken 已经被 zod 验证为 string | undefined，非空检查在上面
-      const isTurnstileValid = await verifyTurnstile(turnstileToken as string)
-      if (!isTurnstileValid) {
+    // 如果启用了 CAPTCHA，验证 token
+    if (isCaptchaEnabled()) {
+      const isCaptchaValid = await verifyCaptcha(captchaToken as string)
+      if (!isCaptchaValid) {
         return NextResponse.json(
           { error: '人机验证失败，请重试' },
           { status: 400 }
@@ -48,10 +47,6 @@ export const POST = withDatabase(async (req: NextRequest, db) => {
 
     const usersCollection = db.collection('users')
 
-    // 查找用户 (使用精确匹配，注意 MongoDB 默认区分大小写)
-    // 如果业务需要不区分大小写登录，可以使用 collation 或存两份 (display_name, username_normalized)
-    // 这里为了安全性，保持默认行为，或强制转换为 index 中的存储格式（例如注册时是否强制小写？）
-    // 假设注册时未强制小写，这里直接查找。
     const user = await usersCollection.findOne({ username })
     if (!user) {
       return NextResponse.json({ error: '用户名或密码错误' }, { status: 401 })
