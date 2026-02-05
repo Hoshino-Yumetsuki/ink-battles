@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { Loader2, Lock, ShieldCheck } from 'lucide-react'
+import { Loader2, Lock, ShieldCheck, AlertTriangle } from 'lucide-react'
 import { CapWidget, type CapWidgetRef } from '@/components/wed/cap-widget'
 
 const isCaptchaEnabled = process.env.NEXT_PUBLIC_CAP_ENABLED === 'true'
@@ -98,6 +98,9 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
         throw new Error(data.error || '修改失败')
       }
 
+      // 更新 localStorage 中的密码用于后续数据加密
+      localStorage.setItem('user_password', newPassword)
+
       setSuccess('密码修改成功')
       setNewPassword('')
       setCode('')
@@ -111,6 +114,15 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
+      {/* 警告提示：修改密码后历史数据无法解密 */}
+      <div className="p-3 text-sm text-amber-700 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400 rounded-md flex items-start gap-2">
+        <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+        <span>
+          <strong>注意：</strong>
+          修改密码后，之前使用旧密码加密的分析历史记录将无法解密查看。请确认后再进行操作。
+        </span>
+      </div>
+
       {error && (
         <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-md">
           {error}
