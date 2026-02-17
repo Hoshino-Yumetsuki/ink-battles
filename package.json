@@ -69,6 +69,7 @@
     "@types/nodemailer": "^7.0.9",
     "@types/react": "^19.2.13",
     "@types/react-dom": "^19.2.3",
+    "node-addon-api": "^8.5.0",
     "react-tabs": "^6.1.0",
     "shadcn": "^3.8.3",
     "tailwindcss": "^4.1.18",

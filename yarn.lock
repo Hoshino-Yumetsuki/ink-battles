@@ -9111,6 +9111,7 @@ __metadata:
     mongodb: "npm:^7.1.0"
     next: "npm:^16.1.6"
     next-themes: "npm:^0.4.6"
+    node-addon-api: "npm:^8.5.0"
     nodemailer: "npm:^8.0.0"
     react: "npm:^19.2.4"
     react-dom: "npm:^19.2.4"
@@ -10970,6 +10971,15 @@ __metadata:
   bin:
     next: dist/bin/next
   checksum: 10c0/543766bf879bb5a5d454dc18cb302953270a92efba1d01dd028ea83c64b69573ce7d6e6c3759ecbaabec0a84131b0237263c24d1ccd7c8a97205e776dcd34e0b
+  languageName: node
+  linkType: hard
+
+"node-addon-api@npm:^8.5.0":
+  version: 8.5.0
+  resolution: "node-addon-api@npm:8.5.0"
+  dependencies:
+    node-gyp: "npm:latest"
+  checksum: 10c0/e4de0b4e70998fed7ef41933946f60565fc3a17cb83b7d626a0c0bb1f734cf7852e0e596f12681e7c8ed424163ee3cdbb4f0abaa9cc269d03f48834c263ba162
   languageName: node
   linkType: hard
 
