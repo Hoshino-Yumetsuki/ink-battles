@@ -1,134 +1,202 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useCallback, useRef, useState } from 'react'
+import Image from 'next/image'
+import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ChangeEmailForm } from '@/components/features/settings/change-email-form'
 import { ChangePasswordForm } from '@/components/features/settings/change-password-form'
 import { DeleteAccountForm } from '@/components/features/settings/delete-account-form'
-import { User, Shield, AlertCircle } from 'lucide-react'
+import { Camera, User } from 'lucide-react'
+import { compressImage } from '@/utils/image-compressor'
+import { useUser } from '@/components/providers/user-context'
 
-interface UserInfo {
-  email?: string
-  // ... other fields
-}
+export default function DashboardSettingsPage() {
+  const { user, refreshUser, setUser } = useUser()
+  const [avatarLoading, setAvatarLoading] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
 
-export default function SettingsPage() {
-  const [user, setUser] = useState<UserInfo | null>(null)
-  const [loading, setLoading] = useState(true)
+  const handleAvatarUpload = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      if (!file) return
 
-  const fetchUser = useCallback(async () => {
-    try {
-      const res = await fetch('/api/auth/me', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('auth_token') || ''}`
+      setAvatarLoading(true)
+      try {
+        const { file: compressedFile } = await compressImage(file, {
+          targetSize: 50 * 1024,
+          initialQuality: 80,
+          minQuality: 40
+        })
+
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.readAsDataURL(compressedFile)
+          reader.onload = () => resolve(reader.result as string)
+          reader.onerror = () => reject(new Error('读取头像文件失败'))
+        })
+
+        const token = localStorage.getItem('auth_token')
+        if (!token) {
+          throw new Error('登录已过期')
         }
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setUser(data)
+
+        const response = await fetch('/api/auth/avatar', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ avatar: base64 })
+        })
+
+        if (!response.ok) {
+          const data = await response.json().catch(() => null)
+          throw new Error(data?.error || '上传失败')
+        }
+
+        setUser((prev) => (prev ? { ...prev, avatar: base64 } : prev))
+      } catch (error) {
+        console.error('Avatar upload failed', error)
+        alert('头像上传失败，请重试')
+      } finally {
+        setAvatarLoading(false)
+        event.target.value = ''
       }
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchUser()
-  }, [fetchUser])
-
-  if (loading) {
-    return <div className="p-8">加载中...</div>
-  }
+    },
+    [setUser]
+  )
 
   return (
-    <div className="min-h-screen p-4 md:p-8 bg-gray-50 dark:bg-zinc-950">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
-            账户安全设置
-          </h1>
-          <p className="mt-2 text-gray-500 dark:text-gray-400">
-            管理您的登录凭证和安全选项
-          </p>
-        </div>
+    <motion.div
+      key="settings"
+      initial={{ opacity: 0, y: 20, filter: 'blur(4px)' }}
+      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      exit={{ opacity: 0, y: -20, filter: 'blur(4px)' }}
+      transition={{
+        duration: 0.4,
+        ease: [0.23, 1, 0.32, 1]
+      }}
+      className="space-y-6"
+    >
+      <Card className="p-6">
+        <h2 className="text-xl font-bold mb-4">账户信息</h2>
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-6 pt-2">
+          <div className="relative group shrink-0">
+            <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border-2 border-gray-200 dark:bg-gray-800 dark:border-gray-700 relative">
+              {user?.avatar ? (
+                <Image
+                  src={user.avatar}
+                  alt={user.username || 'Avatar'}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <User className="w-12 h-12 text-gray-400" />
+              )}
+            </div>
 
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-full cursor-pointer"
+              disabled={avatarLoading}
+              aria-label="上传头像"
+            >
+              <Camera className="w-6 h-6" />
+            </button>
+
+            <input
+              ref={avatarInputRef}
+              type="file"
+              className="hidden"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              disabled={avatarLoading}
+            />
+
+            {avatarLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/50 rounded-full">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-4 w-full">
+            <div>
+              <p className="text-sm text-muted-foreground">用户名</p>
+              <p className="font-medium">{user?.username}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">注册时间</p>
+              <p className="font-medium">
+                {user?.createdAt &&
+                  new Date(user.createdAt).toLocaleString('zh-CN')}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">上次登录</p>
+              <p className="font-medium">
+                {user?.lastLoginAt &&
+                  new Date(user.lastLoginAt).toLocaleString('zh-CN')}
+              </p>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="p-6">
+        <h2 className="text-xl font-bold mb-4">账户安全设置</h2>
         <Tabs defaultValue="email" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 max-w-lg">
+          <TabsList className="grid w-full grid-cols-3 max-w-100 mb-6">
             <TabsTrigger value="email">邮箱设置</TabsTrigger>
             <TabsTrigger value="password">修改密码</TabsTrigger>
             <TabsTrigger
               value="danger"
-              className="data-[state=active]:text-red-600 dark:data-[state=active]:text-red-400"
+              className="text-red-500 data-[state=active]:text-red-600 data-[state=active]:bg-red-50 dark:data-[state=active]:bg-red-950/20"
             >
               注销账户
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="email" className="mt-6">
-            <Card className="p-6">
-              <div className="mb-6 flex items-center gap-3">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                  <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold">邮箱管理</h2>
+          <TabsContent value="email">
+            <div className="space-y-4">
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm">
                   {user?.email ? (
-                    <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
-                      <Shield className="w-3 h-3" /> 已绑定: {user.email}
-                    </p>
+                    <span className="flex items-center gap-2">
+                      <span className="font-semibold text-green-600 dark:text-green-400">
+                        已绑定邮箱:
+                      </span>
+                      <span>{user.email}</span>
+                    </span>
                   ) : (
-                    <p className="text-sm text-yellow-600 dark:text-yellow-400 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" />{' '}
-                      未绑定邮箱，请尽快绑定以保障账户安全
-                    </p>
+                    <span className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+                      尚未绑定邮箱
+                    </span>
                   )}
-                </div>
+                </p>
               </div>
 
-              <div className="border-t pt-6 dark:border-zinc-800">
-                <ChangeEmailForm
-                  hasEmail={!!user?.email}
-                  onSuccess={() => fetchUser()}
-                />
-              </div>
-            </Card>
+              <ChangeEmailForm
+                hasEmail={!!user?.email}
+                onSuccess={() => {
+                  refreshUser()
+                }}
+              />
+            </div>
           </TabsContent>
 
-          <TabsContent value="password" className="mt-6">
-            <Card className="p-6">
-              <div className="mb-6 flex items-center gap-3">
-                <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
-                  <Shield className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold">登录密码</h2>
-                  <p className="text-sm text-gray-500">
-                    定期更换密码可以保护您的账户安全
-                  </p>
-                </div>
-              </div>
-
-              {!user?.email ? (
-                <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 rounded-md flex gap-2 items-center">
-                  <AlertCircle className="w-5 h-5" />
-                  <span>为保障安全，修改密码前请先绑定邮箱。</span>
-                </div>
-              ) : (
-                <div className="border-t pt-6 dark:border-zinc-800">
-                  <ChangePasswordForm onSuccess={() => {}} />
-                </div>
-              )}
-            </Card>
+          <TabsContent value="password">
+            <ChangePasswordForm onSuccess={() => {}} />
           </TabsContent>
 
-          <TabsContent value="danger" className="mt-6">
+          <TabsContent value="danger">
             <DeleteAccountForm />
           </TabsContent>
         </Tabs>
-      </div>
-    </div>
+      </Card>
+    </motion.div>
   )
 }

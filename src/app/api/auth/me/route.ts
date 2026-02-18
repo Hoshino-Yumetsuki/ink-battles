@@ -31,26 +31,6 @@ export const GET = withDatabase(async (req: NextRequest, db) => {
       return NextResponse.json({ error: '用户不存在' }, { status: 404 })
     }
 
-    // 获取分析统计信息
-    const analysisCollection = db.collection('analysis_history')
-    const totalCount = await analysisCollection.countDocuments({
-      userId: user._id.toString()
-    })
-
-    // 计算平均分
-    const pipeline = [
-      {
-        $match: {
-          userId: user._id.toString(),
-          score: { $exists: true, $gt: 0 }
-        }
-      },
-      { $group: { _id: null, avgScore: { $avg: '$score' } } }
-    ]
-    const avgResult = await analysisCollection.aggregate(pipeline).toArray()
-    const averageScore =
-      avgResult.length > 0 ? Math.round(avgResult[0].avgScore) : 0
-
     // 获取配额配置
     const configMaxRequests = rateLimitConfig.maxRequestsUser
 
@@ -115,10 +95,6 @@ export const GET = withDatabase(async (req: NextRequest, db) => {
         avatar: user.avatar,
         createdAt: user.createdAt,
         lastLoginAt: user.lastLoginAt,
-        stats: {
-          totalCount,
-          averageScore
-        },
         usage: {
           used: usedCount,
           limit: currentLimit,
