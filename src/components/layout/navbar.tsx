@@ -14,6 +14,7 @@ import {
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion'
 import { useId, useState, useEffect } from 'react'
 import { User, LogOut, LayoutDashboard } from 'lucide-react'
+import { buildApiUrl } from '@/utils/api-url'
 
 export default function Navbar() {
   const pathname = usePathname()
@@ -38,11 +39,15 @@ export default function Navbar() {
         setIsLoggedIn(true)
         // 获取用户信息以显示头像
         try {
-          const res = await fetch('/api/auth/me', {
+          const res = await fetch(buildApiUrl('/api/auth/me'), {
             headers: { Authorization: `Bearer ${token}` }
           })
           if (res.ok) {
-            const data = await res.json()
+            const data = (await res.json()) as {
+              user?: {
+                avatar?: string
+              }
+            }
             if (data.user?.avatar) {
               setAvatar(data.user.avatar)
             }
@@ -71,7 +76,7 @@ export default function Navbar() {
     localStorage.removeItem('auth_token')
     localStorage.removeItem('username')
     localStorage.removeItem('user_password')
-    await fetch('/api/auth/logout', { method: 'POST' })
+    await fetch(buildApiUrl('/api/auth/logout'), { method: 'POST' })
 
     // 直接刷新页面以更新状态
     window.location.href = '/'

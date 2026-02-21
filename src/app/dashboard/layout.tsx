@@ -16,6 +16,7 @@ import {
 import AnimatedBackground from '@/components/common/animated-background'
 import { UserProvider, useUser } from '@/components/providers/user-context'
 import { compressImage } from '@/utils/image-compressor'
+import { buildApiUrl } from '@/utils/api-url'
 
 function HomeGridIcon() {
   return (
@@ -65,7 +66,7 @@ function DashboardShell({ children }: { children: ReactNode }) {
     localStorage.removeItem('user_password')
 
     try {
-      await fetch('/api/auth/logout', { method: 'POST' })
+      await fetch(buildApiUrl('/api/auth/logout'), { method: 'POST' })
     } catch (error) {
       console.error('Logout request failed', error)
     } finally {
@@ -99,7 +100,7 @@ function DashboardShell({ children }: { children: ReactNode }) {
           return
         }
 
-        const response = await fetch('/api/auth/avatar', {
+        const response = await fetch(buildApiUrl('/api/auth/avatar'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -109,7 +110,9 @@ function DashboardShell({ children }: { children: ReactNode }) {
         })
 
         if (!response.ok) {
-          const data = await response.json().catch(() => null)
+          const data = (await response.json().catch(() => null)) as {
+            error?: string
+          } | null
           throw new Error(data?.error || '上传失败')
         }
 

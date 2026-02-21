@@ -11,6 +11,7 @@ import { DeleteAccountForm } from '@/components/features/settings/delete-account
 import { Camera, User } from 'lucide-react'
 import { compressImage } from '@/utils/image-compressor'
 import { useUser } from '@/components/providers/user-context'
+import { buildApiUrl } from '@/utils/api-url'
 
 export default function DashboardSettingsPage() {
   const { user, refreshUser, setUser } = useUser()
@@ -42,7 +43,7 @@ export default function DashboardSettingsPage() {
           throw new Error('登录已过期')
         }
 
-        const response = await fetch('/api/auth/avatar', {
+        const response = await fetch(buildApiUrl('/api/auth/avatar'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -52,7 +53,9 @@ export default function DashboardSettingsPage() {
         })
 
         if (!response.ok) {
-          const data = await response.json().catch(() => null)
+          const data = (await response.json().catch(() => null)) as {
+            error?: string
+          } | null
           throw new Error(data?.error || '上传失败')
         }
 

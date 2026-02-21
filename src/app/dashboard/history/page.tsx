@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import WriterScoreResult from '@/components/features/analysis/score-result'
 import type { WriterAnalysisResult } from '@/app/page'
 import { decrypt } from '@/utils/crypto'
+import { buildApiUrl } from '@/utils/api-url'
 
 interface AnalysisHistory {
   id: string
@@ -70,7 +71,7 @@ export default function DashboardHistoryPage() {
     try {
       setLoading(true)
       const response = await fetch(
-        `/api/dashboard/history?page=${pageNum}&limit=10`,
+        `${buildApiUrl('/api/dashboard/history')}?page=${pageNum}&limit=10`,
         {
           headers: {
             Authorization: `Bearer ${token}`

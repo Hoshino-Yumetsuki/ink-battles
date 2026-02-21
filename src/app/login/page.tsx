@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { AuthLayout } from '@/components/layout/auth-layout'
 import { User, Lock } from 'lucide-react'
 import { CapWidget, type CapWidgetRef } from '@/components/wed/cap-widget'
+import { buildApiUrl } from '@/utils/api-url'
 
 const isCaptchaEnabled = process.env.NEXT_PUBLIC_CAP_ENABLED === 'true'
 
@@ -42,7 +43,7 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(buildApiUrl('/api/auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -54,7 +55,11 @@ export default function LoginPage() {
         })
       })
 
-      const data = await response.json()
+      const data = (await response.json()) as {
+        error?: string
+        token?: string
+        user?: { username?: string }
+      }
 
       if (!response.ok) {
         // If login failed, the token is likely invalid/consumed, so reset it
@@ -67,8 +72,8 @@ export default function LoginPage() {
       }
 
       // 保存token和用户信息
-      localStorage.setItem('auth_token', data.token)
-      localStorage.setItem('username', data.user.username)
+      localStorage.setItem('auth_token', data.token || '')
+      localStorage.setItem('username', data.user?.username || '')
       localStorage.setItem('user_password', password) // 用于解密
 
       // Dispatch event to notify other components to update auth state
@@ -138,7 +143,7 @@ export default function LoginPage() {
           <div className="flex justify-center">
             <CapWidget
               ref={capWidgetRef}
-              endpoint="/api/cap"
+              endpoint={buildApiUrl('/api/cap')}
               onSolve={(token) => setCaptchaToken(token)}
               onError={(message) => setError(message)}
               onReset={() => setCaptchaToken('')}

@@ -1,12 +1,16 @@
-import { NextResponse } from 'next/server'
+import { NextResponse } from '@/backend/next-server-compat'
 import { withDatabase } from '@/lib/db/middleware'
 import { createCapInstance } from '@/utils/captcha'
 
 export const POST = withDatabase(async (req, db) => {
   try {
-    const { token, solutions } = await req.json()
+    const body = (await req.json()) as {
+      token?: string
+      solutions?: number[]
+    }
+    const { token, solutions } = body
 
-    if (!token || !solutions) {
+    if (!token || !solutions || !Array.isArray(solutions)) {
       return NextResponse.json(
         { success: false, error: 'Missing token or solutions' },
         { status: 400 }

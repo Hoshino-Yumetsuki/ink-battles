@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Loader2, Mail, Lock, ShieldCheck } from 'lucide-react'
 import { CapWidget, type CapWidgetRef } from '@/components/wed/cap-widget'
+import { buildApiUrl } from '@/utils/api-url'
 
 const isCaptchaEnabled = process.env.NEXT_PUBLIC_CAP_ENABLED === 'true'
 
@@ -39,7 +40,7 @@ export function ChangeEmailForm({ hasEmail, onSuccess }: ChangeEmailFormProps) {
 
     try {
       setCountdown(60)
-      const res = await fetch('/api/auth/send-code', {
+      const res = await fetch(buildApiUrl('/api/auth/send-code'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -51,7 +52,7 @@ export function ChangeEmailForm({ hasEmail, onSuccess }: ChangeEmailFormProps) {
           captchaToken
         })
       })
-      const data = await res.json()
+      const data = (await res.json()) as { error?: string }
 
       if (!res.ok) {
         setCountdown(0)
@@ -91,7 +92,7 @@ export function ChangeEmailForm({ hasEmail, onSuccess }: ChangeEmailFormProps) {
     setLoading(true)
 
     try {
-      const res = await fetch('/api/user/change-email', {
+      const res = await fetch(buildApiUrl('/api/user/change-email'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -99,7 +100,7 @@ export function ChangeEmailForm({ hasEmail, onSuccess }: ChangeEmailFormProps) {
         },
         body: JSON.stringify({ email, password, code })
       })
-      const data = await res.json()
+      const data = (await res.json()) as { error?: string }
 
       if (!res.ok) {
         throw new Error(data.error || '修改失败')
@@ -196,7 +197,7 @@ export function ChangeEmailForm({ hasEmail, onSuccess }: ChangeEmailFormProps) {
         <div className="flex justify-center">
           <CapWidget
             ref={capWidgetRef}
-            endpoint="/api/cap"
+            endpoint={buildApiUrl('/api/cap')}
             onSolve={(token) => setCaptchaToken(token)}
             onError={(message) => setError(message)}
             onReset={() => setCaptchaToken('')}

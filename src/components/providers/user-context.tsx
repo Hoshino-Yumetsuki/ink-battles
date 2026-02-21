@@ -11,6 +11,7 @@ import {
   type ReactNode,
   type SetStateAction
 } from 'react'
+import { buildApiUrl } from '@/utils/api-url'
 
 export interface UserInfo {
   id: string
@@ -50,7 +51,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     try {
       setLoading(true)
-      const response = await fetch('/api/auth/me', {
+      const response = await fetch(buildApiUrl('/api/auth/me'), {
         headers: {
           Authorization: `Bearer ${token}`
         }

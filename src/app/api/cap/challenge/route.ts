@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse } from '@/backend/next-server-compat'
 import { withDatabase } from '@/lib/db/middleware'
 import { createCapInstance } from '@/utils/captcha'
 

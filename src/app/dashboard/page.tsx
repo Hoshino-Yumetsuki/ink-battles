@@ -15,6 +15,7 @@ import {
   Zap
 } from 'lucide-react'
 import { useUser } from '@/components/providers/user-context'
+import { buildApiUrl } from '@/utils/api-url'
 
 interface DashboardStats {
   totalCount: number
@@ -61,7 +62,7 @@ export default function DashboardOverviewPage() {
     const fetchStats = async () => {
       try {
         setStatsLoading(true)
-        const response = await fetch('/api/dashboard/stats', {
+        const response = await fetch(buildApiUrl('/api/dashboard/stats'), {
           headers: {
             Authorization: `Bearer ${token}`
           }

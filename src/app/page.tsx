@@ -13,6 +13,7 @@ import AnimatedBackground from '@/components/common/animated-background'
 import FeaturesSection from '@/components/sections/features-section'
 import { calculateOverallScore } from '@/utils/score-calculator'
 import { useFingerprint } from '@/hooks/use-fingerprint'
+import { buildApiUrl } from '@/utils/api-url'
 
 export interface MermaidDiagram {
   type: string
@@ -35,6 +36,20 @@ export interface WriterAnalysisResult {
   comment?: string
   structural_analysis?: string[]
   mermaid_diagrams?: MermaidDiagram[]
+}
+
+interface LimitsResponse {
+  isLoggedIn: boolean
+  username?: string
+  usage: {
+    used: number
+    limit: number
+    resetTime?: string | null
+  }
+}
+
+interface ApiErrorResponse {
+  error?: string
 }
 
 export default function WriterAnalysisPage() {
@@ -82,12 +97,12 @@ export default function WriterAnalysisPage() {
 
     try {
       // Create a URL with timestamp to prevent caching
-      const url = new URL('/api/limits', window.location.origin)
+      const url = new URL(buildApiUrl('/api/limits'), window.location.origin)
       url.searchParams.append('_t', Date.now().toString())
 
       const res = await fetch(url.toString(), { headers })
       if (res.ok) {
-        const data = await res.json()
+        const data = (await res.json()) as LimitsResponse
         setUsageInfo({
           isLoggedIn: data.isLoggedIn,
           username: data.username,
@@ -201,7 +216,7 @@ export default function WriterAnalysisPage() {
           headers.Authorization = `Bearer ${token}`
         }
 
-        const response = await fetch('/api/analyze', {
+        const response = await fetch(buildApiUrl('/api/analyze'), {
           method: 'POST',
           body: formData,
           headers
@@ -209,7 +224,7 @@ export default function WriterAnalysisPage() {
 
         if (!response.ok) {
           try {
-            const errorData = await response.json()
+            const errorData = (await response.json()) as ApiErrorResponse
             throw new Error(errorData.error || `请求失败: ${response.status}`)
           } catch (parseError) {
             if (

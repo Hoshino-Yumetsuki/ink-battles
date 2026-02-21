@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AlertTriangle, Trash2, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { buildApiUrl } from '@/utils/api-url'
 
 export function DeleteAccountForm() {
   const _router = useRouter()
@@ -44,7 +45,7 @@ export function DeleteAccountForm() {
     setLoading(true)
 
     try {
-      const res = await fetch('/api/user/delete', {
+      const res = await fetch(buildApiUrl('/api/user/delete'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -53,7 +54,7 @@ export function DeleteAccountForm() {
         body: JSON.stringify({ password })
       })
 
-      const data = await res.json()
+      const data = (await res.json()) as { error?: string }
 
       if (!res.ok) {
         throw new Error(data.error || '注销失败')

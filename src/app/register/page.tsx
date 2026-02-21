@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { AuthLayout } from '@/components/layout/auth-layout'
 import { User, Lock, KeyRound, Mail, ShieldCheck } from 'lucide-react'
 import { CapWidget, type CapWidgetRef } from '@/components/wed/cap-widget'
+import { buildApiUrl } from '@/utils/api-url'
 
 const isCaptchaEnabled = process.env.NEXT_PUBLIC_CAP_ENABLED === 'true'
 
@@ -40,12 +41,12 @@ export default function RegisterPage() {
 
     try {
       setCountdown(60)
-      const res = await fetch('/api/auth/verify-email', {
+      const res = await fetch(buildApiUrl('/api/auth/verify-email'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, captchaToken })
       })
-      const data = await res.json()
+      const data = (await res.json()) as { error?: string }
 
       if (!res.ok) {
         setCountdown(0)
@@ -102,7 +103,7 @@ export default function RegisterPage() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch(buildApiUrl('/api/auth/register'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -116,7 +117,11 @@ export default function RegisterPage() {
         })
       })
 
-      const data = await response.json()
+      const data = (await response.json()) as {
+        error?: string
+        token?: string
+        user?: { username?: string }
+      }
 
       if (!response.ok) {
         setCaptchaToken('')
@@ -128,8 +133,8 @@ export default function RegisterPage() {
       }
 
       // 保存token和密码
-      localStorage.setItem('auth_token', data.token)
-      localStorage.setItem('username', data.user.username)
+      localStorage.setItem('auth_token', data.token || '')
+      localStorage.setItem('username', data.user?.username || '')
       localStorage.setItem('user_password', password)
 
       // 跳转到dashboard
@@ -238,7 +243,7 @@ export default function RegisterPage() {
           <div className="flex justify-center">
             <CapWidget
               ref={capWidgetRef}
-              endpoint="/api/cap"
+              endpoint={buildApiUrl('/api/cap')}
               onSolve={(token) => setCaptchaToken(token)}
               onError={(message) => toast.error(message)}
               onReset={() => setCaptchaToken('')}

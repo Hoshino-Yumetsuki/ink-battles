@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { NextResponse } from '@/backend/next-server-compat'
+import { appendDeleteCookie } from '@/backend/elysia-cookie'
 
 export async function POST() {
-  const cookieStore = await cookies()
-  cookieStore.delete('auth_token')
-  return NextResponse.json({ success: true })
+  const response = NextResponse.json({ success: true })
+  appendDeleteCookie(response, 'auth_token')
+  return response
 }

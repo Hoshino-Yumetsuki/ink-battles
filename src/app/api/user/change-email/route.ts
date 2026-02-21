@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from '@/backend/next-server-compat'
 import { withDatabase } from '@/lib/db/middleware'
 import { z } from 'zod'
 import { logger } from '@/utils/logger'

@@ -1,12 +1,12 @@
-import { type NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from '@/backend/next-server-compat'
 import { compare } from 'bcryptjs'
 import { withDatabase } from '@/lib/db/middleware'
 import { signToken } from '@/utils/jwt'
-import { cookies } from 'next/headers'
 import { z } from 'zod'
 import sanitize from 'mongo-sanitize'
 import { verifyCaptchaWithDb, isCaptchaEnabled } from '@/utils/captcha'
 import { logger } from '@/utils/logger'
+import { appendSetCookie } from '@/backend/elysia-cookie'
 
 const loginSchema = z.object({
   username: z.string().min(1, '用户名不能为空').trim(),
@@ -73,17 +73,7 @@ export const POST = withDatabase(async (req: NextRequest, db) => {
       username: user.username
     })
 
-    // 设置 Cookie
-    const cookieStore = await cookies()
-    cookieStore.set('auth_token', token, {
-      httpOnly: false, // 允许客户端读取
-      path: '/',
-      maxAge: 604800, // 7 days
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV === 'production'
-    })
-
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       token,
       user: {
@@ -92,6 +82,16 @@ export const POST = withDatabase(async (req: NextRequest, db) => {
         createdAt: user.createdAt
       }
     })
+
+    appendSetCookie(response, 'auth_token', token, {
+      httpOnly: false, // 允许客户端读取
+      path: '/',
+      maxAge: 604800, // 7 days
+      sameSite: 'Strict',
+      secure: process.env.NODE_ENV === 'production'
+    })
+
+    return response
   } catch (error) {
     logger.error('Login error:', error)
     return NextResponse.json({ error: '登录失败，请稍后重试' }, { status: 500 })

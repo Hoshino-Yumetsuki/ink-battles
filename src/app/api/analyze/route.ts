@@ -1,4 +1,4 @@
-import type { NextRequest } from 'next/server'
+import type { NextRequest } from '@/backend/next-server-compat'
 import { generateText, streamText } from 'xsai'
 import { buildPrompt } from '@/prompts'
 import { logger } from '@/utils/logger'
@@ -272,7 +272,14 @@ export const POST = withDatabase(
             }
 
             const arrayBuffer = await file.arrayBuffer()
-            const base64 = Buffer.from(arrayBuffer).toString('base64')
+            const bytes = new Uint8Array(arrayBuffer)
+            const chunkSize = 0x8000
+            let binary = ''
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+              const chunk = bytes.subarray(i, i + chunkSize)
+              binary += String.fromCharCode(...chunk)
+            }
+            const base64 = btoa(binary)
             const fileDataUrl = `data:${file.type};base64,${base64}`
 
             messages = [

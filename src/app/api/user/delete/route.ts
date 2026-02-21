@@ -1,10 +1,11 @@
-import { type NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from '@/backend/next-server-compat'
 import { withDatabase } from '@/lib/db/middleware'
 import { compare } from 'bcryptjs'
 import { extractToken, verifyToken } from '@/utils/jwt'
 import { ObjectId } from 'mongodb'
 import { z } from 'zod'
 import { logger } from '@/utils/logger'
+import { appendDeleteCookie } from '@/backend/elysia-cookie'
 
 const deleteAccountSchema = z.object({
   password: z.string().min(1, '请输入密码')
@@ -70,7 +71,7 @@ export const POST = withDatabase(async (request: NextRequest, db) => {
     const response = NextResponse.json({ success: true, message: '账户已注销' })
 
     // 清除 Cookie
-    response.cookies.delete('auth_token')
+    appendDeleteCookie(response, 'auth_token')
 
     return response
   } catch (error) {

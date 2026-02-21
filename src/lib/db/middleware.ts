@@ -1,4 +1,4 @@
-import type { NextRequest } from 'next/server'
+import type { NextRequest } from '@/backend/next-server-compat'
 import type { Db, MongoClient } from 'mongodb'
 import { getDatabase, closeDatabaseConnection } from '@/utils/mongodb'
 import { logger } from '@/utils/logger'

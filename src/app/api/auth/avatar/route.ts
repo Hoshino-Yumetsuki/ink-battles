@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from '@/backend/next-server-compat'
 import { ObjectId } from 'mongodb'
 import { withDatabase } from '@/lib/db/middleware'
 import { verifyToken, extractToken } from '@/utils/jwt'
@@ -17,7 +17,8 @@ export const POST = withDatabase(async (req: NextRequest, db) => {
     }
 
     const payload = await verifyToken(token)
-    const { avatar } = await req.json()
+    const body = (await req.json()) as { avatar?: string }
+    const avatar = body.avatar
 
     if (!avatar) {
       return NextResponse.json({ error: '未提供头像数据' }, { status: 400 })
