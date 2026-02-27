@@ -59,6 +59,10 @@ export default function RegisterPage() {
       }
 
       setCaptchaToken('')
+      // Reset the Cap widget so user can solve it again for the register step
+      if (isCaptchaEnabled) {
+        capWidgetRef.current?.reset()
+      }
 
       const timer = setInterval(() => {
         setCountdown((prev) => {
