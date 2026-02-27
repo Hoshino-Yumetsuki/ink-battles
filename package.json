@@ -40,7 +40,6 @@
     "framer-motion": "^12.34.3",
     "geist": "^1.7.0",
     "iconv-lite": "^0.7.2",
-    "jimp": "^1.6.0",
     "jose": "^6.1.3",
     "lucide-react": "^0.575.0",
     "mammoth": "^1.11.0",
