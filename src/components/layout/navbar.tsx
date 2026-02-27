@@ -36,8 +36,7 @@ export default function Navbar() {
     const checkLoginStatus = async () => {
       const token = localStorage.getItem('auth_token')
       if (token) {
-        setIsLoggedIn(true)
-        // 获取用户信息以显示头像
+        // 获取用户信息以显示头像，并通过响应状态判断 token 是否有效
         try {
           const res = await fetch(buildApiUrl('/api/auth/me'), {
             headers: { Authorization: `Bearer ${token}` }
@@ -48,12 +47,22 @@ export default function Navbar() {
                 avatar?: string
               }
             }
+            setIsLoggedIn(true)
             if (data.user?.avatar) {
               setAvatar(data.user.avatar)
             }
+          } else {
+            // Token 已过期或无效，清除本地登录状态
+            localStorage.removeItem('auth_token')
+            localStorage.removeItem('username')
+            localStorage.removeItem('user_password')
+            setIsLoggedIn(false)
+            setAvatar(null)
+            window.dispatchEvent(new Event('auth-change'))
           }
         } catch (error) {
           console.error('Failed to fetch user info', error)
+          // 网络异常时不强制登出，保持当前状态
         }
       } else {
         setIsLoggedIn(false)

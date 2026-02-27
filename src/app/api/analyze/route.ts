@@ -14,6 +14,7 @@ import { calculateOverallScore } from '@/utils/score-calculator'
 import { extractCodeBlock } from '@/utils/markdown-parser'
 import { getDatabase, closeDatabaseConnection } from '@/utils/mongodb'
 import { llmConfig } from '@/config/llm'
+import { verifyCaptchaWithDb, isCaptchaEnabled } from '@/utils/captcha'
 import type { Db, MongoClient } from 'mongodb'
 
 interface LlmApiConfig {
@@ -113,6 +114,24 @@ export const POST = withDatabase(
     const analysisType = formData.get('analysisType') as 'text' | 'file'
     const optionsJson = formData.get('options') as string | null
     const options = optionsJson ? JSON.parse(optionsJson) : {}
+    const captchaToken = formData.get('captchaToken') as string | null
+
+    // 人机验证（如已启用）
+    if (isCaptchaEnabled()) {
+      if (!captchaToken) {
+        return new Response(
+          JSON.stringify({ success: false, error: '请完成人机验证' }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        )
+      }
+      const isCaptchaValid = await verifyCaptchaWithDb(captchaToken, db)
+      if (!isCaptchaValid) {
+        return new Response(
+          JSON.stringify({ success: false, error: '人机验证失败，请重试' }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        )
+      }
+    }
 
     if (!analysisType) {
       return new Response(

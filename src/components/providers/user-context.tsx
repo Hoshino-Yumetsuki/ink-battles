@@ -58,6 +58,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
       })
 
       if (!response.ok) {
+        // Token 已过期或无效，清除本地登录状态
+        if (response.status === 401) {
+          localStorage.removeItem('auth_token')
+          localStorage.removeItem('username')
+          localStorage.removeItem('user_password')
+          window.dispatchEvent(new Event('auth-change'))
+        }
         setUser(null)
         return
       }

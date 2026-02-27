@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Toaster, toast } from 'sonner'
 import { AnimatePresence, motion } from 'framer-motion'
 
@@ -14,6 +14,9 @@ import FeaturesSection from '@/components/sections/features-section'
 import { calculateOverallScore } from '@/utils/score-calculator'
 import { useFingerprint } from '@/hooks/use-fingerprint'
 import { buildApiUrl } from '@/utils/api-url'
+import type { CapWidgetRef } from '@/components/wed/cap-widget'
+
+const isCaptchaEnabled = process.env.NEXT_PUBLIC_CAP_ENABLED === 'true'
 
 export interface MermaidDiagram {
   type: string
@@ -54,6 +57,7 @@ interface ApiErrorResponse {
 
 export default function WriterAnalysisPage() {
   const { fingerprint } = useFingerprint()
+  const capWidgetRef = useRef<CapWidgetRef>(null)
   const [content, setContent] = useState<string>('')
   const [uploadedText, setUploadedText] = useState<string>('')
   const [file, setFile] = useState<File | null>(null)
@@ -84,6 +88,8 @@ export default function WriterAnalysisPage() {
     antiCapitalism: false,
     speedReview: false
   })
+
+  const [captchaToken, setCaptchaToken] = useState('')
 
   const fetchLimits = useCallback(async () => {
     if (!fingerprint) return
@@ -166,6 +172,11 @@ export default function WriterAnalysisPage() {
       return
     }
 
+    if (isCaptchaEnabled && !captchaToken) {
+      toast.error('请先完成人机验证')
+      return
+    }
+
     setIsLoading(true)
     setProgress(10)
     setResult(null)
@@ -199,6 +210,11 @@ export default function WriterAnalysisPage() {
 
         formData.append('analysisType', isFileModeText ? 'text' : analysisType)
         formData.append('options', JSON.stringify(enabledOptions))
+
+        // 添加人机验证 token
+        if (isCaptchaEnabled && captchaToken) {
+          formData.append('captchaToken', captchaToken)
+        }
 
         // 添加用户密码用于加密历史记录
         const userPassword = localStorage.getItem('user_password')
@@ -353,6 +369,11 @@ export default function WriterAnalysisPage() {
     } finally {
       setIsLoading(false)
       setTimeout(() => setProgress(0), 1000)
+      // 每次分析完成（无论成功还是失败）均重置验证码
+      if (isCaptchaEnabled) {
+        setCaptchaToken('')
+        capWidgetRef.current?.reset()
+      }
     }
   }
 
@@ -394,6 +415,11 @@ export default function WriterAnalysisPage() {
                 setAnalysisTypeAction={(t) => setAnalysisType(t)}
                 setUploadedTextAction={setUploadedText}
                 usageInfo={usageInfo}
+                isCaptchaEnabled={isCaptchaEnabled}
+                captchaToken={captchaToken}
+                onCaptchaSolveAction={setCaptchaToken}
+                onCaptchaResetAction={() => setCaptchaToken('')}
+                capWidgetRef={capWidgetRef}
               />
             </motion.div>
 

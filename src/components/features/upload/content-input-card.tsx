@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type RefObject } from 'react'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
@@ -23,6 +23,8 @@ import {
 import Link from 'next/link'
 import { compressImage, toReadableSize } from '@/utils/image-compressor'
 import { decodeTextFromFile } from '@/utils/decode-text'
+import { CapWidget, type CapWidgetRef } from '@/components/wed/cap-widget'
+import { buildApiUrl } from '@/utils/api-url'
 
 interface UsageInfo {
   isLoggedIn: boolean
@@ -44,6 +46,11 @@ interface ContentInputCardProps {
   setAnalysisTypeAction: (type: 'text' | 'file') => void
   setUploadedTextAction: (content: string) => void
   usageInfo?: UsageInfo
+  isCaptchaEnabled?: boolean
+  captchaToken?: string
+  onCaptchaSolveAction?: (token: string) => void
+  onCaptchaResetAction?: () => void
+  capWidgetRef?: RefObject<CapWidgetRef | null>
 }
 
 const _SINGLE_WORD_LIMIT = 60000 // Only relevant for visual reference if needed, but not enforcing input limit
@@ -59,7 +66,12 @@ export default function ContentInputCard({
   analysisType,
   setAnalysisTypeAction,
   setUploadedTextAction,
-  usageInfo
+  usageInfo,
+  isCaptchaEnabled,
+  captchaToken,
+  onCaptchaSolveAction,
+  onCaptchaResetAction,
+  capWidgetRef
 }: ContentInputCardProps) {
   // 计算当前输入的字数
   const inputWordCount = content.length
@@ -333,27 +345,42 @@ export default function ContentInputCard({
       </CardContent>
 
       <CardFooter className="pt-2 pb-6 border-t border-gray-100 dark:border-zinc-800/50">
-        <div className="w-full flex justify-between items-center">
+        <div className="w-full flex justify-between items-center gap-3">
           <span className="text-sm text-muted-foreground">
             当前字数: {inputWordCount.toLocaleString()} 字
           </span>
-          <Button
-            onClick={onAnalyzeAction}
-            disabled={isLoading || (!content && !file)}
-            className="px-8"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                正在分析...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4 mr-2" />
-                开始分析
-              </>
+          <div className="flex items-center gap-3">
+            {isCaptchaEnabled && (
+              <CapWidget
+                ref={capWidgetRef}
+                endpoint={buildApiUrl('/api/cap')}
+                onSolve={onCaptchaSolveAction}
+                onError={(msg) => toast.error(msg)}
+                onReset={onCaptchaResetAction}
+              />
             )}
-          </Button>
+            <Button
+              onClick={onAnalyzeAction}
+              disabled={
+                isLoading ||
+                (!content && !file) ||
+                (isCaptchaEnabled && !captchaToken)
+              }
+              className="px-8"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  正在分析...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  开始分析
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </CardFooter>
     </Card>
