@@ -3,10 +3,11 @@ import { withDatabase } from '@/lib/db/middleware'
 import { sendVerificationEmail } from '@/utils/email'
 import { z } from 'zod'
 import { logger } from '@/utils/logger'
-import { extractToken, verifyToken } from '@/utils/jwt'
+import { verifyToken } from '@/utils/jwt'
 import { ObjectId } from 'mongodb'
 import { randomInt } from 'node:crypto'
 import { verifyCaptchaWithDb, isCaptchaEnabled } from '@/utils/captcha'
+import { extractAccessTokenFromRequest } from '@/utils/auth-request'
 
 const sendCodeSchema = z.object({
   type: z.enum(['bind_email', 'change_password']),
@@ -17,10 +18,7 @@ const sendCodeSchema = z.object({
 export const POST = withDatabase(async (request: NextRequest, db) => {
   try {
     // 1. 验证用户身份
-    const token =
-      extractToken(request.headers.get('Authorization')) ||
-      request.cookies.get('auth_token')?.value ||
-      null
+    const token = extractAccessTokenFromRequest(request, 'Authorization')
 
     if (!token) {
       return NextResponse.json({ error: '未登录' }, { status: 401 })

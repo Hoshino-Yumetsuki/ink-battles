@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label'
 import { AlertTriangle, Trash2, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { buildApiUrl } from '@/utils/api-url'
+import { authFetch, clearAuthStorage } from '@/utils/auth-client'
 
 export function DeleteAccountForm() {
   const _router = useRouter()
@@ -45,11 +46,10 @@ export function DeleteAccountForm() {
     setLoading(true)
 
     try {
-      const res = await fetch(buildApiUrl('/api/user/delete'), {
+      const res = await authFetch(buildApiUrl('/api/user/delete'), {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('auth_token') || ''}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ password })
       })
@@ -61,10 +61,8 @@ export function DeleteAccountForm() {
       }
 
       // 清除本地存储
-      localStorage.removeItem('auth_token')
+      clearAuthStorage(false)
       localStorage.removeItem('user')
-      localStorage.removeItem('username')
-      localStorage.removeItem('user_password')
 
       // 跳转首页并刷新
       window.location.href = '/'

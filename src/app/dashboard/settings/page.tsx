@@ -12,6 +12,7 @@ import { Camera, User } from 'lucide-react'
 import { compressImage } from '@/utils/image-compressor'
 import { useUser } from '@/components/providers/user-context'
 import { buildApiUrl } from '@/utils/api-url'
+import { authFetch, getAccessToken } from '@/utils/auth-client'
 
 export default function DashboardSettingsPage() {
   const { user, refreshUser, setUser } = useUser()
@@ -38,16 +39,15 @@ export default function DashboardSettingsPage() {
           reader.onerror = () => reject(new Error('读取头像文件失败'))
         })
 
-        const token = localStorage.getItem('auth_token')
+        const token = getAccessToken()
         if (!token) {
           throw new Error('登录已过期')
         }
 
-        const response = await fetch(buildApiUrl('/api/auth/avatar'), {
+        const response = await authFetch(buildApiUrl('/api/auth/avatar'), {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({ avatar: base64 })
         })

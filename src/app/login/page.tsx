@@ -8,6 +8,7 @@ import { AuthLayout } from '@/components/layout/auth-layout'
 import { User, Lock } from 'lucide-react'
 import { CapWidget, type CapWidgetRef } from '@/components/wed/cap-widget'
 import { buildApiUrl } from '@/utils/api-url'
+import { setAccessToken } from '@/utils/auth-client'
 
 const isCaptchaEnabled = process.env.NEXT_PUBLIC_CAP_ENABLED === 'true'
 
@@ -45,6 +46,7 @@ export default function LoginPage() {
     try {
       const response = await fetch(buildApiUrl('/api/auth/login'), {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         },
@@ -58,6 +60,7 @@ export default function LoginPage() {
       const data = (await response.json()) as {
         error?: string
         token?: string
+        accessToken?: string
         user?: { username?: string }
       }
 
@@ -72,7 +75,7 @@ export default function LoginPage() {
       }
 
       // 保存token和用户信息
-      localStorage.setItem('auth_token', data.token || '')
+      setAccessToken(data.accessToken || data.token || '')
       localStorage.setItem('username', data.user?.username || '')
       localStorage.setItem('user_password', password) // 用于解密
 

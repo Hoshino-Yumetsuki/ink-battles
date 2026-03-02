@@ -2,9 +2,10 @@ import { type NextRequest, NextResponse } from '@/backend/next-server-compat'
 import { withDatabase } from '@/lib/db/middleware'
 import { z } from 'zod'
 import { logger } from '@/utils/logger'
-import { extractToken, verifyToken } from '@/utils/jwt'
+import { verifyToken } from '@/utils/jwt'
 import { ObjectId } from 'mongodb'
 import { hash } from 'bcryptjs'
+import { extractAccessTokenFromRequest } from '@/utils/auth-request'
 
 const changePasswordSchema = z.object({
   code: z.string().length(6, '验证码错误'),
@@ -13,10 +14,7 @@ const changePasswordSchema = z.object({
 
 export const POST = withDatabase(async (request: NextRequest, db) => {
   try {
-    const token =
-      extractToken(request.headers.get('Authorization')) ||
-      request.cookies.get('auth_token')?.value ||
-      null
+    const token = extractAccessTokenFromRequest(request, 'Authorization')
     if (!token) return NextResponse.json({ error: '未登录' }, { status: 401 })
 
     let payload: any

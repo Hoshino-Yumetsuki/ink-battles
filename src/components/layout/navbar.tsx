@@ -15,6 +15,11 @@ import { motion, useScroll, useMotionValueEvent } from 'framer-motion'
 import { useId, useState, useEffect } from 'react'
 import { User, LogOut, LayoutDashboard } from 'lucide-react'
 import { buildApiUrl } from '@/utils/api-url'
+import {
+  authFetch,
+  clearAuthStorage,
+  getAccessToken
+} from '@/utils/auth-client'
 
 export default function Navbar() {
   const pathname = usePathname()
@@ -34,12 +39,12 @@ export default function Navbar() {
   useEffect(() => {
     // 检查登录状态
     const checkLoginStatus = async () => {
-      const token = localStorage.getItem('auth_token')
+      const token = getAccessToken()
       if (token) {
         // 获取用户信息以显示头像，并通过响应状态判断 token 是否有效
         try {
-          const res = await fetch(buildApiUrl('/api/auth/me'), {
-            headers: { Authorization: `Bearer ${token}` }
+          const res = await authFetch(buildApiUrl('/api/auth/me'), {
+            method: 'GET'
           })
           if (res.ok) {
             const data = (await res.json()) as {
@@ -53,9 +58,7 @@ export default function Navbar() {
             }
           } else {
             // Token 已过期或无效，清除本地登录状态
-            localStorage.removeItem('auth_token')
-            localStorage.removeItem('username')
-            localStorage.removeItem('user_password')
+            clearAuthStorage(false)
             setIsLoggedIn(false)
             setAvatar(null)
             window.dispatchEvent(new Event('auth-change'))
@@ -82,10 +85,11 @@ export default function Navbar() {
   }, []) // 依赖 pathname 变化来重新检查登录状态
 
   const handleLogout = async () => {
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('username')
-    localStorage.removeItem('user_password')
-    await fetch(buildApiUrl('/api/auth/logout'), { method: 'POST' })
+    clearAuthStorage(false)
+    await fetch(buildApiUrl('/api/auth/logout'), {
+      method: 'POST',
+      credentials: 'include'
+    })
 
     // 直接刷新页面以更新状态
     window.location.href = '/'

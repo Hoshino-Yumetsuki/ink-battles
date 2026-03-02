@@ -1,16 +1,14 @@
 import { type NextRequest, NextResponse } from '@/backend/next-server-compat'
 import { ObjectId } from 'mongodb'
 import { withDatabase } from '@/lib/db/middleware'
-import { verifyToken, extractToken } from '@/utils/jwt'
+import { verifyToken } from '@/utils/jwt'
 import { logger } from '@/utils/logger'
+import { extractAccessTokenFromRequest } from '@/utils/auth-request'
 
 export const POST = withDatabase(async (req: NextRequest, db) => {
   try {
     // 提取并验证token
-    const token =
-      extractToken(req.headers.get('authorization')) ||
-      req.cookies.get('auth_token')?.value ||
-      null
+    const token = extractAccessTokenFromRequest(req, 'authorization')
 
     if (!token) {
       return NextResponse.json({ error: '未提供认证令牌' }, { status: 401 })

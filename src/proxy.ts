@@ -4,8 +4,11 @@ import type { NextRequest } from 'next/server'
 export default function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith('/dashboard')) {
     const token = request.cookies.get('auth_token')?.value
+    const refreshToken =
+      request.cookies.get('__Host-refresh_token')?.value ||
+      request.cookies.get('refresh_token')?.value
 
-    if (!token) {
+    if (!token && !refreshToken) {
       const loginUrl = new URL('/login', request.url)
       loginUrl.searchParams.set('redirect', request.nextUrl.pathname)
       return NextResponse.redirect(loginUrl)

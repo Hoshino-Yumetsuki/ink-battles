@@ -8,6 +8,7 @@ import * as authLoginRoute from '@/app/api/auth/login/route'
 import * as authRegisterRoute from '@/app/api/auth/register/route'
 import * as authMeRoute from '@/app/api/auth/me/route'
 import * as authLogoutRoute from '@/app/api/auth/logout/route'
+import * as authRefreshRoute from '@/app/api/auth/refresh/route'
 import * as authSendCodeRoute from '@/app/api/auth/send-code/route'
 import * as authVerifyEmailRoute from '@/app/api/auth/verify-email/route'
 import * as authAvatarRoute from '@/app/api/auth/avatar/route'
@@ -45,6 +46,7 @@ export const elysiaApp = new Elysia({ adapter: CloudflareAdapter })
   .post('/api/auth/register', route(authRegisterRoute.POST))
   .get('/api/auth/me', route(authMeRoute.GET))
   .post('/api/auth/logout', route(authLogoutRoute.POST))
+  .post('/api/auth/refresh', route(authRefreshRoute.POST))
   .post('/api/auth/send-code', route(authSendCodeRoute.POST))
   .post('/api/auth/verify-email', route(authVerifyEmailRoute.POST))
   .post('/api/auth/avatar', route(authAvatarRoute.POST))

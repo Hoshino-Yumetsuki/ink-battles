@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Loader2, Lock, ShieldCheck, AlertTriangle } from 'lucide-react'
 import { CapWidget, type CapWidgetRef } from '@/components/wed/cap-widget'
 import { buildApiUrl } from '@/utils/api-url'
+import { authFetch } from '@/utils/auth-client'
 
 const isCaptchaEnabled = process.env.NEXT_PUBLIC_CAP_ENABLED === 'true'
 
@@ -34,11 +35,10 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
 
     try {
       setCountdown(60)
-      const res = await fetch(buildApiUrl('/api/auth/send-code'), {
+      const res = await authFetch(buildApiUrl('/api/auth/send-code'), {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('auth_token') || ''}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           type: 'change_password',
@@ -85,11 +85,10 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
     setLoading(true)
 
     try {
-      const res = await fetch(buildApiUrl('/api/user/change-password'), {
+      const res = await authFetch(buildApiUrl('/api/user/change-password'), {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('auth_token') || ''}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ newPassword, code })
       })

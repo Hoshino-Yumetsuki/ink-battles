@@ -9,6 +9,7 @@ import WriterScoreResult from '@/components/features/analysis/score-result'
 import type { WriterAnalysisResult } from '@/app/page'
 import { decrypt } from '@/utils/crypto'
 import { buildApiUrl } from '@/utils/api-url'
+import { authFetch, getAccessToken } from '@/utils/auth-client'
 
 interface AnalysisHistory {
   id: string
@@ -59,7 +60,7 @@ export default function DashboardHistoryPage() {
     useState<AnalysisHistory | null>(null)
 
   const fetchHistory = useCallback(async (pageNum: number) => {
-    const token = localStorage.getItem('auth_token')
+    const token = getAccessToken()
     const password = localStorage.getItem('user_password')
 
     if (!token) {
@@ -70,13 +71,9 @@ export default function DashboardHistoryPage() {
 
     try {
       setLoading(true)
-      const response = await fetch(
+      const response = await authFetch(
         `${buildApiUrl('/api/dashboard/history')}?page=${pageNum}&limit=10`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+        { method: 'GET' }
       )
 
       if (!response.ok) {

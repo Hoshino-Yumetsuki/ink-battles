@@ -1,12 +1,21 @@
 import { type NextRequest, NextResponse } from '@/backend/next-server-compat'
 import { hash } from 'bcryptjs'
 import { withDatabase } from '@/lib/db/middleware'
-import { signToken } from '@/utils/jwt'
+import {
+  getAccessTokenExpiresIn,
+  getRefreshTokenExpiresIn,
+  signToken
+} from '@/utils/jwt'
 import { z } from 'zod'
 import sanitize from 'mongo-sanitize'
 import { verifyCaptchaWithDb, isCaptchaEnabled } from '@/utils/captcha'
 import { logger } from '@/utils/logger'
 import { appendSetCookie } from '@/backend/elysia-cookie'
+import {
+  createRefreshSession,
+  getAuthCookieNames,
+  getAuthCookieOptions
+} from '@/utils/auth-session'
 
 const registerSchema = z.object({
   username: z
@@ -106,15 +115,22 @@ export const POST = withDatabase(async (req: NextRequest, db) => {
     // 删除已使用的验证码
     await verificationsCollection.deleteOne({ _id: verification._id })
 
-    // 生成JWT token
     const token = await signToken({
       userId: insertResult.insertedId.toString(),
       username
     })
+    const { refreshToken } = await createRefreshSession(db, {
+      userId: insertResult.insertedId.toString(),
+      username
+    })
+
+    const cookieNames = getAuthCookieNames()
+    const cookieOptions = getAuthCookieOptions()
 
     const response = NextResponse.json({
       success: true,
       token,
+      accessToken: token,
       user: {
         id: insertResult.insertedId.toString(),
         username,
@@ -122,12 +138,14 @@ export const POST = withDatabase(async (req: NextRequest, db) => {
       }
     })
 
-    appendSetCookie(response, 'auth_token', token, {
-      httpOnly: false,
-      path: '/',
-      maxAge: 604800, // 7 days
-      sameSite: 'Strict',
-      secure: process.env.NODE_ENV === 'production'
+    appendSetCookie(response, cookieNames.access, token, {
+      ...cookieOptions.access,
+      maxAge: getAccessTokenExpiresIn()
+    })
+
+    appendSetCookie(response, cookieNames.refresh, refreshToken, {
+      ...cookieOptions.refresh,
+      maxAge: getRefreshTokenExpiresIn()
     })
 
     return response

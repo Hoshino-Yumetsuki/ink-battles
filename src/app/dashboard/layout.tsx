@@ -17,6 +17,11 @@ import AnimatedBackground from '@/components/common/animated-background'
 import { UserProvider, useUser } from '@/components/providers/user-context'
 import { compressImage } from '@/utils/image-compressor'
 import { buildApiUrl } from '@/utils/api-url'
+import {
+  authFetch,
+  clearAuthStorage,
+  getAccessToken
+} from '@/utils/auth-client'
 
 function HomeGridIcon() {
   return (
@@ -49,7 +54,7 @@ function DashboardShell({ children }: { children: ReactNode }) {
   )
 
   useEffect(() => {
-    const token = localStorage.getItem('auth_token')
+    const token = getAccessToken()
     if (!token) {
       router.replace('/login')
       return
@@ -61,12 +66,13 @@ function DashboardShell({ children }: { children: ReactNode }) {
   }, [loading, user, router])
 
   const handleLogout = useCallback(async () => {
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('username')
-    localStorage.removeItem('user_password')
+    clearAuthStorage(false)
 
     try {
-      await fetch(buildApiUrl('/api/auth/logout'), { method: 'POST' })
+      await fetch(buildApiUrl('/api/auth/logout'), {
+        method: 'POST',
+        credentials: 'include'
+      })
     } catch (error) {
       console.error('Logout request failed', error)
     } finally {
@@ -94,17 +100,16 @@ function DashboardShell({ children }: { children: ReactNode }) {
           reader.onerror = () => reject(new Error('读取头像文件失败'))
         })
 
-        const token = localStorage.getItem('auth_token')
+        const token = getAccessToken()
         if (!token) {
           router.replace('/login')
           return
         }
 
-        const response = await fetch(buildApiUrl('/api/auth/avatar'), {
+        const response = await authFetch(buildApiUrl('/api/auth/avatar'), {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({ avatar: base64 })
         })

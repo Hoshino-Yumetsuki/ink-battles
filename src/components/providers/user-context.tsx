@@ -12,6 +12,11 @@ import {
   type SetStateAction
 } from 'react'
 import { buildApiUrl } from '@/utils/api-url'
+import {
+  authFetch,
+  clearAuthStorage,
+  getAccessToken
+} from '@/utils/auth-client'
 
 export interface UserInfo {
   id: string
@@ -41,7 +46,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   const refreshUser = useCallback(async () => {
-    const token = localStorage.getItem('auth_token')
+    const token = getAccessToken()
 
     if (!token) {
       setUser(null)
@@ -51,19 +56,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     try {
       setLoading(true)
-      const response = await fetch(buildApiUrl('/api/auth/me'), {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+      const response = await authFetch(buildApiUrl('/api/auth/me'), {
+        method: 'GET'
       })
 
       if (!response.ok) {
         // Token 已过期或无效，清除本地登录状态
         if (response.status === 401) {
-          localStorage.removeItem('auth_token')
-          localStorage.removeItem('username')
-          localStorage.removeItem('user_password')
-          window.dispatchEvent(new Event('auth-change'))
+          clearAuthStorage()
         }
         setUser(null)
         return

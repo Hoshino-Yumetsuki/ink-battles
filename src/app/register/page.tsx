@@ -9,6 +9,7 @@ import { AuthLayout } from '@/components/layout/auth-layout'
 import { User, Lock, KeyRound, Mail, ShieldCheck } from 'lucide-react'
 import { CapWidget, type CapWidgetRef } from '@/components/wed/cap-widget'
 import { buildApiUrl } from '@/utils/api-url'
+import { setAccessToken } from '@/utils/auth-client'
 
 const isCaptchaEnabled = process.env.NEXT_PUBLIC_CAP_ENABLED === 'true'
 
@@ -109,6 +110,7 @@ export default function RegisterPage() {
     try {
       const response = await fetch(buildApiUrl('/api/auth/register'), {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         },
@@ -124,6 +126,7 @@ export default function RegisterPage() {
       const data = (await response.json()) as {
         error?: string
         token?: string
+        accessToken?: string
         user?: { username?: string }
       }
 
@@ -137,9 +140,11 @@ export default function RegisterPage() {
       }
 
       // 保存token和密码
-      localStorage.setItem('auth_token', data.token || '')
+      setAccessToken(data.accessToken || data.token || '')
       localStorage.setItem('username', data.user?.username || '')
       localStorage.setItem('user_password', password)
+
+      window.dispatchEvent(new Event('auth-change'))
 
       // 跳转到dashboard
       router.push('/dashboard')

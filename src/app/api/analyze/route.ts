@@ -8,7 +8,7 @@ import {
   incrementRateLimit
 } from '@/utils/rate-limiter'
 import { withDatabase } from '@/lib/db/middleware'
-import { verifyToken, extractToken } from '@/utils/jwt'
+import { verifyToken } from '@/utils/jwt'
 import { encryptObject } from '@/utils/crypto'
 import { calculateOverallScore } from '@/utils/score-calculator'
 import { extractCodeBlock } from '@/utils/markdown-parser'
@@ -16,6 +16,7 @@ import { getDatabase, closeDatabaseConnection } from '@/utils/mongodb'
 import { llmConfig } from '@/config/llm'
 import { verifyCaptchaWithDb, isCaptchaEnabled } from '@/utils/captcha'
 import type { Db, MongoClient } from 'mongodb'
+import { extractAccessTokenFromRequest } from '@/utils/auth-request'
 
 interface LlmApiConfig {
   baseUrl: string
@@ -36,10 +37,7 @@ export const POST = withDatabase(
   async (request: NextRequest, db: Db, dbClient: MongoClient) => {
     // 1. 先尝试认证用户
     let userId: string | undefined
-    const token =
-      extractToken(request.headers.get('authorization')) ||
-      request.cookies.get('auth_token')?.value ||
-      null
+    const token = extractAccessTokenFromRequest(request, 'authorization')
 
     if (token) {
       try {

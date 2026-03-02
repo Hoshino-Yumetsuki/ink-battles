@@ -15,6 +15,7 @@ import { calculateOverallScore } from '@/utils/score-calculator'
 import { useFingerprint } from '@/hooks/use-fingerprint'
 import { buildApiUrl } from '@/utils/api-url'
 import type { CapWidgetRef } from '@/components/wed/cap-widget'
+import { getAccessToken } from '@/utils/auth-client'
 
 const isCaptchaEnabled = process.env.NEXT_PUBLIC_CAP_ENABLED === 'true'
 
@@ -93,7 +94,7 @@ export default function WriterAnalysisPage() {
 
   const fetchLimits = useCallback(async () => {
     if (!fingerprint) return
-    const token = localStorage.getItem('auth_token')
+    const token = getAccessToken()
     const headers: any = {
       'x-fingerprint': fingerprint
     }
@@ -227,7 +228,7 @@ export default function WriterAnalysisPage() {
           headers['x-fingerprint'] = fingerprint
         }
 
-        const token = localStorage.getItem('auth_token')
+        const token = getAccessToken()
         if (token) {
           headers.Authorization = `Bearer ${token}`
         }

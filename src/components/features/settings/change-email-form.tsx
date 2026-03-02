@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Loader2, Mail, Lock, ShieldCheck } from 'lucide-react'
 import { CapWidget, type CapWidgetRef } from '@/components/wed/cap-widget'
 import { buildApiUrl } from '@/utils/api-url'
+import { authFetch } from '@/utils/auth-client'
 
 const isCaptchaEnabled = process.env.NEXT_PUBLIC_CAP_ENABLED === 'true'
 
@@ -40,11 +41,10 @@ export function ChangeEmailForm({ hasEmail, onSuccess }: ChangeEmailFormProps) {
 
     try {
       setCountdown(60)
-      const res = await fetch(buildApiUrl('/api/auth/send-code'), {
+      const res = await authFetch(buildApiUrl('/api/auth/send-code'), {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('auth_token') || ''}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           type: 'bind_email',
@@ -92,11 +92,10 @@ export function ChangeEmailForm({ hasEmail, onSuccess }: ChangeEmailFormProps) {
     setLoading(true)
 
     try {
-      const res = await fetch(buildApiUrl('/api/user/change-email'), {
+      const res = await authFetch(buildApiUrl('/api/user/change-email'), {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('auth_token') || ''}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ email, password, code })
       })

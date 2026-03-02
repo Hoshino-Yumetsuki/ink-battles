@@ -1,11 +1,16 @@
 import { type NextRequest, NextResponse } from '@/backend/next-server-compat'
 import { withDatabase } from '@/lib/db/middleware'
 import { compare } from 'bcryptjs'
-import { extractToken, verifyToken } from '@/utils/jwt'
+import { verifyToken } from '@/utils/jwt'
 import { ObjectId } from 'mongodb'
 import { z } from 'zod'
 import { logger } from '@/utils/logger'
 import { appendDeleteCookie } from '@/backend/elysia-cookie'
+import {
+  getAuthCookieNames,
+  revokeAllRefreshSessionsForUser
+} from '@/utils/auth-session'
+import { extractAccessTokenFromRequest } from '@/utils/auth-request'
 
 const deleteAccountSchema = z.object({
   password: z.string().min(1, '请输入密码')
@@ -13,10 +18,7 @@ const deleteAccountSchema = z.object({
 
 export const POST = withDatabase(async (request: NextRequest, db) => {
   try {
-    const token =
-      extractToken(request.headers.get('Authorization')) ||
-      request.cookies.get('auth_token')?.value ||
-      null
+    const token = extractAccessTokenFromRequest(request, 'Authorization')
 
     if (!token) {
       return NextResponse.json({ error: '未登录' }, { status: 401 })
@@ -67,11 +69,15 @@ export const POST = withDatabase(async (request: NextRequest, db) => {
     // 3. 删除用户本身
     await usersCollection.deleteOne({ _id: new ObjectId(userId) })
 
+    await revokeAllRefreshSessionsForUser(db, userId)
+
     // 返回成功
     const response = NextResponse.json({ success: true, message: '账户已注销' })
 
     // 清除 Cookie
-    appendDeleteCookie(response, 'auth_token')
+    const cookieNames = getAuthCookieNames()
+    appendDeleteCookie(response, cookieNames.access)
+    appendDeleteCookie(response, cookieNames.refresh)
 
     return response
   } catch (error) {
