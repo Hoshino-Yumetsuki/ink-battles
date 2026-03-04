@@ -1,6 +1,6 @@
-import { type NextRequest, NextResponse } from '@/backend/next-server-compat'
+import { NextResponse, type NextRequest } from 'next/server'
 import { compare } from 'bcryptjs'
-import { withDatabase } from '@/lib/db/middleware'
+import { withDatabase } from '@/utils/mongodb'
 import {
   getAccessTokenExpiresIn,
   signToken,
@@ -10,7 +10,6 @@ import { z } from 'zod'
 import sanitize from 'mongo-sanitize'
 import { verifyCaptchaWithDb, isCaptchaEnabled } from '@/utils/captcha'
 import { logger } from '@/utils/logger'
-import { appendSetCookie } from '@/backend/elysia-cookie'
 import {
   createRefreshSession,
   getAuthCookieNames,
@@ -99,12 +98,12 @@ export const POST = withDatabase(async (req: NextRequest, db) => {
       }
     })
 
-    appendSetCookie(response, cookieNames.access, token, {
+    response.cookies.set(cookieNames.access, token, {
       ...cookieOptions.access,
       maxAge: getAccessTokenExpiresIn()
     })
 
-    appendSetCookie(response, cookieNames.refresh, refreshToken, {
+    response.cookies.set(cookieNames.refresh, refreshToken, {
       ...cookieOptions.refresh,
       maxAge: getRefreshTokenExpiresIn()
     })

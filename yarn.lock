@@ -6145,13 +6145,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cookie@npm:^1.1.1":
-  version: 1.1.1
-  resolution: "cookie@npm:1.1.1"
-  checksum: 10c0/79c4ddc0fcad9c4f045f826f42edf54bcc921a29586a4558b0898277fa89fb47be95bc384c2253f493af7b29500c830da28341274527328f18eba9f58afa112c
-  languageName: node
-  linkType: hard
-
 "core-util-is@npm:^1.0.3, core-util-is@npm:~1.0.0":
   version: 1.0.3
   resolution: "core-util-is@npm:1.0.3"
@@ -6873,30 +6866,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"elysia@npm:^1.4.27":
-  version: 1.4.27
-  resolution: "elysia@npm:1.4.27"
-  dependencies:
-    cookie: "npm:^1.1.1"
-    exact-mirror: "npm:^0.2.7"
-    fast-decode-uri-component: "npm:^1.0.1"
-    memoirist: "npm:^0.4.0"
-  peerDependencies:
-    "@sinclair/typebox": ">= 0.34.0 < 1"
-    "@types/bun": ">= 1.2.0"
-    exact-mirror: ">= 0.0.9"
-    file-type: ">= 20.0.0"
-    openapi-types: ">= 12.0.0"
-    typescript: ">= 5.0.0"
-  peerDependenciesMeta:
-    "@types/bun":
-      optional: true
-    typescript:
-      optional: true
-  checksum: 10c0/e01d693923671fed537d5fec7a6f44c5496f42b4d097995c82acd694084f78e24787fa9df9293fb1b2624cd0da2840eeec436bf705bf97ad8dff8c6da45c49a9
-  languageName: node
-  linkType: hard
-
 "emoji-regex@npm:^10.3.0":
   version: 10.4.0
   resolution: "emoji-regex@npm:10.4.0"
@@ -7262,18 +7231,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"exact-mirror@npm:^0.2.7":
-  version: 0.2.7
-  resolution: "exact-mirror@npm:0.2.7"
-  peerDependencies:
-    "@sinclair/typebox": ^0.34.15
-  peerDependenciesMeta:
-    "@sinclair/typebox":
-      optional: true
-  checksum: 10c0/d50cadc69367df6fe4f28e5ce2ac4470b8d83eaacc02f8ae46ae1d8352335e5220b69dfa6c7ef6eabbaaa07e273873026d08f0ec6bee6d0dff4782487f301dbe
-  languageName: node
-  linkType: hard
-
 "execa@npm:^5.1.1":
   version: 5.1.1
   resolution: "execa@npm:5.1.1"
@@ -7411,13 +7368,6 @@ __metadata:
   version: 3.0.2
   resolution: "extend@npm:3.0.2"
   checksum: 10c0/73bf6e27406e80aa3e85b0d1c4fd987261e628064e170ca781125c0b635a3dabad5e05adbf07595ea0cf1e6c5396cacb214af933da7cbaf24fe75ff14818e8f9
-  languageName: node
-  linkType: hard
-
-"fast-decode-uri-component@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "fast-decode-uri-component@npm:1.0.1"
-  checksum: 10c0/039d50c2e99d64f999c3f2126c23fbf75a04a4117e218a149ca0b1d2aeb8c834b7b19d643b9d35d4eabce357189a6a94085f78cf48869e6e26cc59b036284bc3
   languageName: node
   linkType: hard
 
@@ -8121,13 +8071,12 @@ __metadata:
     chardet: "npm:^2.1.1"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
-    elysia: "npm:^1.4.27"
     file-type: "npm:^21.3.0"
     framer-motion: "npm:^12.34.5"
     geist: "npm:^1.7.0"
     iconv-lite: "npm:^0.7.2"
     jose: "npm:^6.1.3"
-    lucide-react: "npm:^0.576.0"
+    lucide-react: "npm:^0.577.0"
     mammoth: "npm:^1.11.0"
     mermaid: "npm:^11.12.3"
     mongo-sanitize: "npm:^1.1.0"
@@ -8814,12 +8763,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lucide-react@npm:^0.576.0":
-  version: 0.576.0
-  resolution: "lucide-react@npm:0.576.0"
+"lucide-react@npm:^0.577.0":
+  version: 0.577.0
+  resolution: "lucide-react@npm:0.577.0"
   peerDependencies:
     react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10c0/316301dd4331d99ec6923d5e7e7ec48d57309738fa29b2e993fd4f4f9db73a22e820b9bf586831b2bb48ddbd0a7c56f6a6f130b2a5b718df5301395290b99e90
+  checksum: 10c0/f5f56d66d5072b69ab74af2196833e35b888c18d92906d75aff81afc0aeabf00a4092a5b9dbc1bddd250bf54ec3c5d5933c7353589b5cb7efd75b21651cda399
   languageName: node
   linkType: hard
 
@@ -9108,13 +9057,6 @@ __metadata:
   version: 1.1.0
   resolution: "media-typer@npm:1.1.0"
   checksum: 10c0/7b4baa40b25964bb90e2121ee489ec38642127e48d0cc2b6baa442688d3fde6262bfdca86d6bbf6ba708784afcac168c06840c71facac70e390f5f759ac121b9
-  languageName: node
-  linkType: hard
-
-"memoirist@npm:^0.4.0":
-  version: 0.4.0
-  resolution: "memoirist@npm:0.4.0"
-  checksum: 10c0/986426c3474abe7018edeb6a88f11ef22409de652199096565a0c5479a9b91423cb0c8513411e017061b5b8df64cc5e15ccb6e7bac3e83d416753a9698aebe4f
   languageName: node
   linkType: hard
 

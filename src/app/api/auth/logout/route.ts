@@ -1,6 +1,5 @@
-import { type NextRequest, NextResponse } from '@/backend/next-server-compat'
-import { withDatabase } from '@/lib/db/middleware'
-import { appendDeleteCookie } from '@/backend/elysia-cookie'
+import { NextResponse, type NextRequest } from 'next/server'
+import { withDatabase } from '@/utils/mongodb'
 import {
   getAuthCookieNames,
   revokeRefreshSessionByToken
@@ -15,7 +14,7 @@ export const POST = withDatabase(async (request: NextRequest, db) => {
   }
 
   const response = NextResponse.json({ success: true })
-  appendDeleteCookie(response, cookieNames.access)
-  appendDeleteCookie(response, cookieNames.refresh)
+  response.cookies.delete(cookieNames.access)
+  response.cookies.delete(cookieNames.refresh)
   return response
 })

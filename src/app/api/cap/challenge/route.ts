@@ -1,5 +1,5 @@
-import { NextResponse } from '@/backend/next-server-compat'
-import { withDatabase } from '@/lib/db/middleware'
+import { NextResponse } from 'next/server'
+import { withDatabase } from '@/utils/mongodb'
 import { createCapInstance } from '@/utils/captcha'
 
 export const POST = withDatabase(async (_req, db) => {

@@ -1,11 +1,10 @@
-import { type NextRequest, NextResponse } from '@/backend/next-server-compat'
-import { withDatabase } from '@/lib/db/middleware'
+import { NextResponse, type NextRequest } from 'next/server'
+import { withDatabase } from '@/utils/mongodb'
 import { compare } from 'bcryptjs'
 import { verifyToken } from '@/utils/jwt'
 import { ObjectId } from 'mongodb'
 import { z } from 'zod'
 import { logger } from '@/utils/logger'
-import { appendDeleteCookie } from '@/backend/elysia-cookie'
 import {
   getAuthCookieNames,
   revokeAllRefreshSessionsForUser
@@ -76,8 +75,8 @@ export const POST = withDatabase(async (request: NextRequest, db) => {
 
     // 清除 Cookie
     const cookieNames = getAuthCookieNames()
-    appendDeleteCookie(response, cookieNames.access)
-    appendDeleteCookie(response, cookieNames.refresh)
+    response.cookies.delete(cookieNames.access)
+    response.cookies.delete(cookieNames.refresh)
 
     return response
   } catch (error) {

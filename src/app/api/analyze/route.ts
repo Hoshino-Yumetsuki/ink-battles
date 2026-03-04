@@ -1,4 +1,4 @@
-import type { NextRequest } from '@/backend/next-server-compat'
+import type { NextRequest } from 'next/server'
 import { generateText, streamText } from 'xsai'
 import { buildPrompt } from '@/prompts'
 import { logger } from '@/utils/logger'
@@ -7,7 +7,7 @@ import {
   recordVisit,
   incrementRateLimit
 } from '@/utils/rate-limiter'
-import { withDatabase } from '@/lib/db/middleware'
+import { withDatabase } from '@/utils/mongodb'
 import { verifyToken } from '@/utils/jwt'
 import { encryptObject } from '@/utils/crypto'
 import { calculateOverallScore } from '@/utils/score-calculator'
@@ -768,12 +768,11 @@ export const POST = withDatabase(
               controller.enqueue(encoder.encode(msg))
             }
 
-            const progressMsg =
-              `${JSON.stringify({
-                type: 'progress',
-                stage: 'start',
-                message: '正在进行分块并发分析...'
-              })}\n`
+            const progressMsg = `${JSON.stringify({
+              type: 'progress',
+              stage: 'start',
+              message: '正在进行分块并发分析...'
+            })}\n`
             controller.enqueue(encoder.encode(progressMsg))
 
             parsedResult = await analyzeTextByChunks(

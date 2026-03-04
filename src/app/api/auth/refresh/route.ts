@@ -1,6 +1,5 @@
-import { type NextRequest, NextResponse } from '@/backend/next-server-compat'
-import { withDatabase } from '@/lib/db/middleware'
-import { appendDeleteCookie, appendSetCookie } from '@/backend/elysia-cookie'
+import { NextResponse, type NextRequest } from 'next/server'
+import { withDatabase } from '@/utils/mongodb'
 import {
   getAuthCookieNames,
   getAuthCookieOptions,
@@ -34,11 +33,11 @@ export const POST = withDatabase(async (request: NextRequest, db) => {
       accessToken
     })
 
-    appendSetCookie(response, cookieNames.access, accessToken, {
+    response.cookies.set(cookieNames.access, accessToken, {
       ...cookieOptions.access,
       maxAge: getAccessTokenExpiresIn()
     })
-    appendSetCookie(response, cookieNames.refresh, rotated.refreshToken, {
+    response.cookies.set(cookieNames.refresh, rotated.refreshToken, {
       ...cookieOptions.refresh,
       maxAge: getRefreshTokenExpiresIn()
     })
@@ -52,8 +51,8 @@ export const POST = withDatabase(async (request: NextRequest, db) => {
       { error: '刷新会话失败' },
       { status: 401 }
     )
-    appendDeleteCookie(response, cookieNames.access)
-    appendDeleteCookie(response, cookieNames.refresh)
+    response.cookies.delete(cookieNames.access)
+    response.cookies.delete(cookieNames.refresh)
     return response
   }
 })

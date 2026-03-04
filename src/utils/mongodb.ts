@@ -1,4 +1,5 @@
-import { MongoClient } from 'mongodb'
+import type { NextRequest } from 'next/server'
+import { MongoClient, type Db } from 'mongodb'
 import { logger } from './logger'
 
 export async function connectToDatabase() {
@@ -37,5 +38,54 @@ export async function getDatabase(dbName: string = 'ink-battles') {
   return {
     db: client.db(dbName),
     client
+  }
+}
+
+export function withDatabase<T = Response>(
+  handler: (request: NextRequest, db: Db, client: MongoClient) => Promise<T>
+) {
+  return async (request: NextRequest): Promise<T> => {
+    let client: MongoClient | undefined
+
+    try {
+      const dbConnection = await getDatabase()
+      client = dbConnection.client
+      const db = dbConnection.db
+
+      return await handler(request, db, client)
+    } finally {
+      if (client) {
+        await closeDatabaseConnection(client)
+      }
+    }
+  }
+}
+
+export function withOptionalDatabase<T = Response>(
+  handler: (
+    request: NextRequest,
+    db: Db | null,
+    client: MongoClient | null
+  ) => Promise<T>
+) {
+  return async (request: NextRequest): Promise<T> => {
+    let client: MongoClient | null = null
+    let db: Db | null = null
+
+    try {
+      const dbConnection = await getDatabase()
+      client = dbConnection.client
+      db = dbConnection.db
+    } catch (error) {
+      logger.warn('Database connection failed, continuing without DB', error)
+    }
+
+    try {
+      return await handler(request, db, client)
+    } finally {
+      if (client) {
+        await closeDatabaseConnection(client)
+      }
+    }
   }
 }

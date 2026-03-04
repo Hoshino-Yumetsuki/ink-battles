@@ -1,5 +1,5 @@
-import { type NextRequest, NextResponse } from '@/backend/next-server-compat'
-import { withDatabase } from '@/lib/db/middleware'
+import { NextResponse, type NextRequest } from 'next/server'
+import { withDatabase } from '@/utils/mongodb'
 import { verifyToken } from '@/utils/jwt'
 import { logger } from '@/utils/logger'
 import { extractAccessTokenFromRequest } from '@/utils/auth-request'

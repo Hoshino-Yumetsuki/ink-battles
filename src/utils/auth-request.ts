@@ -1,4 +1,4 @@
-import type { NextRequest } from '@/backend/next-server-compat'
+import type { NextRequest } from 'next/server'
 import { extractToken, verifyToken, type JWTPayload } from '@/utils/jwt'
 import { getAuthCookieNames } from '@/utils/auth-session'
 

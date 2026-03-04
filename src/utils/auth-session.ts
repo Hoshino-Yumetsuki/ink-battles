@@ -13,12 +13,11 @@ const REFRESH_COOKIE_NAME =
   process.env.NODE_ENV === 'production'
     ? '__Host-refresh_token'
     : 'refresh_token'
-const DEFAULT_REFRESH_COOKIE_SAME_SITE =
-  (process.env.AUTH_COOKIE_SAME_SITE as
-    | 'Strict'
-    | 'Lax'
-    | 'None'
-    | undefined) || 'Lax'
+const rawSameSite = process.env.AUTH_COOKIE_SAME_SITE?.toLowerCase()
+const DEFAULT_REFRESH_COOKIE_SAME_SITE: 'strict' | 'lax' | 'none' =
+  rawSameSite === 'strict' || rawSameSite === 'none' || rawSameSite === 'lax'
+    ? rawSameSite
+    : 'lax'
 
 export interface AuthSessionUser {
   userId: string
@@ -74,7 +73,7 @@ export function getAuthCookieOptions() {
     access: {
       httpOnly: false,
       path: '/',
-      sameSite: 'Lax' as const,
+      sameSite: 'lax' as const,
       secure: process.env.NODE_ENV === 'production'
     },
     refresh: {
