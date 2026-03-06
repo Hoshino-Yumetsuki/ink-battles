@@ -80,6 +80,8 @@ const LONG_TEXT_CHUNKING: ChunkingConfig = {
 const MAP_CONCURRENCY = Number(process.env.ANALYSIS_MAP_CONCURRENCY) || 8
 const MAP_MAX_RETRIES = Number(process.env.ANALYSIS_MAP_MAX_RETRIES) || 2
 
+const CHUNKING_ENABLED = process.env.ANALYSIS_CHUNKING_ENABLED !== 'false'
+
 function estimateTokenCount(text: string): number {
   return Math.max(1, Math.ceil(text.length / 2))
 }
@@ -499,6 +501,34 @@ function buildReducePrompt(chunkResults: ChunkAnalysisResult[]): string {
   ].join('\n')
 }
 
+async function analyzeTextDirect(
+  content: string,
+  systemPrompt: string,
+  apiConfig: LlmApiConfig,
+  sendProgress: (payload: Record<string, unknown>) => void
+): Promise<AnalysisResult> {
+  const responseFormat = buildResponseFormat()
+
+  sendProgress({
+    type: 'progress',
+    stage: 'analyzing',
+    message: '正在分析文本...'
+  })
+
+  const generatedText = await generateAnalysisText(
+    apiConfig,
+    systemPrompt,
+    content,
+    responseFormat
+  )
+
+  if (!generatedText.trim()) {
+    throw new Error('分析失败，未能获取有效结果')
+  }
+
+  return parseAnalysisText(generatedText)
+}
+
 async function analyzeTextByChunks(
   content: string,
   systemPrompt: string,
@@ -768,19 +798,35 @@ export const POST = withDatabase(
               controller.enqueue(encoder.encode(msg))
             }
 
-            const progressMsg = `${JSON.stringify({
-              type: 'progress',
-              stage: 'start',
-              message: '正在进行分块并发分析...'
-            })}\n`
-            controller.enqueue(encoder.encode(progressMsg))
+            if (CHUNKING_ENABLED) {
+              const progressMsg = `${JSON.stringify({
+                type: 'progress',
+                stage: 'start',
+                message: '正在进行分块分析...'
+              })}\n`
+              controller.enqueue(encoder.encode(progressMsg))
 
-            parsedResult = await analyzeTextByChunks(
-              textContent,
-              systemPrompt,
-              apiConfig,
-              sendProgress
-            )
+              parsedResult = await analyzeTextByChunks(
+                textContent,
+                systemPrompt,
+                apiConfig,
+                sendProgress
+              )
+            } else {
+              const progressMsg = `${JSON.stringify({
+                type: 'progress',
+                stage: 'start',
+                message: '正在分析文本...'
+              })}\n`
+              controller.enqueue(encoder.encode(progressMsg))
+
+              parsedResult = await analyzeTextDirect(
+                textContent,
+                systemPrompt,
+                apiConfig,
+                sendProgress
+              )
+            }
           } else {
             if (!file || !(file instanceof File)) {
               throw new Error('Invalid file object')
