@@ -48,11 +48,11 @@ const OPTIONAL_DIMENSIONS = new Set([
 const SCORE_CONFIG = {
   MIN_SCORE: 0,
   MIN_BASE_SCORE: 20,
-  MAX_BASE_SCORE: 85,
-  EXCELLENCE_THRESHOLD: 4.0,
+  MAX_BASE_SCORE: 90,
+  EXCELLENCE_THRESHOLD: 3.9,
   SYNERGY_FACTOR: 0.7,
   BALANCE_BONUS: 1.0,
-  BREAKTHROUGH_THRESHOLD: 95,
+  BREAKTHROUGH_THRESHOLD: 98,
   CONSISTENCY_THRESHOLD: 0.7,
   RELIABILITY_THRESHOLD: 0.8,
   OBJECTIVITY_WEIGHT: 0.15,
@@ -243,7 +243,7 @@ function calculateSynergyBonus(dimensions: DimensionScore[]): number {
     }
   })
 
-  return Math.min(totalSynergy, 8)
+  return Math.min(totalSynergy, 10)
 }
 
 function calculateExcellenceBonus(dimensions: DimensionScore[]): number {
@@ -265,7 +265,7 @@ function calculateExcellenceBonus(dimensions: DimensionScore[]): number {
     (avgExcellenceScore - SCORE_CONFIG.EXCELLENCE_THRESHOLD) *
     2.2
 
-  return Math.min(bonus, 10)
+  return Math.min(bonus, 12)
 }
 function calculateBalanceAdjustment(dimensions: DimensionScore[]): number {
   const coreScores = dimensions
@@ -387,9 +387,9 @@ function calculateDynamicMaxScore(dimensions: DimensionScore[]): number {
   const avgBonus = Math.max(0, (avgScore - 3) * 3)
   maxScore += avgBonus
 
-  // 硬上限：125分（完美作品）
-  // 硬下限：95分（基准）
-  return Math.max(SCORE_CONFIG.BREAKTHROUGH_THRESHOLD, Math.min(125, maxScore))
+  // 硬上限：128分（完美作品）
+  // 硬下限：98分（基准）
+  return Math.max(SCORE_CONFIG.BREAKTHROUGH_THRESHOLD, Math.min(128, maxScore))
 }
 
 function applyBreakthroughConstraint(
