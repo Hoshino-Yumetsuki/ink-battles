@@ -48,11 +48,11 @@ const OPTIONAL_DIMENSIONS = new Set([
 const SCORE_CONFIG = {
   MIN_SCORE: 0,
   MIN_BASE_SCORE: 15,
-  MAX_BASE_SCORE: 120,
+  MAX_BASE_SCORE: 85,
   EXCELLENCE_THRESHOLD: 4.0,
   SYNERGY_FACTOR: 0.7,
   BALANCE_BONUS: 1.0,
-  BREAKTHROUGH_THRESHOLD: 110,
+  BREAKTHROUGH_THRESHOLD: 95,
   CONSISTENCY_THRESHOLD: 0.7,
   RELIABILITY_THRESHOLD: 0.8,
   OBJECTIVITY_WEIGHT: 0.15,
@@ -243,7 +243,7 @@ function calculateSynergyBonus(dimensions: DimensionScore[]): number {
     }
   })
 
-  return Math.min(totalSynergy, 15)
+  return Math.min(totalSynergy, 8)
 }
 
 function calculateExcellenceBonus(dimensions: DimensionScore[]): number {
@@ -265,7 +265,7 @@ function calculateExcellenceBonus(dimensions: DimensionScore[]): number {
     (avgExcellenceScore - SCORE_CONFIG.EXCELLENCE_THRESHOLD) *
     2.2
 
-  return Math.min(bonus, 18)
+  return Math.min(bonus, 10)
 }
 function calculateBalanceAdjustment(dimensions: DimensionScore[]): number {
   const coreScores = dimensions
@@ -300,7 +300,7 @@ function calculateBalanceAdjustment(dimensions: DimensionScore[]): number {
   const extremePenalty = extremeGap > 8 ? -(extremeGap - 8) * 0.3 : 0
 
   const totalAdjustment = coreBalanceBonus + optionalBonus + extremePenalty
-  return Math.max(-10, Math.min(totalAdjustment, 12))
+  return Math.max(-10, Math.min(totalAdjustment, 6))
 }
 
 function calculateQualityPenalty(dimensions: DimensionScore[]): number {
@@ -345,31 +345,88 @@ function calculateQualityPenalty(dimensions: DimensionScore[]): number {
   return basePenalty * (1 - penaltyReduction)
 }
 
+/**
+ * 计算动态最大分数
+ * 基于维度质量分布，Bayesian 加权
+ *
+ * 核心逻辑：
+ * - 基础天花板：95分
+ * - 每个4.5+维度：+1.5分
+ * - 一致性奖励：+最多5分
+ * - 平均分奖励：+最多4.5分
+ * - 硬上限：120分
+ */
+function calculateDynamicMaxScore(dimensions: DimensionScore[]): number {
+  const excellentCount = dimensions.filter((dim) => dim.score >= 4.5).length
+  const veryGoodCount = dimensions.filter((dim) => dim.score >= 4.0).length
+
+  const avgScore =
+    dimensions.reduce((sum, d) => sum + d.score, 0) / dimensions.length
+
+  const variance =
+    dimensions.reduce((sum, d) => sum + (d.score - avgScore) ** 2, 0) /
+    dimensions.length
+  const stdDev = Math.sqrt(variance)
+
+  // 基础天花板
+  let maxScore = SCORE_CONFIG.BREAKTHROUGH_THRESHOLD
+
+  // 优秀维度奖励：每个4.5+维度提升1.5分
+  maxScore += excellentCount * 1.5
+
+  // 很好维度微调：每个4.0+维度（非4.5+）提升0.3分
+  maxScore += Math.max(0, veryGoodCount - excellentCount) * 0.3
+
+  // 一致性奖励：标准差越低，天花板越高
+  // stdDev=0时最高+5分，stdDev=2时为0
+  const consistencyBonus = Math.max(0, (1 - stdDev / 2) * 5)
+  maxScore += consistencyBonus
+
+  // 平均分奖励：平均分越高，天花板越高
+  // avgScore=3时为0，avgScore=5时为+6分
+  const avgBonus = Math.max(0, (avgScore - 3) * 3)
+  maxScore += avgBonus
+
+  // 硬上限：120分（完美作品）
+  // 硬下限：95分（基准）
+  return Math.max(SCORE_CONFIG.BREAKTHROUGH_THRESHOLD, Math.min(120, maxScore))
+}
+
 function applyBreakthroughConstraint(
   score: number,
   dimensions: DimensionScore[]
 ): number {
-  const highScoreDimensions = dimensions.filter((dim) => dim.score >= 4).length
-  const veryHighScoreDimensions = dimensions.filter(
-    (dim) => dim.score >= 4.5
-  ).length
-  const excellentDimensions = dimensions.filter((dim) => dim.score >= 5).length
-
-  if (highScoreDimensions >= 10 || excellentDimensions >= 3) {
-    const excess = score - SCORE_CONFIG.BREAKTHROUGH_THRESHOLD
-    return SCORE_CONFIG.BREAKTHROUGH_THRESHOLD + excess * 0.95
-  } else if (highScoreDimensions >= 8 || veryHighScoreDimensions >= 3) {
-    const excess = score - SCORE_CONFIG.BREAKTHROUGH_THRESHOLD
-    return SCORE_CONFIG.BREAKTHROUGH_THRESHOLD + excess * 0.9
-  } else if (highScoreDimensions >= 6 || excellentDimensions >= 2) {
-    const excess = score - SCORE_CONFIG.BREAKTHROUGH_THRESHOLD
-    return SCORE_CONFIG.BREAKTHROUGH_THRESHOLD + excess * 0.85
-  } else if (highScoreDimensions >= 4) {
-    const excess = score - SCORE_CONFIG.BREAKTHROUGH_THRESHOLD
-    return SCORE_CONFIG.BREAKTHROUGH_THRESHOLD + excess * 0.8
-  } else {
-    return Math.min(score, SCORE_CONFIG.BREAKTHROUGH_THRESHOLD)
+  // 如果分数低于突破阈值，直接返回
+  if (score <= SCORE_CONFIG.BREAKTHROUGH_THRESHOLD) {
+    return score
   }
+
+  // 计算动态最大分数
+  const dynamicMax = calculateDynamicMaxScore(dimensions)
+
+  // 计算超出突破阈值的部分
+  const excess = score - SCORE_CONFIG.BREAKTHROUGH_THRESHOLD
+
+  // 根据维度质量计算增长率
+  const excellentCount = dimensions.filter((dim) => dim.score >= 4.5).length
+  const veryGoodCount = dimensions.filter((dim) => dim.score >= 4.0).length
+
+  let growthRate = 0.8
+
+  if (excellentCount >= 12) {
+    growthRate = 0.98
+  } else if (excellentCount >= 8) {
+    growthRate = 0.95
+  } else if (excellentCount >= 4) {
+    growthRate = 0.9
+  } else if (veryGoodCount >= 10) {
+    growthRate = 0.85
+  } else if (veryGoodCount >= 6) {
+    growthRate = 0.8
+  }
+
+  const newScore = SCORE_CONFIG.BREAKTHROUGH_THRESHOLD + excess * growthRate
+  return Math.min(newScore, dynamicMax)
 }
 
 function calculateQualityMetrics(dimensions: DimensionScore[]): QualityMetrics {
@@ -490,7 +547,7 @@ function calculateAdvancedBaseScore(
 
     scaledScore *= 0.7 + confidence * 0.3
 
-    const cappedScore = Math.min(32, scaledScore)
+    const cappedScore = Math.min(20, scaledScore)
 
     weightedSum += cappedScore * weight
     totalWeight += weight
@@ -504,20 +561,20 @@ function calculateAdvancedBaseScore(
     SCORE_CONFIG.MIN_BASE_SCORE +
     (SCORE_CONFIG.MAX_BASE_SCORE - SCORE_CONFIG.MIN_BASE_SCORE) * qualityRatio
 
-  return dynamicBaseScore + averageScore * 1.5
+  return dynamicBaseScore + averageScore * 1.0
 }
 
 function mapScoreNonLinear(score: number): number {
   if (score >= 4.5) {
-    return 22 + (score - 4.5) * 12
+    return 16 + (score - 4.5) * 8
   } else if (score >= 4.0) {
-    return 18 + (score - 4.0) * 8
+    return 13 + (score - 4.0) * 6
   } else if (score >= 3.0) {
-    return 11 + (score - 3.0) * 7
+    return 8 + (score - 3.0) * 5
   } else if (score >= 2.0) {
-    return 6 + (score - 2.0) * 5
+    return 4 + (score - 2.0) * 4
   } else {
-    return Math.log(Math.max(0.1, score) + 1) * 4
+    return Math.log(Math.max(0.1, score) + 1) * 2.5
   }
 }
 
