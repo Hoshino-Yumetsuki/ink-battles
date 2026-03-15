@@ -541,6 +541,19 @@ async function analyzeTextByChunks(
     throw new Error('文本切分失败，未生成有效分块')
   }
 
+  const systemPromptTokens = estimateTokenCount(systemPrompt)
+
+  for (const chunk of chunks) {
+    const mapPrompt = buildChunkPrompt(chunk)
+    logger.info('Chunk token count', {
+      chunkIndex: chunk.index,
+      chunkTotal: chunk.total,
+      systemPromptTokens,
+      chunkTokens: estimateTokenCount(chunk.content),
+      totalPromptTokens: estimateTokenCount(`${systemPrompt}\n${mapPrompt}`)
+    })
+  }
+
   sendProgress({
     type: 'progress',
     stage: 'chunking',
