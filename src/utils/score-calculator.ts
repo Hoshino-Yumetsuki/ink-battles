@@ -47,7 +47,7 @@ const OPTIONAL_DIMENSIONS = new Set([
 
 const SCORE_CONFIG = {
   MIN_SCORE: 0,
-  MIN_BASE_SCORE: 15,
+  MIN_BASE_SCORE: 20,
   MAX_BASE_SCORE: 85,
   EXCELLENCE_THRESHOLD: 4.0,
   SYNERGY_FACTOR: 0.7,
@@ -276,7 +276,7 @@ function calculateBalanceAdjustment(dimensions: DimensionScore[]): number {
     .map((dim) => dim.score)
 
   if (coreScores.length < 4) {
-    return -8
+    return -4
   }
 
   const coreMean =
@@ -300,7 +300,7 @@ function calculateBalanceAdjustment(dimensions: DimensionScore[]): number {
   const extremePenalty = extremeGap > 8 ? -(extremeGap - 8) * 0.3 : 0
 
   const totalAdjustment = coreBalanceBonus + optionalBonus + extremePenalty
-  return Math.max(-10, Math.min(totalAdjustment, 6))
+  return Math.max(-6, Math.min(totalAdjustment, 8))
 }
 
 function calculateQualityPenalty(dimensions: DimensionScore[]): number {
@@ -324,22 +324,22 @@ function calculateQualityPenalty(dimensions: DimensionScore[]): number {
 
   let penaltyReduction = 0
   if (highScoreDimensions >= 4) {
-    penaltyReduction = 0.8
+    penaltyReduction = 0.85
   } else if (highScoreDimensions >= 2) {
-    penaltyReduction = 0.5
+    penaltyReduction = 0.6
   } else if (excellentDimensions >= 1) {
-    penaltyReduction = 0.3
+    penaltyReduction = 0.4
   }
 
   let basePenalty = 0
   if (avgScore <= 1.2 && veryLowScoreRatio >= 0.9) {
-    basePenalty = -15
+    basePenalty = -10
   } else if (avgScore <= 1.5 && veryLowScoreRatio >= 0.8) {
-    basePenalty = -8
+    basePenalty = -6
   } else if (avgScore <= 2.0 && lowScoreRatio >= 0.8) {
-    basePenalty = -4
+    basePenalty = -3
   } else if (avgScore <= 2.5 && lowScoreRatio >= 0.6) {
-    basePenalty = -1
+    basePenalty = -0.5
   }
 
   return basePenalty * (1 - penaltyReduction)
@@ -387,9 +387,9 @@ function calculateDynamicMaxScore(dimensions: DimensionScore[]): number {
   const avgBonus = Math.max(0, (avgScore - 3) * 3)
   maxScore += avgBonus
 
-  // 硬上限：120分（完美作品）
+  // 硬上限：125分（完美作品）
   // 硬下限：95分（基准）
-  return Math.max(SCORE_CONFIG.BREAKTHROUGH_THRESHOLD, Math.min(120, maxScore))
+  return Math.max(SCORE_CONFIG.BREAKTHROUGH_THRESHOLD, Math.min(125, maxScore))
 }
 
 function applyBreakthroughConstraint(
@@ -411,18 +411,18 @@ function applyBreakthroughConstraint(
   const excellentCount = dimensions.filter((dim) => dim.score >= 4.5).length
   const veryGoodCount = dimensions.filter((dim) => dim.score >= 4.0).length
 
-  let growthRate = 0.8
+  let growthRate = 0.88
 
   if (excellentCount >= 12) {
-    growthRate = 0.98
+    growthRate = 1.0
   } else if (excellentCount >= 8) {
-    growthRate = 0.95
+    growthRate = 0.98
   } else if (excellentCount >= 4) {
-    growthRate = 0.9
+    growthRate = 0.95
   } else if (veryGoodCount >= 10) {
-    growthRate = 0.85
+    growthRate = 0.92
   } else if (veryGoodCount >= 6) {
-    growthRate = 0.8
+    growthRate = 0.9
   }
 
   const newScore = SCORE_CONFIG.BREAKTHROUGH_THRESHOLD + excess * growthRate
@@ -574,7 +574,7 @@ function mapScoreNonLinear(score: number): number {
   } else if (score >= 2.0) {
     return 4 + (score - 2.0) * 4
   } else {
-    return Math.log(Math.max(0.1, score) + 1) * 2.5
+    return Math.log(Math.max(0.1, score) + 1) * 3.2
   }
 }
 
@@ -585,9 +585,9 @@ function calculateConsistencyAdjustment(
   const consistencyScore = qualityMetrics.consistency
 
   if (consistencyScore >= SCORE_CONFIG.CONSISTENCY_THRESHOLD) {
-    return (consistencyScore - SCORE_CONFIG.CONSISTENCY_THRESHOLD) * 8
+    return (consistencyScore - SCORE_CONFIG.CONSISTENCY_THRESHOLD) * 9
   } else {
-    return (consistencyScore - SCORE_CONFIG.CONSISTENCY_THRESHOLD) * 12
+    return (consistencyScore - SCORE_CONFIG.CONSISTENCY_THRESHOLD) * 8
   }
 }
 
