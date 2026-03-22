@@ -345,11 +345,11 @@ export default function ContentInputCard({
       </CardContent>
 
       <CardFooter className="pt-2 pb-6 border-t border-gray-100 dark:border-zinc-800/50">
-        <div className="w-full flex justify-between items-center gap-3">
+        <div className="w-full flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <span className="text-sm text-muted-foreground">
             当前字数: {inputWordCount.toLocaleString()} 字
           </span>
-          <div className="flex items-center gap-3">
+          <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center">
             {isCaptchaEnabled && (
               <CapWidget
                 ref={capWidgetRef}
@@ -366,7 +366,7 @@ export default function ContentInputCard({
                 (!content && !file) ||
                 (isCaptchaEnabled && !captchaToken)
               }
-              className="px-8"
+              className="w-full px-8 sm:w-auto"
             >
               {isLoading ? (
                 <>
