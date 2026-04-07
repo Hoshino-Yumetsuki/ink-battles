@@ -9,7 +9,7 @@ import {
   Clock,
   ExternalLink,
   FileText,
-  Github,
+  GitBranch,
   Heart,
   TrendingUp,
   Zap
@@ -192,7 +192,7 @@ export default function DashboardOverviewPage() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <Github className="w-3.5 h-3.5" />
+                <GitBranch className="w-3.5 h-3.5" />
                 GitHub
               </a>
             </Button>
