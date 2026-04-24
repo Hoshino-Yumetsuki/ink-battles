@@ -25,19 +25,6 @@ const loginSchema = z.object({
   captchaToken: z.string().optional()
 })
 
-/**
- * 迁移旧格式历史记录：旧记录用明文密码加密，新记录用派生 enc_key 加密
- * 登录时趁有明文密码的机会，一次性迁移
- */
-async function migrateHistoryEncryption(
-  db: ReturnType<typeof import('@/utils/mongodb').withDatabase extends (fn: (req: any, db: infer D) => any) => any ? (req: any) => Promise<{ db: D }> : never>,
-  userId: string,
-  plainPassword: string,
-  encKey: string
-): Promise<void> {
-  // 用 any 避免复杂类型推断
-}
-
 export const POST = withDatabase(async (req: NextRequest, db) => {
   try {
     const json = await req.json()

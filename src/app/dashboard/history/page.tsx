@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import WriterScoreResult from '@/components/features/analysis/score-result'
 import type { WriterAnalysisResult } from '@/app/page'
 import { authFetch } from '@/utils/auth-client'
+import { buildApiUrl } from '@/utils/api-url'
 
 interface AnalysisHistory {
   id: string

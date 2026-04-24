@@ -9,7 +9,7 @@ import {
 } from '@/utils/rate-limiter'
 import { withDatabase } from '@/utils/mongodb'
 import { verifyToken } from '@/utils/jwt'
-import { encryptObject } from '@/utils/crypto'
+import { encryptObject, decryptObject } from '@/utils/crypto'
 import { calculateOverallScore } from '@/utils/score-calculator'
 import { extractCodeBlock } from '@/utils/markdown-parser'
 import { getDatabase, closeDatabaseConnection } from '@/utils/mongodb'
@@ -18,6 +18,7 @@ import { verifyCaptchaWithDb, isCaptchaEnabled } from '@/utils/captcha'
 import type { Db, MongoClient } from 'mongodb'
 import { extractAccessTokenFromRequest } from '@/utils/auth-request'
 import { getAuthCookieNames } from '@/utils/auth-session'
+import { ObjectId } from 'mongodb'
 
 interface LlmApiConfig {
   baseUrl: string
@@ -646,12 +647,31 @@ export const POST = withDatabase(
         const payload = await verifyToken(token)
         userId = payload.userId
       } catch (_error) {
-        // Token无效仅作为日志记录，不强制阻断，后续逻辑可能会根据有无userId做区分 (例如不同限流策略)
-        // 但如果本意是API如果带Token必须正确，则这里应该处理
         logger.warn('Invalid token provided for analysis request')
       }
     }
 
+    // 2. 尝试读取用户自定义 API 配置
+    let userApiConfig: { baseUrl: string; apiKey: string; model: string } | null = null
+    if (userId) {
+      try {
+        const encKey = request.cookies.get(getAuthCookieNames().encKey)?.value ?? null
+        if (encKey) {
+          const user = await db.collection('users').findOne({ _id: new ObjectId(userId) })
+          if (user?.customApiConfig) {
+            userApiConfig = await decryptObject<{ baseUrl: string; apiKey: string; model: string }>(
+              user.customApiConfig,
+              encKey
+            )
+          }
+        }
+      } catch {
+        // 解密失败，回退到默认配置
+        userApiConfig = null
+      }
+    }
+
+    // 3. 限流：有自定义 API 配置的用户跳过限流
     let rateLimitResult: {
       allowed: boolean
       remainingRequests?: number
@@ -661,7 +681,10 @@ export const POST = withDatabase(
     }
     let identifier: string | undefined
 
-    if (userId) {
+    if (userApiConfig) {
+      // 使用自定义 API 配置的用户跳过限流
+      rateLimitResult = { allowed: true }
+    } else if (userId) {
       // 已登录用户：直接进行限流检查，使用 userId 作为标识
       rateLimitResult = await checkRateLimit(
         request,
@@ -714,6 +737,11 @@ export const POST = withDatabase(
     const optionsJson = formData.get('options') as string | null
     const options = optionsJson ? JSON.parse(optionsJson) : {}
     const captchaToken = formData.get('captchaToken') as string | null
+
+    // 未登录用户可传临时凭据（仅本次有效，不存储）
+    const tempApiBaseUrl = formData.get('tempApiBaseUrl') as string | null
+    const tempApiKey = formData.get('tempApiKey') as string | null
+    const tempApiModel = formData.get('tempApiModel') as string | null
 
     // 从 httpOnly cookie 读取加密密钥（不再接受前端传入的 password）
     const encKeyCookieName = getAuthCookieNames().encKey
@@ -771,7 +799,26 @@ export const POST = withDatabase(
       )
     }
 
-    const apiConfig = llmConfig
+    // 构建 apiConfig：优先级 用户DB配置 > 未登录临时配置 > 服务端默认配置
+    let apiConfig: LlmApiConfig
+    if (userApiConfig && userApiConfig.apiKey) {
+      apiConfig = {
+        ...llmConfig,
+        baseUrl: userApiConfig.baseUrl || llmConfig.baseUrl,
+        apiKey: userApiConfig.apiKey,
+        model: userApiConfig.model || llmConfig.model
+      }
+    } else if (!userId && tempApiKey) {
+      apiConfig = {
+        ...llmConfig,
+        baseUrl: tempApiBaseUrl || llmConfig.baseUrl,
+        apiKey: tempApiKey,
+        model: tempApiModel || llmConfig.model
+      }
+    } else {
+      apiConfig = llmConfig
+    }
+
     if (!isValidLlmApiConfig(apiConfig)) {
       return new Response(
         JSON.stringify({

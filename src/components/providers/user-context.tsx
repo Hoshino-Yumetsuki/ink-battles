@@ -12,10 +12,7 @@ import {
   type SetStateAction
 } from 'react'
 import { buildApiUrl } from '@/utils/api-url'
-import {
-  authFetch,
-  clearAuthStorage
-} from '@/utils/auth-client'
+import { authFetch } from '@/utils/auth-client'
 
 export interface UserInfo {
   id: string
@@ -49,12 +46,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setLoading(true)
       const response = await authFetch(buildApiUrl('/api/auth/me'), {
         method: 'GET'
-      })
+      }, { retryOnUnauthorized: false })
 
       if (!response.ok) {
-        if (response.status === 401) {
-          clearAuthStorage()
-        }
         setUser(null)
         return
       }

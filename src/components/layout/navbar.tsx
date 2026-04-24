@@ -42,7 +42,7 @@ export default function Navbar() {
       try {
         const res = await authFetch(buildApiUrl('/api/auth/me'), {
           method: 'GET'
-        })
+        }, { retryOnUnauthorized: false })
         if (res.ok) {
           const data = (await res.json()) as {
             user?: {
@@ -54,18 +54,12 @@ export default function Navbar() {
             setAvatar(data.user.avatar)
           }
         } else {
-          clearAuthStorage(false)
           setIsLoggedIn(false)
           setAvatar(null)
-          window.dispatchEvent(new Event('auth-change'))
         }
       } catch (error) {
         console.error('Failed to fetch user info', error)
         // 网络异常时不强制登出，保持当前状态
-      }
-      } else {
-        setIsLoggedIn(false)
-        setAvatar(null)
       }
     }
 

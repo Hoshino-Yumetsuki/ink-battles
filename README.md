@@ -21,8 +21,8 @@ OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 # 如需自定义代理或兼容 Azure，可设置：
 OPENAI_BASE_URL=https://api.openai.com/v1
 
-# 指定模型 (可选，默认 gpt-4o)
-MODEL=gpt-4o
+# 指定模型 (可选，默认 gemini-3.1-pro-preview)
+MODEL=gemini-3.1-pro-preview
 
 # 启用流式响应 (可选，默认 false)
 # 当设置为 true 时，在调用 AI API 时将使用流式模式

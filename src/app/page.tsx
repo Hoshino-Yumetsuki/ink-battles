@@ -11,6 +11,7 @@ import AnalysisOptions from '@/components/features/analysis/analysis-options'
 import WriterScoreResult from '@/components/features/analysis/score-result'
 import AnimatedBackground from '@/components/common/animated-background'
 import FeaturesSection from '@/components/sections/features-section'
+import CustomApiCard, { type CustomApiConfig } from '@/components/features/analysis/custom-api-card'
 import { calculateOverallScore } from '@/utils/score-calculator'
 import { useFingerprint } from '@/hooks/use-fingerprint'
 import { buildApiUrl } from '@/utils/api-url'
@@ -91,6 +92,7 @@ export default function WriterAnalysisPage() {
   })
 
   const [captchaToken, setCaptchaToken] = useState('')
+  const [customApiConfig, setCustomApiConfig] = useState<CustomApiConfig | null>(null)
 
   const fetchLimits = useCallback(async () => {
     if (!fingerprint) return
@@ -210,6 +212,15 @@ export default function WriterAnalysisPage() {
         // 添加人机验证 token
         if (isCaptchaEnabled && captchaToken) {
           formData.append('captchaToken', captchaToken)
+        }
+
+        // 未登录用户传临时凭据（已登录用户服务端自动读取 DB）
+        if (!usageInfo?.isLoggedIn && customApiConfig) {
+          formData.append('tempApiBaseUrl', customApiConfig.baseUrl)
+          formData.append('tempApiKey', customApiConfig.apiKey)
+          if (customApiConfig.model) {
+            formData.append('tempApiModel', customApiConfig.model)
+          }
         }
 
         const headers: HeadersInit = {}
@@ -430,6 +441,18 @@ export default function WriterAnalysisPage() {
                 <AnalysisOptions
                   options={enabledOptions}
                   onChange={handleOptionChange}
+                  disabled={isLoading}
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.4 }}
+              >
+                <CustomApiCard
+                  isLoggedIn={usageInfo?.isLoggedIn ?? false}
+                  onChange={setCustomApiConfig}
                   disabled={isLoading}
                 />
               </motion.div>

@@ -51,7 +51,7 @@ export async function authFetch(
 
   const refreshed = await refreshAccessToken()
   if (!refreshed) {
-    clearAuthStorage()
+    clearAuthStorage(false) // 不触发 auth-change，避免循环
     return response
   }
 
