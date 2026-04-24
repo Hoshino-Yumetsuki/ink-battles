@@ -77,6 +77,7 @@ export const POST = withDatabase(async (request: NextRequest, db) => {
     const cookieNames = getAuthCookieNames()
     response.cookies.delete(cookieNames.access)
     response.cookies.delete(cookieNames.refresh)
+    response.cookies.delete(cookieNames.encKey)
 
     return response
   } catch (error) {

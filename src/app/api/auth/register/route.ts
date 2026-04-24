@@ -12,6 +12,7 @@ import { verifyCaptchaWithDb, isCaptchaEnabled } from '@/utils/captcha'
 import { logger } from '@/utils/logger'
 import {
   createRefreshSession,
+  deriveEncryptionKey,
   getAuthCookieNames,
   getAuthCookieOptions
 } from '@/utils/auth-session'
@@ -126,6 +127,11 @@ export const POST = withDatabase(async (req: NextRequest, db) => {
     const cookieNames = getAuthCookieNames()
     const cookieOptions = getAuthCookieOptions()
 
+    const encKey = await deriveEncryptionKey(
+      password,
+      insertResult.insertedId.toString()
+    )
+
     const response = NextResponse.json({
       success: true,
       token,
@@ -146,6 +152,8 @@ export const POST = withDatabase(async (req: NextRequest, db) => {
       ...cookieOptions.refresh,
       maxAge: getRefreshTokenExpiresIn()
     })
+
+    response.cookies.set(cookieNames.encKey, encKey, cookieOptions.encKey)
 
     return response
   } catch (error) {

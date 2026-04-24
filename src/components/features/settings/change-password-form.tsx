@@ -98,9 +98,7 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
         throw new Error(data.error || '修改失败')
       }
 
-      // 更新 localStorage 中的密码用于后续数据加密
-      localStorage.setItem('user_password', newPassword)
-
+      // enc_key cookie 由服务端在 change-password 响应中自动更新
       setSuccess('密码修改成功')
       setNewPassword('')
       setCode('')

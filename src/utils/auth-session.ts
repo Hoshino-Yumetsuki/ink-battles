@@ -1,4 +1,5 @@
-import { createHash, randomUUID } from 'node:crypto'
+import { createHash, pbkdf2, randomUUID } from 'node:crypto'
+import { promisify } from 'node:util'
 import type { Db } from 'mongodb'
 import { logger } from '@/utils/logger'
 import {
@@ -8,16 +9,36 @@ import {
   verifyRefreshToken
 } from '@/utils/jwt'
 
+const pbkdf2Async = promisify(pbkdf2)
+
 const ACCESS_COOKIE_NAME = 'auth_token'
 const REFRESH_COOKIE_NAME =
   process.env.NODE_ENV === 'production'
     ? '__Host-refresh_token'
     : 'refresh_token'
+const ENC_KEY_COOKIE_NAME =
+  process.env.NODE_ENV === 'production' ? '__Host-enc_key' : 'enc_key'
 const rawSameSite = process.env.AUTH_COOKIE_SAME_SITE?.toLowerCase()
 const DEFAULT_REFRESH_COOKIE_SAME_SITE: 'strict' | 'lax' | 'none' =
   rawSameSite === 'strict' || rawSameSite === 'none' || rawSameSite === 'lax'
     ? rawSameSite
     : 'lax'
+
+// 永久 cookie 的 Max-Age：10 年
+const PERMANENT_MAX_AGE = 10 * 365 * 24 * 60 * 60
+
+/**
+ * 用用户密码和 userId 派生加密密钥（服务端执行，密码不落客户端）
+ * 使用 PBKDF2-SHA256，100000 次迭代，输出 32 字节 hex
+ */
+export async function deriveEncryptionKey(
+  password: string,
+  userId: string
+): Promise<string> {
+  const salt = Buffer.from(userId.padEnd(16, '0').slice(0, 16))
+  const key = await pbkdf2Async(password, salt, 100000, 32, 'sha256')
+  return key.toString('hex')
+}
 
 export interface AuthSessionUser {
   userId: string
@@ -64,14 +85,15 @@ export async function ensureRefreshSessionIndexes(db: Db): Promise<void> {
 export function getAuthCookieNames() {
   return {
     access: ACCESS_COOKIE_NAME,
-    refresh: REFRESH_COOKIE_NAME
+    refresh: REFRESH_COOKIE_NAME,
+    encKey: ENC_KEY_COOKIE_NAME
   }
 }
 
 export function getAuthCookieOptions() {
   return {
     access: {
-      httpOnly: false,
+      httpOnly: true,
       path: '/',
       sameSite: 'lax' as const,
       secure: process.env.NODE_ENV === 'production'
@@ -81,6 +103,13 @@ export function getAuthCookieOptions() {
       path: '/',
       sameSite: DEFAULT_REFRESH_COOKIE_SAME_SITE,
       secure: process.env.NODE_ENV === 'production'
+    },
+    encKey: {
+      httpOnly: true,
+      path: '/',
+      sameSite: 'lax' as const,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: PERMANENT_MAX_AGE
     }
   }
 }

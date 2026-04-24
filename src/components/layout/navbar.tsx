@@ -17,8 +17,7 @@ import { User, LogOut, LayoutDashboard } from 'lucide-react'
 import { buildApiUrl } from '@/utils/api-url'
 import {
   authFetch,
-  clearAuthStorage,
-  getAccessToken
+  clearAuthStorage
 } from '@/utils/auth-client'
 
 export default function Navbar() {
@@ -39,34 +38,31 @@ export default function Navbar() {
   useEffect(() => {
     // 检查登录状态
     const checkLoginStatus = async () => {
-      const token = getAccessToken()
-      if (token) {
-        // 获取用户信息以显示头像，并通过响应状态判断 token 是否有效
-        try {
-          const res = await authFetch(buildApiUrl('/api/auth/me'), {
-            method: 'GET'
-          })
-          if (res.ok) {
-            const data = (await res.json()) as {
-              user?: {
-                avatar?: string
-              }
+      // access token 是 httpOnly cookie，直接请求 /api/auth/me 判断登录状态
+      try {
+        const res = await authFetch(buildApiUrl('/api/auth/me'), {
+          method: 'GET'
+        })
+        if (res.ok) {
+          const data = (await res.json()) as {
+            user?: {
+              avatar?: string
             }
-            setIsLoggedIn(true)
-            if (data.user?.avatar) {
-              setAvatar(data.user.avatar)
-            }
-          } else {
-            // Token 已过期或无效，清除本地登录状态
-            clearAuthStorage(false)
-            setIsLoggedIn(false)
-            setAvatar(null)
-            window.dispatchEvent(new Event('auth-change'))
           }
-        } catch (error) {
-          console.error('Failed to fetch user info', error)
-          // 网络异常时不强制登出，保持当前状态
+          setIsLoggedIn(true)
+          if (data.user?.avatar) {
+            setAvatar(data.user.avatar)
+          }
+        } else {
+          clearAuthStorage(false)
+          setIsLoggedIn(false)
+          setAvatar(null)
+          window.dispatchEvent(new Event('auth-change'))
         }
+      } catch (error) {
+        console.error('Failed to fetch user info', error)
+        // 网络异常时不强制登出，保持当前状态
+      }
       } else {
         setIsLoggedIn(false)
         setAvatar(null)

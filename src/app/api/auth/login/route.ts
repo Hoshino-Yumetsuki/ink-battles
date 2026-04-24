@@ -12,9 +12,12 @@ import { verifyCaptchaWithDb, isCaptchaEnabled } from '@/utils/captcha'
 import { logger } from '@/utils/logger'
 import {
   createRefreshSession,
+  deriveEncryptionKey,
   getAuthCookieNames,
   getAuthCookieOptions
 } from '@/utils/auth-session'
+// MIGRATION: 迁移期临时导入，所有用户迁移完成后删除此行及下方迁移调用
+import { migrateHistoryEncryption } from '@/utils/migrate-history-encryption'
 
 const loginSchema = z.object({
   username: z.string().min(1, '用户名不能为空').trim(),
@@ -22,11 +25,23 @@ const loginSchema = z.object({
   captchaToken: z.string().optional()
 })
 
+/**
+ * 迁移旧格式历史记录：旧记录用明文密码加密，新记录用派生 enc_key 加密
+ * 登录时趁有明文密码的机会，一次性迁移
+ */
+async function migrateHistoryEncryption(
+  db: ReturnType<typeof import('@/utils/mongodb').withDatabase extends (fn: (req: any, db: infer D) => any) => any ? (req: any) => Promise<{ db: D }> : never>,
+  userId: string,
+  plainPassword: string,
+  encKey: string
+): Promise<void> {
+  // 用 any 避免复杂类型推断
+}
+
 export const POST = withDatabase(async (req: NextRequest, db) => {
   try {
     const json = await req.json()
 
-    // Zod 验证: 确保 username/password 是字符串，拒绝对象/数组等 NoSQL 注入载荷
     const result = loginSchema.safeParse(json)
     if (!result.success) {
       return NextResponse.json({ error: '无效的输入格式' }, { status: 400 })
@@ -34,12 +49,10 @@ export const POST = withDatabase(async (req: NextRequest, db) => {
 
     const { username: rawUsername, password, captchaToken } = result.data
 
-    // 检查是否启用 CAPTCHA 验证
     if (isCaptchaEnabled() && !captchaToken) {
       return NextResponse.json({ error: '请完成人机验证' }, { status: 400 })
     }
 
-    // 如果启用了 CAPTCHA，验证 token
     if (isCaptchaEnabled()) {
       const isCaptchaValid = await verifyCaptchaWithDb(
         captchaToken as string,
@@ -53,9 +66,7 @@ export const POST = withDatabase(async (req: NextRequest, db) => {
       }
     }
 
-    // 进一步清理输入 (防止 $ 符号开头的键)
     const username = sanitize(rawUsername)
-
     const usersCollection = db.collection('users')
 
     const user = await usersCollection.findOne({ username })
@@ -63,24 +74,31 @@ export const POST = withDatabase(async (req: NextRequest, db) => {
       return NextResponse.json({ error: '用户名或密码错误' }, { status: 401 })
     }
 
-    // 验证密码
     const isPasswordValid = await compare(password, user.password)
     if (!isPasswordValid) {
       return NextResponse.json({ error: '用户名或密码错误' }, { status: 401 })
     }
 
-    // 更新最后登录时间
     await usersCollection.updateOne(
       { _id: user._id },
       { $set: { lastLoginAt: new Date() } }
     )
 
-    const token = await signToken({
-      userId: user._id.toString(),
-      username: user.username
-    })
+    const userId = user._id.toString()
+    const encKey = await deriveEncryptionKey(password, userId)
+
+    // MIGRATION: 迁移期临时逻辑，所有用户迁移完成后删除此块
+    if (!user.historyMigrated) {
+      try {
+        await migrateHistoryEncryption(db, userId, user._id, password, encKey)
+      } catch (err) {
+        logger.error('History migration failed', err)
+      }
+    }
+
+    const token = await signToken({ userId, username: user.username })
     const { refreshToken } = await createRefreshSession(db, {
-      userId: user._id.toString(),
+      userId,
       username: user.username
     })
 
@@ -92,7 +110,7 @@ export const POST = withDatabase(async (req: NextRequest, db) => {
       token,
       accessToken: token,
       user: {
-        id: user._id.toString(),
+        id: userId,
         username: user.username,
         createdAt: user.createdAt
       }
@@ -107,6 +125,8 @@ export const POST = withDatabase(async (req: NextRequest, db) => {
       ...cookieOptions.refresh,
       maxAge: getRefreshTokenExpiresIn()
     })
+
+    response.cookies.set(cookieNames.encKey, encKey, cookieOptions.encKey)
 
     return response
   } catch (error) {

@@ -15,7 +15,7 @@ import { calculateOverallScore } from '@/utils/score-calculator'
 import { useFingerprint } from '@/hooks/use-fingerprint'
 import { buildApiUrl } from '@/utils/api-url'
 import type { CapWidgetRef } from '@/components/wed/cap-widget'
-import { getAccessToken } from '@/utils/auth-client'
+import { authFetch } from '@/utils/auth-client'
 
 const isCaptchaEnabled = process.env.NEXT_PUBLIC_CAP_ENABLED === 'true'
 
@@ -94,20 +94,15 @@ export default function WriterAnalysisPage() {
 
   const fetchLimits = useCallback(async () => {
     if (!fingerprint) return
-    const token = getAccessToken()
-    const headers: any = {
+    const headers: HeadersInit = {
       'x-fingerprint': fingerprint
-    }
-    if (token) {
-      headers.Authorization = `Bearer ${token}`
     }
 
     try {
-      // Create a URL with timestamp to prevent caching
       const url = new URL(buildApiUrl('/api/limits'), window.location.origin)
       url.searchParams.append('_t', Date.now().toString())
 
-      const res = await fetch(url.toString(), { headers })
+      const res = await fetch(url.toString(), { headers, credentials: 'include' })
       if (res.ok) {
         const data = (await res.json()) as LimitsResponse
         setUsageInfo({
@@ -217,26 +212,16 @@ export default function WriterAnalysisPage() {
           formData.append('captchaToken', captchaToken)
         }
 
-        // 添加用户密码用于加密历史记录
-        const userPassword = localStorage.getItem('user_password')
-        if (userPassword) {
-          formData.append('password', userPassword)
-        }
-
         const headers: HeadersInit = {}
         if (fingerprint) {
           headers['x-fingerprint'] = fingerprint
         }
 
-        const token = getAccessToken()
-        if (token) {
-          headers.Authorization = `Bearer ${token}`
-        }
-
         const response = await fetch(buildApiUrl('/api/analyze'), {
           method: 'POST',
           body: formData,
-          headers
+          headers,
+          credentials: 'include'
         })
 
         if (!response.ok) {

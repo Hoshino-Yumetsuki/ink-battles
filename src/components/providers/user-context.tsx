@@ -14,8 +14,7 @@ import {
 import { buildApiUrl } from '@/utils/api-url'
 import {
   authFetch,
-  clearAuthStorage,
-  getAccessToken
+  clearAuthStorage
 } from '@/utils/auth-client'
 
 export interface UserInfo {
@@ -46,14 +45,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   const refreshUser = useCallback(async () => {
-    const token = getAccessToken()
-
-    if (!token) {
-      setUser(null)
-      setLoading(false)
-      return
-    }
-
     try {
       setLoading(true)
       const response = await authFetch(buildApiUrl('/api/auth/me'), {
@@ -61,7 +52,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
       })
 
       if (!response.ok) {
-        // Token 已过期或无效，清除本地登录状态
         if (response.status === 401) {
           clearAuthStorage()
         }

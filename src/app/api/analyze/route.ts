@@ -17,6 +17,7 @@ import { llmConfig } from '@/config/llm'
 import { verifyCaptchaWithDb, isCaptchaEnabled } from '@/utils/captcha'
 import type { Db, MongoClient } from 'mongodb'
 import { extractAccessTokenFromRequest } from '@/utils/auth-request'
+import { getAuthCookieNames } from '@/utils/auth-session'
 
 interface LlmApiConfig {
   baseUrl: string
@@ -708,12 +709,15 @@ export const POST = withDatabase(
 
     const formData = await request.formData()
     const content = formData.get('content') as string | null
-    const password = formData.get('password') as string | null
     const file = formData.get('file') as File | null
     const analysisType = formData.get('analysisType') as 'text' | 'file'
     const optionsJson = formData.get('options') as string | null
     const options = optionsJson ? JSON.parse(optionsJson) : {}
     const captchaToken = formData.get('captchaToken') as string | null
+
+    // 从 httpOnly cookie 读取加密密钥（不再接受前端传入的 password）
+    const encKeyCookieName = getAuthCookieNames().encKey
+    const encKey = request.cookies.get(encKeyCookieName)?.value || null
 
     // 人机验证（如已启用）
     if (isCaptchaEnabled()) {
@@ -901,12 +905,12 @@ export const POST = withDatabase(
           parsedResult.overallScore = score
 
           // 加密并存储结果 (仅对已登录用户)
-          if (userId && password) {
+          if (userId && encKey) {
             let saveClient: MongoClient | undefined
             try {
               const encryptedResult = await encryptObject(
                 parsedResult,
-                password
+                encKey
               )
 
               const dbResult = await getDatabase()
@@ -929,9 +933,9 @@ export const POST = withDatabase(
                 await closeDatabaseConnection(saveClient)
               }
             }
-          } else if (userId && !password) {
+          } else if (userId && !encKey) {
             logger.warn(
-              'User logged in but no password provided for encryption, history not saved',
+              'User logged in but no enc_key cookie found, history not saved',
               { userId }
             )
           }

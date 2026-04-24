@@ -7,15 +7,14 @@ import { Card } from '@/components/ui/card'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import WriterScoreResult from '@/components/features/analysis/score-result'
 import type { WriterAnalysisResult } from '@/app/page'
-import { decrypt } from '@/utils/crypto'
-import { buildApiUrl } from '@/utils/api-url'
-import { authFetch, getAccessToken } from '@/utils/auth-client'
+import { authFetch } from '@/utils/auth-client'
 
 interface AnalysisHistory {
   id: string
   result?: WriterAnalysisResult | null
   error?: string
   mode: string
+  score?: number
   createdAt: string
 }
 
@@ -23,8 +22,10 @@ interface HistoryResponse {
   success?: boolean
   histories?: Array<{
     id: string
-    encryptedResult?: string
+    result?: WriterAnalysisResult | null
+    error?: string
     mode: string
+    score?: number
     createdAt: string
   }>
   pagination?: {
@@ -60,15 +61,6 @@ export default function DashboardHistoryPage() {
     useState<AnalysisHistory | null>(null)
 
   const fetchHistory = useCallback(async (pageNum: number) => {
-    const token = getAccessToken()
-    const password = localStorage.getItem('user_password')
-
-    if (!token) {
-      setHistories([])
-      setLoading(false)
-      return
-    }
-
     try {
       setLoading(true)
       const response = await authFetch(
@@ -83,40 +75,16 @@ export default function DashboardHistoryPage() {
       const data: HistoryResponse = await response.json()
       const rawHistories = data.histories || []
 
-      const decryptedHistories = await Promise.all(
-        rawHistories.map(async (item) => {
-          try {
-            if (!password || !item.encryptedResult) {
-              return {
-                id: item.id,
-                mode: item.mode,
-                createdAt: item.createdAt,
-                error: !password ? '缺少本地密码，无法解密' : undefined,
-                result: null
-              }
-            }
-
-            const decrypted = await decrypt(item.encryptedResult, password)
-            return {
-              id: item.id,
-              mode: item.mode,
-              createdAt: item.createdAt,
-              result: JSON.parse(decrypted) as WriterAnalysisResult
-            }
-          } catch (error) {
-            console.error('Failed to decrypt history item', item.id, error)
-            return {
-              id: item.id,
-              mode: item.mode,
-              createdAt: item.createdAt,
-              error: '解密失败',
-              result: null
-            }
-          }
-        })
+      setHistories(
+        rawHistories.map((item) => ({
+          id: item.id,
+          result: item.result ?? null,
+          error: item.error,
+          mode: item.mode,
+          score: item.score,
+          createdAt: item.createdAt
+        }))
       )
-
-      setHistories(decryptedHistories)
       setTotalPages(data.pagination?.totalPages || 1)
       setPage(data.pagination?.page || pageNum)
     } catch (error) {

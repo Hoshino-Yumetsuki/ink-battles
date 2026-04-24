@@ -8,7 +8,7 @@ import { AuthLayout } from '@/components/layout/auth-layout'
 import { User, Lock } from 'lucide-react'
 import { CapWidget, type CapWidgetRef } from '@/components/wed/cap-widget'
 import { buildApiUrl } from '@/utils/api-url'
-import { setAccessToken } from '@/utils/auth-client'
+import { clearAuthStorage } from '@/utils/auth-client'
 
 const isCaptchaEnabled = process.env.NEXT_PUBLIC_CAP_ENABLED === 'true'
 
@@ -74,10 +74,7 @@ export default function LoginPage() {
         throw new Error(data.error || '登录失败')
       }
 
-      // 保存token和用户信息
-      setAccessToken(data.accessToken || data.token || '')
-      localStorage.setItem('username', data.user?.username || '')
-      localStorage.setItem('user_password', password) // 用于解密
+      // token 和加密密钥现在通过 httpOnly cookie 管理，无需前端存储
 
       // Dispatch event to notify other components to update auth state
       window.dispatchEvent(new Event('auth-change'))

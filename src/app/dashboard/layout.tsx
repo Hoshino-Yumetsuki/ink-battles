@@ -19,8 +19,7 @@ import { compressImage } from '@/utils/image-compressor'
 import { buildApiUrl } from '@/utils/api-url'
 import {
   authFetch,
-  clearAuthStorage,
-  getAccessToken
+  clearAuthStorage
 } from '@/utils/auth-client'
 
 function HomeGridIcon() {
@@ -54,12 +53,6 @@ function DashboardShell({ children }: { children: ReactNode }) {
   )
 
   useEffect(() => {
-    const token = getAccessToken()
-    if (!token) {
-      router.replace('/login')
-      return
-    }
-
     if (!loading && !user) {
       router.replace('/login')
     }
@@ -99,12 +92,6 @@ function DashboardShell({ children }: { children: ReactNode }) {
           reader.onload = () => resolve(reader.result as string)
           reader.onerror = () => reject(new Error('读取头像文件失败'))
         })
-
-        const token = getAccessToken()
-        if (!token) {
-          router.replace('/login')
-          return
-        }
 
         const response = await authFetch(buildApiUrl('/api/auth/avatar'), {
           method: 'POST',

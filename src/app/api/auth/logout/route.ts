@@ -16,5 +16,6 @@ export const POST = withDatabase(async (request: NextRequest, db) => {
   const response = NextResponse.json({ success: true })
   response.cookies.delete(cookieNames.access)
   response.cookies.delete(cookieNames.refresh)
+  response.cookies.delete(cookieNames.encKey)
   return response
 })

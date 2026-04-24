@@ -3,10 +3,11 @@ import { withDatabase } from '@/utils/mongodb'
 import { verifyToken } from '@/utils/jwt'
 import { logger } from '@/utils/logger'
 import { extractAccessTokenFromRequest } from '@/utils/auth-request'
+import { getAuthCookieNames } from '@/utils/auth-session'
+import { decryptObject } from '@/utils/crypto'
 
 export const GET = withDatabase(async (req: NextRequest, db) => {
   try {
-    // 提取并验证token
     const token = extractAccessTokenFromRequest(req, 'authorization')
 
     if (!token) {
@@ -15,7 +16,14 @@ export const GET = withDatabase(async (req: NextRequest, db) => {
 
     const payload = await verifyToken(token)
 
-    // 获取分页参数
+    // 从 httpOnly cookie 读取加密密钥
+    const encKeyCookieName = getAuthCookieNames().encKey
+    const encKey = req.cookies.get(encKeyCookieName)?.value || null
+
+    if (!encKey) {
+      return NextResponse.json({ error: '缺少加密密钥，请重新登录' }, { status: 401 })
+    }
+
     const { searchParams } = new URL(req.url)
     const page = parseInt(searchParams.get('page') || '1', 10)
     const limit = parseInt(searchParams.get('limit') || '10', 10)
@@ -23,11 +31,9 @@ export const GET = withDatabase(async (req: NextRequest, db) => {
 
     const analysisCollection = db.collection('analysis_history')
 
-    // 查询总数
     const query = { userId: payload.userId }
     const total = await analysisCollection.countDocuments(query)
 
-    // 查询用户的分析历史
     const histories = await analysisCollection
       .find(query)
       .sort({ createdAt: -1 })
@@ -35,13 +41,30 @@ export const GET = withDatabase(async (req: NextRequest, db) => {
       .limit(limit)
       .toArray()
 
-    // 返回加密的记录
-    const resultHistories = histories.map((history: any) => ({
-      id: history._id.toString(),
-      encryptedResult: history.encryptedResult,
-      mode: history.mode,
-      createdAt: history.createdAt
-    }))
+    // 服务端解密，返回明文
+    const resultHistories = await Promise.all(
+      histories.map(async (history: any) => {
+        try {
+          const result = await decryptObject<unknown>(history.encryptedResult, encKey)
+          return {
+            id: history._id.toString(),
+            result,
+            mode: history.mode,
+            score: history.score,
+            createdAt: history.createdAt
+          }
+        } catch {
+          return {
+            id: history._id.toString(),
+            result: null,
+            error: '解密失败',
+            mode: history.mode,
+            score: history.score,
+            createdAt: history.createdAt
+          }
+        }
+      })
+    )
 
     return NextResponse.json({
       success: true,

@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { useUser } from '@/components/providers/user-context'
 import { buildApiUrl } from '@/utils/api-url'
-import { authFetch, getAccessToken } from '@/utils/auth-client'
+import { authFetch } from '@/utils/auth-client'
 
 interface DashboardStats {
   totalCount: number
@@ -52,13 +52,6 @@ export default function DashboardOverviewPage() {
   })
 
   useEffect(() => {
-    const token = getAccessToken()
-
-    if (!token) {
-      setStatsLoading(false)
-      return
-    }
-
     let active = true
     const fetchStats = async () => {
       try {

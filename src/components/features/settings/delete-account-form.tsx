@@ -62,7 +62,6 @@ export function DeleteAccountForm() {
 
       // 清除本地存储
       clearAuthStorage(false)
-      localStorage.removeItem('user')
 
       // 跳转首页并刷新
       window.location.href = '/'
