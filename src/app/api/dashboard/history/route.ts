@@ -21,7 +21,10 @@ export const GET = withDatabase(async (req: NextRequest, db) => {
     const encKey = req.cookies.get(encKeyCookieName)?.value || null
 
     if (!encKey) {
-      return NextResponse.json({ error: '缺少加密密钥，请重新登录' }, { status: 401 })
+      return NextResponse.json(
+        { error: '缺少加密密钥，请重新登录' },
+        { status: 401 }
+      )
     }
 
     const { searchParams } = new URL(req.url)
@@ -45,7 +48,10 @@ export const GET = withDatabase(async (req: NextRequest, db) => {
     const resultHistories = await Promise.all(
       histories.map(async (history: any) => {
         try {
-          const result = await decryptObject<unknown>(history.encryptedResult, encKey)
+          const result = await decryptObject<unknown>(
+            history.encryptedResult,
+            encKey
+          )
           return {
             id: history._id.toString(),
             result,

@@ -100,10 +100,14 @@ export const POST = withDatabase(async (request: NextRequest, db) => {
         )
       )
         .filter(
-          (r): r is PromiseFulfilledResult<{ id: any; encryptedResult: string } | null> =>
-            r.status === 'fulfilled' && r.value !== null
+          (
+            r
+          ): r is PromiseFulfilledResult<{
+            id: any
+            encryptedResult: string
+          } | null> => r.status === 'fulfilled' && r.value !== null
         )
-        .map((r) => r.value!)
+        .map((r) => r.value as { id: any; encryptedResult: string })
 
       if (reEncryptOps.length > 0) {
         await Promise.all(
@@ -128,7 +132,10 @@ export const POST = withDatabase(async (request: NextRequest, db) => {
     await verificationsCollection.deleteOne({ _id: verification._id })
 
     // 7. 更新 enc_key cookie
-    const response = NextResponse.json({ success: true, message: '密码修改成功' })
+    const response = NextResponse.json({
+      success: true,
+      message: '密码修改成功'
+    })
     response.cookies.set(cookieNames.encKey, newEncKey, cookieOptions.encKey)
 
     return response

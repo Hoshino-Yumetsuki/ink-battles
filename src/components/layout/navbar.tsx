@@ -15,10 +15,7 @@ import { motion, useScroll, useMotionValueEvent } from 'framer-motion'
 import { useId, useState, useEffect } from 'react'
 import { User, LogOut, LayoutDashboard } from 'lucide-react'
 import { buildApiUrl } from '@/utils/api-url'
-import {
-  authFetch,
-  clearAuthStorage
-} from '@/utils/auth-client'
+import { authFetch, clearAuthStorage } from '@/utils/auth-client'
 
 export default function Navbar() {
   const pathname = usePathname()
@@ -40,9 +37,13 @@ export default function Navbar() {
     const checkLoginStatus = async () => {
       // access token 是 httpOnly cookie，直接请求 /api/auth/me 判断登录状态
       try {
-        const res = await authFetch(buildApiUrl('/api/auth/me'), {
-          method: 'GET'
-        }, { retryOnUnauthorized: false })
+        const res = await authFetch(
+          buildApiUrl('/api/auth/me'),
+          {
+            method: 'GET'
+          },
+          { retryOnUnauthorized: false }
+        )
         if (res.ok) {
           const data = (await res.json()) as {
             user?: {

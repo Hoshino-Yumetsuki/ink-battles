@@ -8,7 +8,6 @@ import { AuthLayout } from '@/components/layout/auth-layout'
 import { User, Lock } from 'lucide-react'
 import { CapWidget, type CapWidgetRef } from '@/components/wed/cap-widget'
 import { buildApiUrl } from '@/utils/api-url'
-import { clearAuthStorage } from '@/utils/auth-client'
 
 const isCaptchaEnabled = process.env.NEXT_PUBLIC_CAP_ENABLED === 'true'
 

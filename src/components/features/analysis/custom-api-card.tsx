@@ -9,7 +9,7 @@ import {
   CardDescription
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { KeyRound, Trash2, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react'
+import { KeyRound, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import { buildApiUrl } from '@/utils/api-url'
 import { authFetch } from '@/utils/auth-client'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -18,6 +18,7 @@ export interface CustomApiConfig {
   baseUrl: string
   apiKey: string
   model: string
+  structuredOutput?: boolean
 }
 
 interface CustomApiCardProps {
@@ -37,6 +38,7 @@ export default function CustomApiCard({
   const [baseUrl, setBaseUrl] = useState('')
   const [apiKey, setApiKey] = useState('')
   const [model, setModel] = useState('')
+  const [structuredOutput, setStructuredOutput] = useState(false)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState('')
@@ -45,9 +47,14 @@ export default function CustomApiCard({
   const loadSavedConfig = useCallback(async () => {
     if (!isLoggedIn) return
     try {
-      const res = await authFetch(buildApiUrl('/api/user/custom-api'), { method: 'GET' })
+      const res = await authFetch(buildApiUrl('/api/user/custom-api'), {
+        method: 'GET'
+      })
       if (res.ok) {
-        const data = (await res.json()) as { hasConfig: boolean; model?: string }
+        const data = (await res.json()) as {
+          hasConfig: boolean
+          model?: string
+        }
         setHasSaved(data.hasConfig)
         setSavedModel(data.model || '')
         if (data.hasConfig) {
@@ -101,7 +108,7 @@ export default function CustomApiCard({
       }
     } else {
       // 未登录：仅传给父组件本次使用
-      onChange({ baseUrl, apiKey, model })
+      onChange({ baseUrl, apiKey, model, structuredOutput })
       setExpanded(false)
     }
   }
@@ -110,7 +117,9 @@ export default function CustomApiCard({
     setDeleting(true)
     setError('')
     try {
-      const res = await authFetch(buildApiUrl('/api/user/custom-api'), { method: 'DELETE' })
+      const res = await authFetch(buildApiUrl('/api/user/custom-api'), {
+        method: 'DELETE'
+      })
       if (!res.ok) {
         const data = (await res.json()) as { error?: string }
         throw new Error(data.error || '删除失败')
@@ -154,11 +163,12 @@ export default function CustomApiCard({
               </span>
             )}
           </div>
-          {!hasSaved && (
-            expanded
-              ? <ChevronUp className="w-4 h-4 text-muted-foreground" />
-              : <ChevronDown className="w-4 h-4 text-muted-foreground" />
-          )}
+          {!hasSaved &&
+            (expanded ? (
+              <ChevronUp className="w-4 h-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            ))}
         </div>
         <CardDescription className="text-xs">
           使用自己的 API Key 进行分析，跳过使用次数限制
@@ -182,9 +192,16 @@ export default function CustomApiCard({
                   { label: 'API Key', value: '••••••••••••••••' },
                   { label: 'Model', value: savedModel || llmConfigPlaceholder }
                 ].map(({ label, value }) => (
-                  <div key={label} className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground w-20 shrink-0">{label}</span>
-                    <span className="font-mono text-xs text-muted-foreground truncate">{value}</span>
+                  <div
+                    key={label}
+                    className="flex items-center justify-between text-sm"
+                  >
+                    <span className="text-muted-foreground w-20 shrink-0">
+                      {label}
+                    </span>
+                    <span className="font-mono text-xs text-muted-foreground truncate">
+                      {value}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -208,7 +225,11 @@ export default function CustomApiCard({
                   <Trash2 className="w-3.5 h-3.5" />
                 </Button>
               </div>
-              {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+              {error && (
+                <p className="text-xs text-red-600 dark:text-red-400">
+                  {error}
+                </p>
+              )}
             </CardContent>
           </motion.div>
         )}
@@ -225,10 +246,14 @@ export default function CustomApiCard({
             <CardContent className="pt-0 space-y-3">
               <div className="space-y-2">
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">
+                  <label
+                    htmlFor="byok-base-url"
+                    className="text-xs text-muted-foreground mb-1 block"
+                  >
                     Base URL <span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="byok-base-url"
                     type="url"
                     value={baseUrl}
                     onChange={(e) => setBaseUrl(e.target.value)}
@@ -238,10 +263,14 @@ export default function CustomApiCard({
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">
+                  <label
+                    htmlFor="byok-api-key"
+                    className="text-xs text-muted-foreground mb-1 block"
+                  >
                     API Key <span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="byok-api-key"
                     type="password"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
@@ -251,10 +280,14 @@ export default function CustomApiCard({
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">
+                  <label
+                    htmlFor="byok-model"
+                    className="text-xs text-muted-foreground mb-1 block"
+                  >
                     Model <span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="byok-model"
                     type="text"
                     value={model}
                     onChange={(e) => setModel(e.target.value)}
@@ -263,9 +296,35 @@ export default function CustomApiCard({
                     className="w-full text-sm px-3 py-2 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
                   />
                 </div>
+                <div className="flex items-center justify-between py-1">
+                  <div>
+                    <span className="text-xs text-muted-foreground">
+                      启用结构化输出
+                    </span>
+                    <p className="text-xs text-muted-foreground/60 mt-0.5">
+                      要求模型以 JSON Schema 格式返回结果
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={structuredOutput}
+                    onClick={() => setStructuredOutput((v) => !v)}
+                    disabled={disabled || saving}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${structuredOutput ? 'bg-primary' : 'bg-input'}`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform duration-200 ${structuredOutput ? 'translate-x-4' : 'translate-x-0'}`}
+                    />
+                  </button>
+                </div>
               </div>
 
-              {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+              {error && (
+                <p className="text-xs text-red-600 dark:text-red-400">
+                  {error}
+                </p>
+              )}
 
               <div className="flex gap-2">
                 <Button

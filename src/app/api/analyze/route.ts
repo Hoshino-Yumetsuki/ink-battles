@@ -652,17 +652,25 @@ export const POST = withDatabase(
     }
 
     // 2. 尝试读取用户自定义 API 配置
-    let userApiConfig: { baseUrl: string; apiKey: string; model: string } | null = null
+    let userApiConfig: {
+      baseUrl: string
+      apiKey: string
+      model: string
+    } | null = null
     if (userId) {
       try {
-        const encKey = request.cookies.get(getAuthCookieNames().encKey)?.value ?? null
+        const encKey =
+          request.cookies.get(getAuthCookieNames().encKey)?.value ?? null
         if (encKey) {
-          const user = await db.collection('users').findOne({ _id: new ObjectId(userId) })
+          const user = await db
+            .collection('users')
+            .findOne({ _id: new ObjectId(userId) })
           if (user?.customApiConfig) {
-            userApiConfig = await decryptObject<{ baseUrl: string; apiKey: string; model: string }>(
-              user.customApiConfig,
-              encKey
-            )
+            userApiConfig = await decryptObject<{
+              baseUrl: string
+              apiKey: string
+              model: string
+            }>(user.customApiConfig, encKey)
           }
         }
       } catch {
@@ -742,6 +750,7 @@ export const POST = withDatabase(
     const tempApiBaseUrl = formData.get('tempApiBaseUrl') as string | null
     const tempApiKey = formData.get('tempApiKey') as string | null
     const tempApiModel = formData.get('tempApiModel') as string | null
+    const tempStructuredOutput = formData.get('tempStructuredOutput') === 'true'
 
     // 从 httpOnly cookie 读取加密密钥（不再接受前端传入的 password）
     const encKeyCookieName = getAuthCookieNames().encKey
@@ -801,19 +810,21 @@ export const POST = withDatabase(
 
     // 构建 apiConfig：优先级 用户DB配置 > 未登录临时配置 > 服务端默认配置
     let apiConfig: LlmApiConfig
-    if (userApiConfig && userApiConfig.apiKey) {
+    if (userApiConfig?.apiKey) {
       apiConfig = {
         ...llmConfig,
         baseUrl: userApiConfig.baseUrl || llmConfig.baseUrl,
         apiKey: userApiConfig.apiKey,
-        model: userApiConfig.model || llmConfig.model
+        model: userApiConfig.model || llmConfig.model,
+        useStructuredOutput: tempStructuredOutput
       }
     } else if (!userId && tempApiKey) {
       apiConfig = {
         ...llmConfig,
         baseUrl: tempApiBaseUrl || llmConfig.baseUrl,
         apiKey: tempApiKey,
-        model: tempApiModel || llmConfig.model
+        model: tempApiModel || llmConfig.model,
+        useStructuredOutput: tempStructuredOutput
       }
     } else {
       apiConfig = llmConfig
@@ -955,10 +966,7 @@ export const POST = withDatabase(
           if (userId && encKey) {
             let saveClient: MongoClient | undefined
             try {
-              const encryptedResult = await encryptObject(
-                parsedResult,
-                encKey
-              )
+              const encryptedResult = await encryptObject(parsedResult, encKey)
 
               const dbResult = await getDatabase()
               const saveDb = dbResult.db

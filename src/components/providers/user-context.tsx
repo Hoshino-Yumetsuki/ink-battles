@@ -44,9 +44,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const refreshUser = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await authFetch(buildApiUrl('/api/auth/me'), {
-        method: 'GET'
-      }, { retryOnUnauthorized: false })
+      const response = await authFetch(
+        buildApiUrl('/api/auth/me'),
+        {
+          method: 'GET'
+        },
+        { retryOnUnauthorized: false }
+      )
 
       if (!response.ok) {
         setUser(null)

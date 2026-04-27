@@ -19,7 +19,8 @@ async function getAuthContext(request: NextRequest) {
   if (!token) return null
   try {
     const payload = await verifyToken(token)
-    const encKey = request.cookies.get(getAuthCookieNames().encKey)?.value ?? null
+    const encKey =
+      request.cookies.get(getAuthCookieNames().encKey)?.value ?? null
     return { userId: payload.userId, encKey }
   } catch {
     return null
@@ -31,20 +32,28 @@ export const GET = withDatabase(async (request: NextRequest, db) => {
   try {
     const auth = await getAuthContext(request)
     if (!auth) return NextResponse.json({ error: '未登录' }, { status: 401 })
-    if (!auth.encKey) return NextResponse.json({ error: '缺少加密密钥，请重新登录' }, { status: 401 })
+    if (!auth.encKey)
+      return NextResponse.json(
+        { error: '缺少加密密钥，请重新登录' },
+        { status: 401 }
+      )
 
-    const user = await db.collection('users').findOne({ _id: new ObjectId(auth.userId) })
-    if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 })
+    const user = await db
+      .collection('users')
+      .findOne({ _id: new ObjectId(auth.userId) })
+    if (!user)
+      return NextResponse.json({ error: '用户不存在' }, { status: 404 })
 
     if (!user.customApiConfig) {
       return NextResponse.json({ success: true, hasConfig: false })
     }
 
     try {
-      const decrypted = await decryptObject<{ baseUrl: string; apiKey: string; model?: string }>(
-        user.customApiConfig,
-        auth.encKey
-      )
+      const decrypted = await decryptObject<{
+        baseUrl: string
+        apiKey: string
+        model?: string
+      }>(user.customApiConfig, auth.encKey)
       return NextResponse.json({
         success: true,
         hasConfig: true,
@@ -65,20 +74,32 @@ export const POST = withDatabase(async (request: NextRequest, db) => {
   try {
     const auth = await getAuthContext(request)
     if (!auth) return NextResponse.json({ error: '未登录' }, { status: 401 })
-    if (!auth.encKey) return NextResponse.json({ error: '缺少加密密钥，请重新登录' }, { status: 401 })
+    if (!auth.encKey)
+      return NextResponse.json(
+        { error: '缺少加密密钥，请重新登录' },
+        { status: 401 }
+      )
 
     const body = await request.json()
     const result = saveSchema.safeParse(body)
     if (!result.success)
-      return NextResponse.json({ error: result.error.issues[0].message }, { status: 400 })
+      return NextResponse.json(
+        { error: result.error.issues[0].message },
+        { status: 400 }
+      )
 
     const { baseUrl, apiKey, model } = result.data
-    const encrypted = await encryptObject({ baseUrl, apiKey, model }, auth.encKey)
-
-    await db.collection('users').updateOne(
-      { _id: new ObjectId(auth.userId) },
-      { $set: { customApiConfig: encrypted, updatedAt: new Date() } }
+    const encrypted = await encryptObject(
+      { baseUrl, apiKey, model },
+      auth.encKey
     )
+
+    await db
+      .collection('users')
+      .updateOne(
+        { _id: new ObjectId(auth.userId) },
+        { $set: { customApiConfig: encrypted, updatedAt: new Date() } }
+      )
 
     return NextResponse.json({ success: true, message: '凭据已保存' })
   } catch (error) {
@@ -93,10 +114,12 @@ export const DELETE = withDatabase(async (request: NextRequest, db) => {
     const auth = await getAuthContext(request)
     if (!auth) return NextResponse.json({ error: '未登录' }, { status: 401 })
 
-    await db.collection('users').updateOne(
-      { _id: new ObjectId(auth.userId) },
-      { $unset: { customApiConfig: '' }, $set: { updatedAt: new Date() } }
-    )
+    await db
+      .collection('users')
+      .updateOne(
+        { _id: new ObjectId(auth.userId) },
+        { $unset: { customApiConfig: '' }, $set: { updatedAt: new Date() } }
+      )
 
     return NextResponse.json({ success: true, message: '凭据已删除' })
   } catch (error) {

@@ -46,7 +46,7 @@ export default function FileUploader({
     if (isText || isDocx) {
       try {
         const decoded = await decodeTextFromFile(selectedFile)
-        if (!decoded || !decoded.trim()) {
+        if (!decoded?.trim()) {
           toast.error('无法从文件中提取文本')
           return
         }

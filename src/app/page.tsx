@@ -11,12 +11,13 @@ import AnalysisOptions from '@/components/features/analysis/analysis-options'
 import WriterScoreResult from '@/components/features/analysis/score-result'
 import AnimatedBackground from '@/components/common/animated-background'
 import FeaturesSection from '@/components/sections/features-section'
-import CustomApiCard, { type CustomApiConfig } from '@/components/features/analysis/custom-api-card'
+import CustomApiCard, {
+  type CustomApiConfig
+} from '@/components/features/analysis/custom-api-card'
 import { calculateOverallScore } from '@/utils/score-calculator'
 import { useFingerprint } from '@/hooks/use-fingerprint'
 import { buildApiUrl } from '@/utils/api-url'
 import type { CapWidgetRef } from '@/components/wed/cap-widget'
-import { authFetch } from '@/utils/auth-client'
 
 const isCaptchaEnabled = process.env.NEXT_PUBLIC_CAP_ENABLED === 'true'
 
@@ -92,7 +93,8 @@ export default function WriterAnalysisPage() {
   })
 
   const [captchaToken, setCaptchaToken] = useState('')
-  const [customApiConfig, setCustomApiConfig] = useState<CustomApiConfig | null>(null)
+  const [customApiConfig, setCustomApiConfig] =
+    useState<CustomApiConfig | null>(null)
 
   const fetchLimits = useCallback(async () => {
     if (!fingerprint) return
@@ -104,7 +106,10 @@ export default function WriterAnalysisPage() {
       const url = new URL(buildApiUrl('/api/limits'), window.location.origin)
       url.searchParams.append('_t', Date.now().toString())
 
-      const res = await fetch(url.toString(), { headers, credentials: 'include' })
+      const res = await fetch(url.toString(), {
+        headers,
+        credentials: 'include'
+      })
       if (res.ok) {
         const data = (await res.json()) as LimitsResponse
         setUsageInfo({
@@ -220,6 +225,9 @@ export default function WriterAnalysisPage() {
           formData.append('tempApiKey', customApiConfig.apiKey)
           if (customApiConfig.model) {
             formData.append('tempApiModel', customApiConfig.model)
+          }
+          if (customApiConfig.structuredOutput) {
+            formData.append('tempStructuredOutput', 'true')
           }
         }
 

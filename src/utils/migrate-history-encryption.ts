@@ -45,10 +45,14 @@ export async function migrateHistoryEncryption(
     )
   )
     .filter(
-      (r): r is PromiseFulfilledResult<{ id: ObjectId; encryptedResult: string } | null> =>
-        r.status === 'fulfilled' && r.value !== null
+      (
+        r
+      ): r is PromiseFulfilledResult<{
+        id: ObjectId
+        encryptedResult: string
+      } | null> => r.status === 'fulfilled' && r.value !== null
     )
-    .map((r) => r.value!)
+    .map((r) => r.value as { id: ObjectId; encryptedResult: string })
 
   if (ops.length > 0) {
     await Promise.all(

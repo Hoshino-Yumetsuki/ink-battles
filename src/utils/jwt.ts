@@ -121,7 +121,7 @@ export function getRefreshTokenExpiresIn(): number {
  * 必须符合 "Bearer <token>" 格式
  */
 export function extractToken(authHeader: string | null): string | null {
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!authHeader?.startsWith('Bearer ')) {
     return null
   }
   return authHeader.substring(7)

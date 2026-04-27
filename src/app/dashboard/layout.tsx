@@ -17,10 +17,7 @@ import AnimatedBackground from '@/components/common/animated-background'
 import { UserProvider, useUser } from '@/components/providers/user-context'
 import { compressImage } from '@/utils/image-compressor'
 import { buildApiUrl } from '@/utils/api-url'
-import {
-  authFetch,
-  clearAuthStorage
-} from '@/utils/auth-client'
+import { authFetch, clearAuthStorage } from '@/utils/auth-client'
 
 function HomeGridIcon() {
   return (
@@ -117,7 +114,7 @@ function DashboardShell({ children }: { children: ReactNode }) {
         event.target.value = ''
       }
     },
-    [router, setUser]
+    [setUser]
   )
 
   const navItems = [
