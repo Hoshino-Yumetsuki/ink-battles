@@ -12,12 +12,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AlertTriangle, Trash2, X } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { buildApiUrl } from '@/utils/api-url'
 import { authFetch, clearAuthStorage } from '@/utils/auth-client'
 
 export function DeleteAccountForm() {
-  const _router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')

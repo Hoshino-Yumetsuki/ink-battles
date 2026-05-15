@@ -1,4 +1,3 @@
-import type { NextRequest } from 'next/server'
 import { type Db, type MongoClient, ObjectId } from 'mongodb'
 import { getDatabase, closeDatabaseConnection } from './mongodb'
 import { logger } from './logger'
@@ -12,7 +11,7 @@ interface RateLimitRecord {
   maxRequests: number
 }
 
-function extractFingerprint(request: NextRequest): string | null {
+function extractFingerprint(request: Request): string | null {
   return request.headers.get('x-fingerprint')
 }
 
@@ -36,7 +35,7 @@ function formatWaitTime(seconds: number): string {
 }
 
 export async function checkRateLimit(
-  request: NextRequest,
+  request: Request,
   sharedDb?: { db: Db; client: MongoClient },
   userId?: string
 ): Promise<{

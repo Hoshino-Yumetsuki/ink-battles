@@ -7,7 +7,7 @@ import { CapWidget, type CapWidgetRef } from '@/components/wed/cap-widget'
 import { buildApiUrl } from '@/utils/api-url'
 import { authFetch } from '@/utils/auth-client'
 
-const isCaptchaEnabled = process.env.NEXT_PUBLIC_CAP_ENABLED === 'true'
+const isCaptchaEnabled = import.meta.env.VITE_CAP_ENABLED === 'true'
 
 interface ChangePasswordFormProps {
   onSuccess: () => void

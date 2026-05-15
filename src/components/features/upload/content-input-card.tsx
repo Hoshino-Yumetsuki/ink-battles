@@ -4,7 +4,6 @@ import { useState, useEffect, type RefObject } from 'react'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import Image from 'next/image'
 import {
   Card,
   CardContent,
@@ -20,7 +19,6 @@ import {
   FileText,
   Clock
 } from 'lucide-react'
-import Link from 'next/link'
 import { compressImage, toReadableSize } from '@/utils/image-compressor'
 import { decodeTextFromFile } from '@/utils/decode-text'
 import { CapWidget, type CapWidgetRef } from '@/components/wed/cap-widget'
@@ -236,18 +234,18 @@ export default function ContentInputCard({
               )}
               {!usageInfo?.isLoggedIn ? (
                 <div className="flex gap-3 text-sm font-medium ml-auto">
-                  <Link
+                  <a
                     href="/login"
                     className="text-blue-600 hover:text-blue-700 hover:underline"
                   >
                     登录
-                  </Link>
-                  <Link
+                  </a>
+                  <a
                     href="/register"
                     className="text-blue-600 hover:text-blue-700 hover:underline"
                   >
                     注册
-                  </Link>
+                  </a>
                 </div>
               ) : (
                 <div className="text-xs text-muted-foreground ml-auto">
@@ -297,10 +295,9 @@ export default function ContentInputCard({
               {previewUrl && file.type.startsWith('image/') ? (
                 <div className="relative w-full h-full flex flex-col items-center justify-center min-h-50">
                   <div className="relative w-full flex-1 min-h-50 mb-4">
-                    <Image
+                    <img
                       src={previewUrl}
                       alt="Preview"
-                      fill
                       className="object-contain"
                     />
                   </div>

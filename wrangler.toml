@@ -1,9 +1,13 @@
-main = ".open-next/worker.js"
+main = "dist/worker/index.js"
 name = "ink-battles"
-compatibility_date = "2025-07-14"
+compatibility_date = "2026-05-01"
 compatibility_flags = ["nodejs_compat"]
+
 [assets]
-directory = ".open-next/assets"
+directory = "dist/client"
 binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
 [observability]
 enabled = true

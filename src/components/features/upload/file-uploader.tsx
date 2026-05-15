@@ -5,7 +5,6 @@ import { useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
-import Image from 'next/image'
 import { decodeTextFromFile } from '@/utils/decode-text'
 import { UploadCloud, X, FileText, Loader2, Sparkles } from 'lucide-react'
 import { cn } from '@/utils/utils'
@@ -149,10 +148,9 @@ export default function FileUploader({
           <div className="w-full h-full flex flex-col items-center justify-center">
             {previewUrl ? (
               <div className="relative w-full h-full min-h-50 flex items-center justify-center">
-                <Image
+                <img
                   src={previewUrl}
                   alt="预览图片"
-                  fill
                   style={{ objectFit: 'contain' }}
                   className="rounded-lg shadow-sm"
                 />

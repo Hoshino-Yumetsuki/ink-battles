@@ -1,65 +1,79 @@
 # Ink Battles
 
 ## 项目简介
-Ink Battles 是一个AI写作作品分析平台。它允许用户输入文本或上传包含文字的图片，从多个维度对作品进行量化评分，并给出改进建议，帮助作者提升创作质量。
+Ink Battles 是一个 AI 写作作品分析平台。它允许用户输入文本或上传包含文字的图片，从多个维度对作品进行量化评分，并给出改进建议，帮助作者提升创作质量。
 
 ## 主要功能
-1. **文本 / 图片输入**：支持直接粘贴文本，也支持上传图片并通过 `GPT-4o` 、 `Gemini` 或者其它支持 Vision 的模型的识别能力识别文本内容。
-2. **多维度评分**：对作品在"人物塑造力、结构复杂度、情节反转密度、情感穿透力、文体魅力、先锋性 / 实验性"等维度进行 1-5 分打分，并给出总分、评价标签及自定义标题。
+1. **文本 / 图片输入**：支持直接粘贴文本，也支持上传图片并通过 `GPT-4o`、`Gemini` 或其它支持 Vision 的模型识别文本内容。
+2. **多维度评分**：对作品在人物塑造力、结构复杂度、情节反转密度、情感穿透力、文体魅力、先锋性 / 实验性等维度打分。
 3. **可配置分析选项**：可开启初始评分、成稿质量评估、内容审核、文本风格检测、热点话题分析、评审等分析模块。
 
 ## Playground
 
-快来试试我们的在线实例：https://ink-battles.yumetsuki.moe/
+在线实例：https://ink-battles.yumetsuki.moe/
+
+## 技术栈
+
+- Vite + React SPA
+- Elysia API
+- Cloudflare Workers + Rolldown worker build
+- Yarn 4
 
 ## 环境变量
-在根目录创建 `.env` 并填入：
+在根目录创建 `.env` 并填入。浏览器可见变量必须使用 `VITE_` 前缀，服务端密钥保持为 Worker 环境变量或 Wrangler secret。
+
 ```
-# OpenAI 相关
+# 客户端公开变量
+VITE_API_BASE_URL=
+VITE_CAP_ENABLED=false
+
+# 服务端密钥和业务配置
 OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-# 如需自定义代理或兼容 Azure，可设置：
 OPENAI_BASE_URL=https://api.openai.com/v1
-
-# 指定模型 (可选，默认 gemini-3.1-pro-preview)
 MODEL=gemini-3.1-pro-preview
-
-# 启用流式响应 (可选，默认 false)
-# 当设置为 true 时，在调用 AI API 时将使用流式模式
-# 并等待完全响应后再返回内容给前端
 USE_STREAMING=false
+MONGODB_URI=
+MONGODB_DB_NAME=ink-battles
+JWT_SECRET=
 ```
 
 ## 快速开始
-### 1. 克隆并安装依赖
+
+### 1. 安装依赖
+
 ```bash
-# 使用 pnpm / npm 亦可
-$ yarn install
+yarn install
 ```
 
 ### 2. 本地开发
+
 ```bash
-$ yarn dev          # 默认在 http://localhost:3000 运行
+yarn dev
 ```
 
 ### 3. 生产构建
+
 ```bash
-$ yarn build        # 生成 .next 产物
-$ yarn start        # 以生产模式启动
+yarn build
 ```
 
-### 4. Docker 一键运行
-如果你更喜欢容器化部署：
+### 4. 本地预览
+
 ```bash
-$ docker build -t ink-battles .
-$ docker run -p 3000:3000 \
-  -e OPENAI_API_KEY=$OPENAI_API_KEY \
-  ink-battles
+yarn preview
 ```
 
-## TODO
-等待 opennextjs 适配 Next 16 的 proxy
+### 5. 部署
+
+```bash
+yarn deploy
+```
+
+### 6. Cloudflare 类型生成
+
+```bash
+yarn cf-typegen
+```
 
 ## 许可证
 本项目基于 **MIT License** 开源
-

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.13/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.15/schema.json",
   "root": true,
   "vcs": {
     "enabled": true,
@@ -11,7 +11,10 @@
     "ignoreUnknown": false,
     "includes": [
       "**",
-      "!!**/*.lock"
+      "!!**/*.lock",
+      "!!cloudflare-env.d.ts",
+      "!!dist",
+      "!!.sisyphus"
     ]
   },
   "formatter": {

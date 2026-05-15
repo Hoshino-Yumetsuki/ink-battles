@@ -44,3 +44,9 @@ yarn-error.log*
 next-env.d.ts
 
 .wrangler
+.sisyphus
+superpowers
+migration
+dist
+cloudflare-env.d.ts
+.playwright-mcp

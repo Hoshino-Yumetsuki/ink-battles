@@ -17,10 +17,8 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
+    "types": [
+      "vite/client"
     ],
     "paths": {
       "@/*": [
@@ -29,15 +27,9 @@
     }
   },
   "include": [
-    "next-env.d.ts",
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "next.config.ts",
-    "open-next.config.ts",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    ".next\\dev/types/**/*.ts",
-    ".next\\dev/types/**/*.ts"
+    "src",
+    "vite.config.ts",
+    "cloudflare-env.d.ts"
   ],
   "exclude": [
     "node_modules"

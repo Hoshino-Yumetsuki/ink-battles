@@ -1,6 +1,6 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { usePathname } from '@/client/navigation'
 
 export default function Footer() {
   const pathname = usePathname()

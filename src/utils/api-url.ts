@@ -1,4 +1,4 @@
-const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || ''
+const apiBase = import.meta.env.VITE_API_BASE_URL?.trim() || ''
 
 export function buildApiUrl(path: string): string {
   if (!apiBase) {

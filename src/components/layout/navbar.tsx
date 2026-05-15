@@ -1,8 +1,6 @@
 'use client'
 
-import Link from 'next/link'
-import Image from 'next/image'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter } from '@/client/navigation'
 import { ThemeSwitcher } from '@/components/common/theme-switcher'
 import { Button } from '@/components/ui/button'
 import {
@@ -153,7 +151,7 @@ export default function Navbar() {
             <ul className="flex items-center gap-6">
               {navItems.map((item) => (
                 <li key={item.path}>
-                  <Link
+                  <a
                     href={item.path}
                     className={`transition-colors hover:text-blue-600 ${
                       pathname === item.path
@@ -162,7 +160,7 @@ export default function Navbar() {
                     }`}
                   >
                     {item.label}
-                  </Link>
+                  </a>
                 </li>
               ))}
             </ul>
@@ -177,11 +175,10 @@ export default function Navbar() {
                     className="relative h-10 w-10 rounded-full p-0 overflow-hidden"
                   >
                     {avatar ? (
-                      <Image
+                      <img
                         src={avatar}
                         alt="User Avatar"
-                        fill
-                        className="object-cover"
+                        className="h-full w-full object-cover"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-muted">

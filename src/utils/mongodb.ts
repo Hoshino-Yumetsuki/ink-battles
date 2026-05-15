@@ -1,4 +1,3 @@
-import type { NextRequest } from 'next/server'
 import { MongoClient, type Db } from 'mongodb'
 import { logger } from './logger'
 
@@ -42,9 +41,9 @@ export async function getDatabase(dbName: string = 'ink-battles') {
 }
 
 export function withDatabase<T = Response>(
-  handler: (request: NextRequest, db: Db, client: MongoClient) => Promise<T>
+  handler: (request: Request, db: Db, client: MongoClient) => Promise<T>
 ) {
-  return async (request: NextRequest): Promise<T> => {
+  return async (request: Request): Promise<T> => {
     let client: MongoClient | undefined
 
     try {
@@ -63,12 +62,12 @@ export function withDatabase<T = Response>(
 
 export function withOptionalDatabase<T = Response>(
   handler: (
-    request: NextRequest,
+    request: Request,
     db: Db | null,
     client: MongoClient | null
   ) => Promise<T>
 ) {
-  return async (request: NextRequest): Promise<T> => {
+  return async (request: Request): Promise<T> => {
     let client: MongoClient | null = null
     let db: Db | null = null
 

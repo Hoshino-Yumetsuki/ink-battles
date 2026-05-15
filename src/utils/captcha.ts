@@ -4,6 +4,7 @@ import type { Db } from 'mongodb'
 
 export function createCapInstance(db: Db): Cap {
   return new Cap({
+    noFSState: true,
     storage: {
       challenges: {
         store: async (token, challengeData) => {
