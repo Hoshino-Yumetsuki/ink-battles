@@ -27,17 +27,6 @@ jobs:
           corepack prepare
           yarn install --immutable
 
-      - name: Cache Next.js and OpenNext build
-        uses: actions/cache@v5.0.1
-        with:
-          path: |
-            ${{ github.workspace }}/.next/cache
-            ${{ github.workspace }}/.open-next
-          key: ${{ runner.os }}-nextjs-opennext-${{ hashFiles('**/yarn.lock') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-opennext-${{ hashFiles('**/yarn.lock') }}-
-            ${{ runner.os }}-nextjs-opennext-
-
       - name: Build and Deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
