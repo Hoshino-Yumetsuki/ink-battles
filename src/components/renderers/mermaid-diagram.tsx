@@ -16,7 +16,7 @@ export default function MermaidDiagram({
 }: MermaidDiagramProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [error, setError] = useState<string | null>(null)
-  const [_isRendered, setIsRendered] = useState(false)
+  const [, setIsRendered] = useState(false)
   const [isZoomed, setIsZoomed] = useState(false)
   const [mounted, setMounted] = useState(false)
 
@@ -39,12 +39,9 @@ export default function MermaidDiagram({
           fontFamily: 'inherit'
         })
 
-        if (containerRef.current) {
-          containerRef.current.innerHTML = ''
-        }
+        containerRef.current.innerHTML = ''
 
         const id = `mermaid-${Math.random().toString(36).slice(2, 11)}`
-
         const { svg } = await mermaid.render(id, chart.trim())
 
         if (containerRef.current) {

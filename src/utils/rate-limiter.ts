@@ -97,7 +97,6 @@ export async function checkRateLimit(
           // 配额减少，调整已使用数不超过新配额
           newUsed = Math.min(usage.used, rateLimitConfig.maxRequestsUser)
         }
-        // 如果配额增加，保持当前使用数不变
 
         await usersCollection.updateOne(
           { _id: user._id },
@@ -131,7 +130,6 @@ export async function checkRateLimit(
         }
       }
 
-      // 检查是否超限（使用更新后的 usage.limit 和 usage.used）
       if (usage.used >= (usage.limit || rateLimitConfig.maxRequestsUser)) {
         const resetTime = usage.resetTime
           ? new Date(usage.resetTime)
@@ -176,7 +174,6 @@ export async function checkRateLimit(
       { expireAfterSeconds: rateLimitConfig.windowSeconds * 2 }
     )
 
-    // 清理所有过期的速率限制记录
     await cleanExpiredRecords(db, windowStart)
 
     const record = await collection.findOne({ fingerprint: identifier })
@@ -206,7 +203,6 @@ export async function checkRateLimit(
           rateLimitConfig.maxRequestsGuest
         )
       }
-      // 如果配额增加，保持当前计数不变
 
       await collection.updateOne(
         { fingerprint: identifier },
@@ -218,7 +214,6 @@ export async function checkRateLimit(
         }
       )
 
-      // 更新内存中的record对象以便后续检查
       record.maxRequests = rateLimitConfig.maxRequestsGuest
       record.requestCount = newRequestCount
 
@@ -284,14 +279,12 @@ export async function checkRateLimit(
 }
 
 export async function incrementRateLimit(
-  descriptor: string | null,
+  identifier: string | null,
   sharedDb?: { db: Db; client: MongoClient }
 ): Promise<void> {
   if (!rateLimitConfig.enabled) {
     return
   }
-
-  const identifier = descriptor
 
   if (!identifier) {
     logger.warn('Cannot increment rate limit: identifier is missing')
@@ -331,7 +324,6 @@ export async function incrementRateLimit(
           const shouldReset = !currentResetTime || currentResetTime < now
 
           if (shouldReset) {
-            // 新窗口
             await usersCollection.updateOne(
               { _id: new ObjectId(userId) },
               {
@@ -346,7 +338,6 @@ export async function incrementRateLimit(
               }
             )
           } else {
-            // 现有窗口增加计数
             await usersCollection.updateOne(
               { _id: new ObjectId(userId) },
               {
@@ -354,7 +345,6 @@ export async function incrementRateLimit(
                   'usage.used': 1,
                   totalAnalysisCount: 1
                 },
-                // 确保 limit 即使配置变更也是最新的
                 $set: {
                   'usage.limit': rateLimitConfig.maxRequestsUser
                 }
@@ -372,11 +362,10 @@ export async function incrementRateLimit(
       now.getTime() - rateLimitConfig.windowSeconds * 1000
     )
 
-    // 查找当前用户的记录
+    // 查找当前记录
     const record = await collection.findOne({ fingerprint: identifier })
 
     if (!record || record.windowStart < windowStart) {
-      // 首次请求或时间窗口已过期，创建新记录
       const newRecord = {
         fingerprint: identifier,
         lastRequest: now,
@@ -393,7 +382,6 @@ export async function incrementRateLimit(
         fingerprint: identifier
       })
     } else {
-      // 增加计数
       await collection.updateOne(
         { fingerprint: identifier },
         {
@@ -416,18 +404,12 @@ export async function incrementRateLimit(
   }
 }
 
-/**
- * 清理所有过期的记录（速率限制和访问记录）
- */
 async function cleanExpiredRecords(db: Db, windowStart: Date) {
   try {
-    // 批量清理过期记录：速率限制记录和访问记录
     const [rateLimitResult, visitsResult] = await Promise.all([
-      // 清理过期的速率限制记录
       db.collection('rate_limits').deleteMany({
         windowStart: { $lt: windowStart }
       }),
-      // 清理超过时间窗口的访问记录（与速率限制使用相同的过期时间）
       db.collection('visits').deleteMany({
         timestamp: { $lt: windowStart }
       })

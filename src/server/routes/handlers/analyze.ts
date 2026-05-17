@@ -635,11 +635,10 @@ function isValidLlmApiConfig(config: LlmApiConfig): boolean {
   return Boolean(config.apiKey)
 }
 
-export const maxDuration = 300 // 最大执行时间 5 分钟
+export const maxDuration = 300
 
 export const POST = withDatabase(
   async (request: Request, db: Db, dbClient: MongoClient) => {
-    // 1. 先尝试认证用户
     let userId: string | undefined
     const token = extractAccessTokenFromRequest(request, 'authorization')
 
@@ -652,7 +651,6 @@ export const POST = withDatabase(
       }
     }
 
-    // 2. 尝试读取用户自定义 API 配置
     let userApiConfig: {
       baseUrl: string
       apiKey: string
@@ -674,12 +672,10 @@ export const POST = withDatabase(
           }
         }
       } catch {
-        // 解密失败，回退到默认配置
         userApiConfig = null
       }
     }
 
-    // 3. 限流：有自定义 API 配置的用户跳过限流
     let rateLimitResult: {
       allowed: boolean
       remainingRequests?: number
@@ -690,10 +686,8 @@ export const POST = withDatabase(
     let identifier: string | undefined
 
     if (userApiConfig) {
-      // 使用自定义 API 配置的用户跳过限流
       rateLimitResult = { allowed: true }
     } else if (userId) {
-      // 已登录用户：直接进行限流检查，使用 userId 作为标识
       rateLimitResult = await checkRateLimit(
         request,
         { db, client: dbClient },
@@ -701,7 +695,6 @@ export const POST = withDatabase(
       )
       identifier = rateLimitResult.identifier
     } else {
-      // 匿名用户：使用指纹进行限流检查
       rateLimitResult = await checkRateLimit(request, { db, client: dbClient })
       identifier = rateLimitResult.identifier
     }
@@ -746,17 +739,14 @@ export const POST = withDatabase(
     const options = optionsJson ? JSON.parse(optionsJson) : {}
     const captchaToken = formData.get('captchaToken') as string | null
 
-    // 未登录用户可传临时凭据（仅本次有效，不存储）
     const tempApiBaseUrl = formData.get('tempApiBaseUrl') as string | null
     const tempApiKey = formData.get('tempApiKey') as string | null
     const tempApiModel = formData.get('tempApiModel') as string | null
     const tempStructuredOutput = formData.get('tempStructuredOutput') === 'true'
 
-    // 从 httpOnly cookie 读取加密密钥（不再接受前端传入的 password）
     const encKeyCookieName = getAuthCookieNames().encKey
     const encKey = readCookie(request, encKeyCookieName) || null
 
-    // 人机验证（如已启用）
     if (isCaptchaEnabled()) {
       if (!captchaToken) {
         return new Response(
@@ -808,7 +798,7 @@ export const POST = withDatabase(
       )
     }
 
-    // 构建 apiConfig：优先级 用户DB配置 > 未登录临时配置 > 服务端默认配置
+    // Priority: user DB config > anonymous temp config > server default
     let apiConfig: LlmApiConfig
     if (userApiConfig?.apiKey) {
       apiConfig = {
@@ -969,11 +959,9 @@ export const POST = withDatabase(
             )
           }
 
-          // 计算总评分并添加到结果中
           const score = calculateOverallScore(parsedResult.dimensions)
           parsedResult.overallScore = score
 
-          // 加密并存储结果 (仅对已登录用户)
           if (userId && encKey) {
             let saveClient: MongoClient | undefined
             try {
@@ -1006,7 +994,6 @@ export const POST = withDatabase(
             )
           }
 
-          // 返回纯净的 JSON 对象给前端
           const resultMsg = `${JSON.stringify({
             type: 'result',
             success: true,

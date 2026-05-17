@@ -35,10 +35,8 @@ export const POST = withDatabase(async (req: Request, db) => {
   try {
     const body = await req.json()
 
-    // Zod 验证
     const result = registerSchema.safeParse(body)
     if (!result.success) {
-      // 返回第一个错误信息
       const errorMsg = result.error.issues[0]?.message || '无效的输入格式'
       return json({ error: errorMsg }, { status: 400 })
     }
@@ -52,14 +50,11 @@ export const POST = withDatabase(async (req: Request, db) => {
     } = result.data
     const username = sanitize(rawUsername)
 
-    // 检查是否启用 CAPTCHA 验证
     if (isCaptchaEnabled() && !captchaToken) {
       return json({ error: '请完成人机验证' }, { status: 400 })
     }
 
-    // 如果启用了 CAPTCHA，验证 token
     if (isCaptchaEnabled()) {
-      // captchaToken 已经被 zod 验证为 string | undefined，非空检查在上面
       const isCaptchaValid = await verifyCaptchaWithDb(
         captchaToken as string,
         db
@@ -72,7 +67,6 @@ export const POST = withDatabase(async (req: Request, db) => {
     const usersCollection = db.collection('users')
     const verificationsCollection = db.collection('email_verifications')
 
-    // 验证验证码
     const verification = await verificationsCollection.findOne({ email, code })
     if (!verification) {
       return json({ error: '验证码无效或错误' }, { status: 400 })
@@ -82,22 +76,18 @@ export const POST = withDatabase(async (req: Request, db) => {
       return json({ error: '验证码已过期，请重新获取' }, { status: 400 })
     }
 
-    // 检查用户名是否已存在
     const existingUser = await usersCollection.findOne({ username })
     if (existingUser) {
       return json({ error: '注册失败，请检查输入信息' }, { status: 409 })
     }
 
-    // 检查邮箱是否已存在
     const existingEmail = await usersCollection.findOne({ email })
     if (existingEmail) {
       return json({ error: '注册失败，请检查输入信息' }, { status: 409 })
     }
 
-    // 哈希密码
     const hashedPassword = await hash(password, 12)
 
-    // 创建用户
     const insertResult = await usersCollection.insertOne({
       username,
       email,
@@ -107,7 +97,6 @@ export const POST = withDatabase(async (req: Request, db) => {
       isEmailVerified: true
     })
 
-    // 删除已使用的验证码
     await verificationsCollection.deleteOne({ _id: verification._id })
 
     const token = await signToken({

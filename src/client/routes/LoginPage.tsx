@@ -34,11 +34,6 @@ export function LoginPage() {
       return
     }
 
-    // if (!fingerprint) {
-    //   setError('浏览器指纹获取失败，请刷新页面重试');
-    //   return;
-    // }
-
     setLoading(true)
 
     try {
@@ -63,21 +58,15 @@ export function LoginPage() {
       }
 
       if (!response.ok) {
-        // If login failed, the token is likely invalid/consumed, so reset it
+        // Token is consumed on failed attempt, reset to allow re-solve
         setCaptchaToken('')
-        // Reset the Cap widget to allow user to solve again
         if (isCaptchaEnabled) {
           capWidgetRef.current?.reset()
         }
         throw new Error(data.error || '登录失败')
       }
 
-      // token 和加密密钥现在通过 httpOnly cookie 管理，无需前端存储
-
-      // Dispatch event to notify other components to update auth state
       window.dispatchEvent(new Event('auth-change'))
-
-      // 跳转到首页
       router.push('/')
     } catch (err: any) {
       setError(err.message)

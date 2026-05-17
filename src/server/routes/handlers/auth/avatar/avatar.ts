@@ -15,7 +15,6 @@ const ALLOWED_AVATAR_MIME_PREFIXES = [
 
 export const POST = withDatabase(async (req: Request, db) => {
   try {
-    // 提取并验证token
     const token = extractAccessTokenFromRequest(req, 'authorization')
 
     if (!token) {
@@ -30,13 +29,11 @@ export const POST = withDatabase(async (req: Request, db) => {
       return json({ error: '未提供头像数据' }, { status: 400 })
     }
 
-    // 服务端大小检查 (Base64 string length roughly represents size * 1.33)
-    // 50KB * 1.33 ≈ 68KB characters
+    // 50KB base64 ≈ 68K chars, cap at 70K
     if (avatar.length > 70000) {
       return json({ error: '头像文件过大（超过50KB）' }, { status: 400 })
     }
 
-    // Validate that the data URI is actually an image type
     const isValidImageDataUri = ALLOWED_AVATAR_MIME_PREFIXES.some((prefix) =>
       avatar.startsWith(prefix)
     )

@@ -22,53 +22,37 @@ export const POST = withDatabase(async (request: Request, db) => {
 
     const { email, captchaToken } = result.data
 
-    // 检查是否启用 CAPTCHA 验证
     const captchaEnabled = isCaptchaEnabled()
-    logger.info(
-      `[verify-email] CAPTCHA enabled: ${captchaEnabled}, Token provided: ${!!captchaToken}`
-    )
 
     if (captchaEnabled && !captchaToken) {
-      logger.warn('[verify-email] CAPTCHA enabled but no token provided')
       return json({ error: '请完成人机验证' }, { status: 400 })
     }
 
-    // 如果启用了 CAPTCHA，验证 token
     if (captchaEnabled) {
-      logger.info('[verify-email] Verifying CAPTCHA token...')
       const isCaptchaValid = await verifyCaptchaWithDb(
         captchaToken as string,
         db
       )
-      logger.info('[verify-email] CAPTCHA verification result', {
-        valid: isCaptchaValid
-      })
       if (!isCaptchaValid) {
         return json({ error: '人机验证失败，请重试' }, { status: 400 })
       }
     }
 
-    // 检查邮箱是否已被注册
     // 无论是否已注册，都返回成功以防止用户枚举
     const existingUser = await db.collection('users').findOne({ email })
     if (existingUser) {
       return json({ success: true, message: '验证码已发送' })
     }
 
-    // 生成6位数字验证码 (使用安全的随机数生成器)
     const code = randomInt(100000, 1000000).toString()
 
-    // 保存验证码到数据库
-    // 设置过期时间为10分钟后
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
 
-    // 确保存储验证码的集合有 TTL 索引
-    // 这里异步创建索引，不阻塞主流程，如果已存在则忽略
+    // TTL index - async, non-blocking
     db.collection('email_verifications')
       .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 })
       .catch((err) => logger.error('Failed to create TTL index', err))
 
-    // 更新或插入验证码
     await db.collection('email_verifications').updateOne(
       { email },
       {
@@ -81,7 +65,6 @@ export const POST = withDatabase(async (request: Request, db) => {
       { upsert: true }
     )
 
-    // 发送邮件
     const emailSent = await sendVerificationEmail(email, code)
 
     if (!emailSent) {

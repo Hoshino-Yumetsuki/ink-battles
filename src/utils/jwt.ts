@@ -48,11 +48,6 @@ export interface JWTPayload {
   exp?: number
 }
 
-/**
- * 生成JWT token
- * @param payload 载荷数据
- * @param expiresIn 过期时间（秒），默认7天
- */
 export async function signToken(
   payload: Omit<JWTPayload, 'iat' | 'exp'>,
   expiresIn: number = getAccessTokenTtlSeconds()
@@ -66,11 +61,6 @@ export async function signToken(
   return token
 }
 
-/**
- * 验证JWT token
- * @param token JWT token
- * @returns 解析后的载荷
- */
 export async function verifyToken(token: string): Promise<JWTPayload> {
   try {
     const { payload } = await jwtVerify(token, secret)
@@ -120,10 +110,7 @@ export function getRefreshTokenExpiresIn(): number {
   return getRefreshTokenTtlSeconds()
 }
 
-/**
- * 从请求头中提取token
- * 必须符合 "Bearer <token>" 格式
- */
+/** 从请求头中提取token，必须符合 "Bearer <token>" 格式 */
 export function extractToken(authHeader: string | null): string | null {
   if (!authHeader?.startsWith('Bearer ')) {
     return null
