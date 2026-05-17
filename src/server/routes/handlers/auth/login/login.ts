@@ -21,7 +21,7 @@ import {
 import { migrateHistoryEncryption } from '@/utils/migrate-history-encryption'
 
 const loginSchema = z.object({
-  username: z.string().min(1, '用户名不能为空').trim(),
+  username: z.string().min(1, '用户名或邮箱不能为空').trim(),
   password: z.string().min(1, '密码不能为空'),
   captchaToken: z.string().optional()
 })
@@ -54,7 +54,12 @@ export const POST = withDatabase(async (req: Request, db) => {
     const username = sanitize(rawUsername)
     const usersCollection = db.collection('users')
 
-    const user = await usersCollection.findOne({ username })
+    const isEmail = username.includes('@')
+    const query = isEmail
+      ? { email: username.toLowerCase() }
+      : { username }
+
+    const user = await usersCollection.findOne(query)
     if (!user) {
       return json({ error: '用户名或密码错误' }, { status: 401 })
     }

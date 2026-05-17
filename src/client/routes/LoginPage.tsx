@@ -4,7 +4,7 @@ import { useState, useRef } from 'react'
 import { useRouter } from '@/client/navigation'
 import { Button } from '@/components/ui/button'
 import { AuthLayout } from '@/components/layout/auth-layout'
-import { User, Lock } from 'lucide-react'
+import { User, Lock, Mail } from 'lucide-react'
 import { CapWidget, type CapWidgetRef } from '@/components/wed/cap-widget'
 import { buildApiUrl } from '@/utils/api-url'
 
@@ -107,7 +107,11 @@ export function LoginPage() {
         <div className="space-y-4">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <User className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+              {username.includes('@') ? (
+                <Mail className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+              ) : (
+                <User className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+              )}
             </div>
             <input
               id="username"
@@ -115,7 +119,7 @@ export function LoginPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800 dark:text-white border border-transparent dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-zinc-800 transition-colors"
-              placeholder="请输入您的用户名"
+              placeholder="用户名或邮箱"
               disabled={loading}
             />
           </div>
