@@ -5,6 +5,14 @@ import { verifyToken } from '@/utils/jwt'
 import { logger } from '@/utils/logger'
 import { extractAccessTokenFromRequest } from '@/utils/auth-request'
 
+const ALLOWED_AVATAR_MIME_PREFIXES = [
+  'data:image/png',
+  'data:image/jpeg',
+  'data:image/gif',
+  'data:image/webp',
+  'data:image/svg+xml'
+]
+
 export const POST = withDatabase(async (req: Request, db) => {
   try {
     // 提取并验证token
@@ -26,6 +34,17 @@ export const POST = withDatabase(async (req: Request, db) => {
     // 50KB * 1.33 ≈ 68KB characters
     if (avatar.length > 70000) {
       return json({ error: '头像文件过大（超过50KB）' }, { status: 400 })
+    }
+
+    // Validate that the data URI is actually an image type
+    const isValidImageDataUri = ALLOWED_AVATAR_MIME_PREFIXES.some((prefix) =>
+      avatar.startsWith(prefix)
+    )
+    if (!isValidImageDataUri) {
+      return json(
+        { error: '头像格式无效，仅支持 PNG/JPEG/GIF/WebP/SVG 格式' },
+        { status: 400 }
+      )
     }
 
     const usersCollection = db.collection('users')

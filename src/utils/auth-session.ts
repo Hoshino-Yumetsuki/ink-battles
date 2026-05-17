@@ -163,7 +163,15 @@ export async function rotateRefreshSession(
     throw new Error('Refresh session not found')
   }
   if (existing.revokedAt) {
-    throw new Error('Refresh session revoked')
+    // Token reuse detected - potential theft. Revoke entire family.
+    logger.warn(
+      `Refresh token reuse detected for family ${existing.familyId}, user ${existing.userId}. Revoking all sessions in family.`
+    )
+    await collection.updateMany(
+      { familyId: existing.familyId, revokedAt: null },
+      { $set: { revokedAt: new Date(), updatedAt: new Date() } }
+    )
+    throw new Error('Refresh token reuse detected')
   }
   if (existing.expiresAt.getTime() <= Date.now()) {
     throw new Error('Refresh session expired')

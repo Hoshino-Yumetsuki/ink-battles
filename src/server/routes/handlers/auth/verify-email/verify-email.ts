@@ -49,9 +49,10 @@ export const POST = withDatabase(async (request: Request, db) => {
     }
 
     // 检查邮箱是否已被注册
+    // 无论是否已注册，都返回成功以防止用户枚举
     const existingUser = await db.collection('users').findOne({ email })
     if (existingUser) {
-      return json({ error: '该邮箱已被注册' }, { status: 400 })
+      return json({ success: true, message: '验证码已发送' })
     }
 
     // 生成6位数字验证码 (使用安全的随机数生成器)

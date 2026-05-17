@@ -35,7 +35,7 @@ export default function MermaidDiagram({
         mermaid.initialize({
           startOnLoad: false,
           theme: 'default',
-          securityLevel: 'loose',
+          securityLevel: 'strict',
           fontFamily: 'inherit'
         })
 

@@ -275,7 +275,7 @@ export async function checkRateLimit(
     }
   } catch (error) {
     logger.error('Error checking rate limit', error)
-    return { allowed: true }
+    return { allowed: false, error: 'Rate limit check failed' }
   } finally {
     if (shouldCloseConnection && client) {
       await closeDatabaseConnection(client)

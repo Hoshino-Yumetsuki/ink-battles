@@ -85,13 +85,13 @@ export const POST = withDatabase(async (req: Request, db) => {
     // 检查用户名是否已存在
     const existingUser = await usersCollection.findOne({ username })
     if (existingUser) {
-      return json({ error: '用户名已存在' }, { status: 409 })
+      return json({ error: '注册失败，请检查输入信息' }, { status: 409 })
     }
 
     // 检查邮箱是否已存在
     const existingEmail = await usersCollection.findOne({ email })
     if (existingEmail) {
-      return json({ error: '该邮箱已被注册' }, { status: 409 })
+      return json({ error: '注册失败，请检查输入信息' }, { status: 409 })
     }
 
     // 哈希密码

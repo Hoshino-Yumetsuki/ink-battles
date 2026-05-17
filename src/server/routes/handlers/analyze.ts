@@ -19,6 +19,7 @@ import type { Db, MongoClient } from 'mongodb'
 import { extractAccessTokenFromRequest } from '@/utils/auth-request'
 import { getAuthCookieNames } from '@/utils/auth-session'
 import { ObjectId } from 'mongodb'
+import { fileTypeFromBuffer } from 'file-type'
 
 interface LlmApiConfig {
   baseUrl: string
@@ -912,6 +913,17 @@ export const POST = withDatabase(
             }
 
             const arrayBuffer = await file.arrayBuffer()
+
+            // Magic byte validation - don't trust client-provided MIME type
+            const detectedType = await fileTypeFromBuffer(
+              new Uint8Array(arrayBuffer)
+            )
+            if (!detectedType?.mime.startsWith('image/')) {
+              throw new Error(
+                'Invalid file content: file does not appear to be a valid image'
+              )
+            }
+
             const bytes = new Uint8Array(arrayBuffer)
             const chunkSize = 0x8000
             let binary = ''

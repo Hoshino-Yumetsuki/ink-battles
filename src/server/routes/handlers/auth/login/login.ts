@@ -55,9 +55,7 @@ export const POST = withDatabase(async (req: Request, db) => {
     const usersCollection = db.collection('users')
 
     const isEmail = username.includes('@')
-    const query = isEmail
-      ? { email: username.toLowerCase() }
-      : { username }
+    const query = isEmail ? { email: username.toLowerCase() } : { username }
 
     const user = await usersCollection.findOne(query)
     if (!user) {
