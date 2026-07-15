@@ -1,6 +1,6 @@
 import { Elysia, type AnyElysia } from 'elysia'
 import { CloudflareAdapter } from 'elysia/adapter/cloudflare-worker'
-import { createDynamicErrorHandler } from 'elysia/dist/dynamic-handle.mjs'
+import { createDynamicErrorHandler } from './dynamic-error-handler'
 import { api } from '@/server/api'
 
 /**
