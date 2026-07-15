@@ -5,14 +5,19 @@ const external = new RegExp(
   `^(node:|${[...Object.getOwnPropertyNames(pkg.devDependencies ? pkg.devDependencies : []), ...Object.getOwnPropertyNames(pkg.dependencies ? pkg.dependencies : [])].join('|')})`
 )
 
-const config = {
-  input: './src/worker/index.ts'
-}
-
 export default defineConfig([
   {
-    ...config,
-    output: [{ file: 'dist/worker/index.js', format: 'es', minify: true }],
+    input: {
+      index: './src/worker/index.ts',
+      app: './src/worker/app.ts'
+    },
+    output: {
+      dir: 'dist/worker',
+      format: 'es',
+      minify: true,
+      entryFileNames: '[name].js',
+      chunkFileNames: 'chunks/[name]-[hash].js'
+    },
     external
   }
 ])

@@ -1,7 +1,27 @@
-import { Elysia } from 'elysia'
-import { CloudflareAdapter } from 'elysia/adapter/cloudflare-worker'
-import { api } from '@/server/api'
+type WorkerApp = {
+  fetch: (
+    request: Request,
+    env?: unknown,
+    executionContext?: ExecutionContext
+  ) => Response | Promise<Response>
+}
 
-const app = new Elysia({ adapter: CloudflareAdapter }).use(api).compile()
+let appPromise: Promise<WorkerApp> | undefined
 
-export default app
+function loadApp(): Promise<WorkerApp> {
+  if (!appPromise) {
+    appPromise = import('./app').then((module) => module.default)
+  }
+
+  return appPromise
+}
+
+export default {
+  fetch(
+    request: Request,
+    env?: unknown,
+    executionContext?: ExecutionContext
+  ): Promise<Response> {
+    return loadApp().then((app) => app.fetch(request, env, executionContext))
+  }
+}

@@ -50,3 +50,4 @@ migration
 dist
 cloudflare-env.d.ts
 .playwright-mcp
+.omc
