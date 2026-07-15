@@ -635,6 +635,32 @@ function isValidLlmApiConfig(config: LlmApiConfig): boolean {
   return Boolean(config.apiKey)
 }
 
+function parseFormJsonField(
+  raw: FormDataEntryValue | null
+): Record<string, unknown> {
+  if (raw == null) {
+    return {}
+  }
+
+  if (typeof raw !== 'string') {
+    return {}
+  }
+
+  const trimmed = raw.trim()
+  if (!trimmed || trimmed === '[object Object]') {
+    return {}
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(trimmed)
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {}
+  } catch {
+    return {}
+  }
+}
+
 export const maxDuration = 300
 
 export const POST = withDatabase(
@@ -735,8 +761,8 @@ export const POST = withDatabase(
     const content = formData.get('content') as string | null
     const file = formData.get('file') as File | null
     const analysisType = formData.get('analysisType') as 'text' | 'file'
-    const optionsJson = formData.get('options') as string | null
-    const options = optionsJson ? JSON.parse(optionsJson) : {}
+    const optionsJson = formData.get('options')
+    const options = parseFormJsonField(optionsJson)
     const captchaToken = formData.get('captchaToken') as string | null
 
     const tempApiBaseUrl = formData.get('tempApiBaseUrl') as string | null

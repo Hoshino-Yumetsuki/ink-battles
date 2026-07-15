@@ -43,10 +43,17 @@ function bodyToFormData(body: unknown): FormData {
       for (const item of value) {
         if (item instanceof Blob) {
           formData.append(key, item)
+        } else if (item !== null && typeof item === 'object') {
+          formData.append(key, JSON.stringify(item))
         } else {
           formData.append(key, String(item))
         }
       }
+      continue
+    }
+
+    if (typeof value === 'object') {
+      formData.append(key, JSON.stringify(value))
       continue
     }
 
