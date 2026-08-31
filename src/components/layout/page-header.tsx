@@ -1,7 +1,7 @@
-'use client'
+"use client"
 
-import { motion } from 'framer-motion'
-import { AlertCircle, Sparkles, Link as LinkIcon } from 'lucide-react'
+import { motion } from "framer-motion"
+import { AlertCircle, Sparkles, Link as LinkIcon } from "lucide-react"
 
 export default function PageHeader() {
   return (
@@ -33,8 +33,7 @@ export default function PageHeader() {
         </h1>
 
         <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          基于先进 AI
-          模型的作品分析工具，为您的创作提供深度洞察、评分与改进建议。
+          基于先进 AI 模型的作品分析工具，为您的创作提供深度洞察、评分与改进建议。
         </p>
 
         {/* 友链 */}

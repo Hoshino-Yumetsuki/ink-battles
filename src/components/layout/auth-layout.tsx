@@ -1,7 +1,7 @@
-'use client'
+"use client"
 
-import { ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ArrowLeft } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface AuthLayoutProps {
   children: React.ReactNode
@@ -11,14 +11,14 @@ interface AuthLayoutProps {
 
 export function AuthLayout({
   children,
-  title = 'Ink Battles',
-  image = 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200&q=80'
+  title = "Ink Battles",
+  image = "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200&q=80"
 }: AuthLayoutProps) {
-  const authBackground = '/G13s14MbIAADlgb.jpg'
+  const authBackground = "/G13s14MbIAADlgb.jpg"
 
   return (
     <div
-      className={`min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden ${!authBackground ? 'bg-gray-50 dark:bg-black' : ''}`}
+      className={`min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden ${!authBackground ? "bg-gray-50 dark:bg-black" : ""}`}
     >
       {/* 全局背景壁纸（如果有配置） */}
       {authBackground && (
@@ -32,16 +32,13 @@ export function AuthLayout({
         </div>
       )}
 
-      <a
-        href="/"
-        className="absolute top-8 left-8 z-50 transition-transform hover:-translate-x-1"
-      >
+      <a href="/" className="absolute top-8 left-8 z-50 transition-transform hover:-translate-x-1">
         <Button
           variant="ghost"
           className={`gap-2 ${
             authBackground
-              ? 'bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm border border-white/10'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              ? "bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm border border-white/10"
+              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
           }`}
         >
           <ArrowLeft className="h-5 w-5" />
@@ -56,8 +53,8 @@ export function AuthLayout({
               className="absolute inset-0 bg-cover bg-center"
               style={{
                 backgroundImage: `url('${authBackground}')`,
-                height: '100%',
-                minHeight: '100%'
+                height: "100%",
+                minHeight: "100%"
               }}
             />
           ) : (
@@ -65,8 +62,8 @@ export function AuthLayout({
               className="absolute inset-0 bg-cover bg-center opacity-80"
               style={{
                 backgroundImage: `url('${image}')`,
-                height: '100%',
-                minHeight: '100%'
+                height: "100%",
+                minHeight: "100%"
               }}
             >
               <div className="absolute inset-0 bg-linear-to-br from-blue-900/60 to-purple-900/60" />

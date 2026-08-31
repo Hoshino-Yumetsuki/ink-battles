@@ -1,4 +1,4 @@
-type LogLevel = 'info' | 'warn' | 'error' | 'debug'
+type LogLevel = "info" | "warn" | "error" | "debug"
 
 interface LogEntry {
   timestamp: string
@@ -14,11 +14,11 @@ const formatLogEntry = (entry: LogEntry): string => {
   if (details) {
     try {
       if (details instanceof Error) {
-        formattedLog += `\n  Stack: ${details.stack || 'No stack trace available'}`
+        formattedLog += `\n  Stack: ${details.stack || "No stack trace available"}`
       } else {
         formattedLog += `\n  Details: ${JSON.stringify(details, null, 2)}`
       }
-    } catch  {
+    } catch {
       formattedLog += `\n  Details: [Non-serializable object]`
     }
   }
@@ -26,7 +26,7 @@ const formatLogEntry = (entry: LogEntry): string => {
   return formattedLog
 }
 
-const isProduction = process.env.NODE_ENV === 'production'
+const isProduction = process.env.NODE_ENV === "production"
 
 const logMessage = (level: LogLevel, message: string, details?: any) => {
   const timestamp = new Date().toISOString()
@@ -34,16 +34,16 @@ const logMessage = (level: LogLevel, message: string, details?: any) => {
   const formattedLog = formatLogEntry(entry)
 
   switch (level) {
-    case 'info':
+    case "info":
       console.info(formattedLog)
       break
-    case 'warn':
+    case "warn":
       console.warn(formattedLog)
       break
-    case 'error':
+    case "error":
       console.error(formattedLog)
       break
-    case 'debug':
+    case "debug":
       if (!isProduction) {
         console.debug(formattedLog)
       }
@@ -55,12 +55,8 @@ const logMessage = (level: LogLevel, message: string, details?: any) => {
 }
 
 export const logger = {
-  info: (message: string, details?: any) =>
-    logMessage('info', message, details),
-  warn: (message: string, details?: any) =>
-    logMessage('warn', message, details),
-  error: (message: string, details?: any) =>
-    logMessage('error', message, details),
-  debug: (message: string, details?: any) =>
-    logMessage('debug', message, details)
+  info: (message: string, details?: any) => logMessage("info", message, details),
+  warn: (message: string, details?: any) => logMessage("warn", message, details),
+  error: (message: string, details?: any) => logMessage("error", message, details),
+  debug: (message: string, details?: any) => logMessage("debug", message, details)
 }

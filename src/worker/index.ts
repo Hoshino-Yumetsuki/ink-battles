@@ -10,18 +10,14 @@ let appPromise: Promise<WorkerApp> | undefined
 
 function loadApp(): Promise<WorkerApp> {
   if (!appPromise) {
-    appPromise = import('./app').then((module) => module.default)
+    appPromise = import("./app").then((module) => module.default)
   }
 
   return appPromise
 }
 
 export default {
-  fetch(
-    request: Request,
-    env?: unknown,
-    executionContext?: ExecutionContext
-  ): Promise<Response> {
+  fetch(request: Request, env?: unknown, executionContext?: ExecutionContext): Promise<Response> {
     return loadApp().then((app) => app.fetch(request, env, executionContext))
   }
 }

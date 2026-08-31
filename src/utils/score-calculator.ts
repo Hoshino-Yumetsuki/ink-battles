@@ -21,28 +21,28 @@ interface AdvancedScoreResult {
 }
 
 const DIMENSION_WEIGHTS: Record<string, number> = {
-  '🎭 人物塑造力': 1.2,
-  '🧠 结构复杂度': 1.0,
-  '🔀 情节反转密度': 0.9,
-  '💔 情感穿透力': 1.1,
-  '🎨 文体魅力': 1.0,
-  '🌀 先锋性/实验性': 0.8,
-  '😂 幽默感/自嘲力': 0.7,
-  '🌍 主题深度': 1.2,
-  '🏺 文化底蕴性': 1.0,
-  '📚 引用张力（互文性）': 0.8,
-  '🪤 谜团操控力与读者诱导性': 0.9,
-  '🧷 稳定性/完成度': 1.0,
-  '🧬 语言原创性': 1.1,
-  '👑 经典性': 1.2,
-  '🧑‍🚀 新锐性': 0.9
+  "🎭 人物塑造力": 1.2,
+  "🧠 结构复杂度": 1.0,
+  "🔀 情节反转密度": 0.9,
+  "💔 情感穿透力": 1.1,
+  "🎨 文体魅力": 1.0,
+  "🌀 先锋性/实验性": 0.8,
+  "😂 幽默感/自嘲力": 0.7,
+  "🌍 主题深度": 1.2,
+  "🏺 文化底蕴性": 1.0,
+  "📚 引用张力（互文性）": 0.8,
+  "🪤 谜团操控力与读者诱导性": 0.9,
+  "🧷 稳定性/完成度": 1.0,
+  "🧬 语言原创性": 1.1,
+  "👑 经典性": 1.2,
+  "🧑‍🚀 新锐性": 0.9
 }
 
 const OPTIONAL_DIMENSIONS = new Set([
-  '😂 幽默感/自嘲力',
-  '📚 引用张力（互文性）',
-  '🪤 谜团操控力与读者诱导性',
-  '🔀 情节反转密度'
+  "😂 幽默感/自嘲力",
+  "📚 引用张力（互文性）",
+  "🪤 谜团操控力与读者诱导性",
+  "🔀 情节反转密度"
 ])
 
 const SCORE_CONFIG = {
@@ -67,18 +67,16 @@ const DYNAMIC_WEIGHT_CONFIG = {
 }
 
 const SYNERGY_GROUPS: Record<string, string[]> = {
-  创作核心: ['🎭 人物塑造力', '🧠 结构复杂度', '💔 情感穿透力'],
-  情感表达: ['💔 情感穿透力', '🎨 文体魅力', '😂 幽默感/自嘲力'],
-  深度内涵: ['🌍 主题深度', '🏺 文化底蕴性', '📚 引用张力（互文性）'],
-  创新实验: ['🌀 先锋性/实验性', '🧬 语言原创性', '🧑‍🚀 新锐性'],
-  完成品质: ['🧷 稳定性/完成度', '🎨 文体魅力', '🧬 语言原创性'],
-  经典价值: ['👑 经典性', '🌍 主题深度', '🏺 文化底蕴性'],
-  叙事技巧: ['🔀 情节反转密度', '🪤 谜团操控力与读者诱导性', '🧠 结构复杂度']
+  创作核心: ["🎭 人物塑造力", "🧠 结构复杂度", "💔 情感穿透力"],
+  情感表达: ["💔 情感穿透力", "🎨 文体魅力", "😂 幽默感/自嘲力"],
+  深度内涵: ["🌍 主题深度", "🏺 文化底蕴性", "📚 引用张力（互文性）"],
+  创新实验: ["🌀 先锋性/实验性", "🧬 语言原创性", "🧑‍🚀 新锐性"],
+  完成品质: ["🧷 稳定性/完成度", "🎨 文体魅力", "🧬 语言原创性"],
+  经典价值: ["👑 经典性", "🌍 主题深度", "🏺 文化底蕴性"],
+  叙事技巧: ["🔀 情节反转密度", "🪤 谜团操控力与读者诱导性", "🧠 结构复杂度"]
 }
 
-export function calculateOverallScore(
-  dimensions: DimensionScore[] | Record<string, any>
-): number {
+export function calculateOverallScore(dimensions: DimensionScore[] | Record<string, any>): number {
   const result = calculateAdvancedScore(dimensions)
   return result.finalScore
 }
@@ -100,12 +98,12 @@ export function calculateAdvancedScore(
   if (!Array.isArray(dimensions)) {
     dimensionArray = []
     Object.entries(dimensions).forEach(([key, value]) => {
-      if (typeof value === 'object' && value !== null) {
-        const dimensionScore = typeof value.score === 'number' ? value.score : 0
+      if (typeof value === "object" && value !== null) {
+        const dimensionScore = typeof value.score === "number" ? value.score : 0
         dimensionArray.push({
           name: key,
           score: dimensionScore,
-          description: value.description || '',
+          description: value.description || "",
           confidence: value.confidence || 0.8,
           variance: value.variance || 0.1
         })
@@ -140,9 +138,7 @@ function createEmptyResult(): AdvancedScoreResult {
   }
 }
 
-function calculateAdvancedComplexScore(
-  dimensions: DimensionScore[]
-): AdvancedScoreResult {
+function calculateAdvancedComplexScore(dimensions: DimensionScore[]): AdvancedScoreResult {
   const validDimensions = filterValidDimensions(dimensions)
 
   if (validDimensions.length === 0) {
@@ -151,10 +147,7 @@ function calculateAdvancedComplexScore(
 
   const qualityMetrics = calculateQualityMetrics(validDimensions)
 
-  const adjustedWeights = calculateDynamicWeights(
-    validDimensions,
-    qualityMetrics
-  )
+  const adjustedWeights = calculateDynamicWeights(validDimensions, qualityMetrics)
 
   const baseScore = calculateAdvancedBaseScore(validDimensions, adjustedWeights)
 
@@ -168,13 +161,9 @@ function calculateAdvancedComplexScore(
     validDimensions,
     qualityMetrics
   )
-  adjustments.objectivityBonus = calculateObjectivityBonus(
-    validDimensions,
-    qualityMetrics
-  )
+  adjustments.objectivityBonus = calculateObjectivityBonus(validDimensions, qualityMetrics)
 
-  let totalScore =
-    baseScore + Object.values(adjustments).reduce((sum, adj) => sum + adj, 0)
+  let totalScore = baseScore + Object.values(adjustments).reduce((sum, adj) => sum + adj, 0)
 
   if (totalScore > SCORE_CONFIG.BREAKTHROUGH_THRESHOLD) {
     totalScore = applyBreakthroughConstraint(totalScore, validDimensions)
@@ -194,9 +183,9 @@ function filterValidDimensions(dimensions: DimensionScore[]): DimensionScore[] {
   return dimensions.filter(
     (dimension) =>
       dimension &&
-      typeof dimension === 'object' &&
-      typeof dimension.name === 'string' &&
-      typeof dimension.score === 'number' &&
+      typeof dimension === "object" &&
+      typeof dimension.name === "string" &&
+      typeof dimension.score === "number" &&
       !Number.isNaN(dimension.score) &&
       dimension.score >= 0
   )
@@ -216,9 +205,7 @@ function calculateSynergyBonus(dimensions: DimensionScore[]): number {
       .filter((score) => score > 0)
 
     const totalDimensionsInGroup = dimensionNames.length
-    const optionalCount = dimensionNames.filter((name) =>
-      OPTIONAL_DIMENSIONS.has(name)
-    ).length
+    const optionalCount = dimensionNames.filter((name) => OPTIONAL_DIMENSIONS.has(name)).length
     const requiredForSynergy = Math.max(
       2,
       Math.ceil((totalDimensionsInGroup - optionalCount) * 0.6)
@@ -226,18 +213,14 @@ function calculateSynergyBonus(dimensions: DimensionScore[]): number {
 
     if (groupScores.length >= requiredForSynergy) {
       const geometricMean =
-        groupScores.reduce((acc, score) => acc * Math.max(1, score), 1) **
-        (1 / groupScores.length)
+        groupScores.reduce((acc, score) => acc * Math.max(1, score), 1) ** (1 / groupScores.length)
 
       const participationRatio = groupScores.length / totalDimensionsInGroup
       const synergyMultiplier = 0.7 + participationRatio * 0.3
 
       if (geometricMean > 7) {
         const synergyContribution =
-          (geometricMean - 6) *
-          SCORE_CONFIG.SYNERGY_FACTOR *
-          groupScores.length *
-          synergyMultiplier
+          (geometricMean - 6) * SCORE_CONFIG.SYNERGY_FACTOR * groupScores.length * synergyMultiplier
         totalSynergy += synergyContribution
       }
     }
@@ -257,8 +240,7 @@ function calculateExcellenceBonus(dimensions: DimensionScore[]): number {
 
   const excellenceCount = excellentDimensions.length
   const avgExcellenceScore =
-    excellentDimensions.reduce((sum, dim) => sum + dim.score, 0) /
-    excellenceCount
+    excellentDimensions.reduce((sum, dim) => sum + dim.score, 0) / excellenceCount
 
   const bonus =
     (excellenceCount / dimensions.length) ** 1.3 *
@@ -279,11 +261,9 @@ function calculateBalanceAdjustment(dimensions: DimensionScore[]): number {
     return -4
   }
 
-  const coreMean =
-    coreScores.reduce((sum, score) => sum + score, 0) / coreScores.length
+  const coreMean = coreScores.reduce((sum, score) => sum + score, 0) / coreScores.length
   const coreVariance =
-    coreScores.reduce((sum, score) => sum + (score - coreMean) ** 2, 0) /
-    coreScores.length
+    coreScores.reduce((sum, score) => sum + (score - coreMean) ** 2, 0) / coreScores.length
   const coreStdDev = Math.sqrt(coreVariance)
 
   const coreBalanceBonus = Math.max(
@@ -291,8 +271,7 @@ function calculateBalanceAdjustment(dimensions: DimensionScore[]): number {
     (3 - coreStdDev) * SCORE_CONFIG.BALANCE_BONUS * coreMean * 0.1
   )
 
-  const optionalBonus =
-    optionalScores.length > 0 ? Math.min(1.8, optionalScores.length * 0.6) : 0
+  const optionalBonus = optionalScores.length > 0 ? Math.min(1.8, optionalScores.length * 0.6) : 0
 
   const maxCoreScore = Math.max(...coreScores)
   const minCoreScore = Math.min(...coreScores)
@@ -304,19 +283,12 @@ function calculateBalanceAdjustment(dimensions: DimensionScore[]): number {
 }
 
 function calculateQualityPenalty(dimensions: DimensionScore[]): number {
-  const avgScore =
-    dimensions.reduce((sum, dim) => sum + dim.score, 0) / dimensions.length
+  const avgScore = dimensions.reduce((sum, dim) => sum + dim.score, 0) / dimensions.length
 
-  const highScoreDimensions = dimensions.filter(
-    (dim) => dim.score >= 4.0
-  ).length
-  const excellentDimensions = dimensions.filter(
-    (dim) => dim.score >= 4.5
-  ).length
+  const highScoreDimensions = dimensions.filter((dim) => dim.score >= 4.0).length
+  const excellentDimensions = dimensions.filter((dim) => dim.score >= 4.5).length
 
-  const veryLowScoreDimensions = dimensions.filter(
-    (dim) => dim.score <= 1.5
-  ).length
+  const veryLowScoreDimensions = dimensions.filter((dim) => dim.score <= 1.5).length
   const veryLowScoreRatio = veryLowScoreDimensions / dimensions.length
 
   const lowScoreDimensions = dimensions.filter((dim) => dim.score <= 2.5).length
@@ -360,12 +332,10 @@ function calculateDynamicMaxScore(dimensions: DimensionScore[]): number {
   const excellentCount = dimensions.filter((dim) => dim.score >= 4.5).length
   const veryGoodCount = dimensions.filter((dim) => dim.score >= 4.0).length
 
-  const avgScore =
-    dimensions.reduce((sum, d) => sum + d.score, 0) / dimensions.length
+  const avgScore = dimensions.reduce((sum, d) => sum + d.score, 0) / dimensions.length
 
   const variance =
-    dimensions.reduce((sum, d) => sum + (d.score - avgScore) ** 2, 0) /
-    dimensions.length
+    dimensions.reduce((sum, d) => sum + (d.score - avgScore) ** 2, 0) / dimensions.length
   const stdDev = Math.sqrt(variance)
 
   // 基础天花板
@@ -392,10 +362,7 @@ function calculateDynamicMaxScore(dimensions: DimensionScore[]): number {
   return Math.max(SCORE_CONFIG.BREAKTHROUGH_THRESHOLD, Math.min(128, maxScore))
 }
 
-function applyBreakthroughConstraint(
-  score: number,
-  dimensions: DimensionScore[]
-): number {
+function applyBreakthroughConstraint(score: number, dimensions: DimensionScore[]): number {
   // 如果分数低于突破阈值，直接返回
   if (score <= SCORE_CONFIG.BREAKTHROUGH_THRESHOLD) {
     return score
@@ -435,31 +402,22 @@ function calculateQualityMetrics(dimensions: DimensionScore[]): QualityMetrics {
   const variances = dimensions.map((d) => d.variance || 0.1)
 
   const scoreMean = scores.reduce((sum, s) => sum + s, 0) / scores.length
-  const scoreVariance =
-    scores.reduce((sum, s) => sum + (s - scoreMean) ** 2, 0) / scores.length
+  const scoreVariance = scores.reduce((sum, s) => sum + (s - scoreMean) ** 2, 0) / scores.length
   const consistency =
     Math.max(0, 1 - scoreVariance / 4) * 0.7 +
     (confidences.reduce((sum, c) => sum + c, 0) / confidences.length) * 0.3
 
-  const avgConfidence =
-    confidences.reduce((sum, c) => sum + c, 0) / confidences.length
-  const completenessRatio =
-    dimensions.length / Object.keys(DIMENSION_WEIGHTS).length
+  const avgConfidence = confidences.reduce((sum, c) => sum + c, 0) / confidences.length
+  const completenessRatio = dimensions.length / Object.keys(DIMENSION_WEIGHTS).length
   const reliability = avgConfidence * 0.6 + completenessRatio * 0.4
 
-  const avgVariance =
-    variances.reduce((sum, v) => sum + v, 0) / variances.length
+  const avgVariance = variances.reduce((sum, v) => sum + v, 0) / variances.length
   const scoreDistribution = calculateScoreDistribution(scores)
-  const objectivity =
-    Math.max(0, 1 - avgVariance) * 0.5 + scoreDistribution * 0.5
+  const objectivity = Math.max(0, 1 - avgVariance) * 0.5 + scoreDistribution * 0.5
 
-  const corePresent = dimensions.filter(
-    (d) => !OPTIONAL_DIMENSIONS.has(d.name)
-  ).length
-  const totalCore =
-    Object.keys(DIMENSION_WEIGHTS).length - OPTIONAL_DIMENSIONS.size
-  const completeness =
-    Math.min(1, corePresent / totalCore) * 0.8 + completenessRatio * 0.2
+  const corePresent = dimensions.filter((d) => !OPTIONAL_DIMENSIONS.has(d.name)).length
+  const totalCore = Object.keys(DIMENSION_WEIGHTS).length - OPTIONAL_DIMENSIONS.size
+  const completeness = Math.min(1, corePresent / totalCore) * 0.8 + completenessRatio * 0.2
 
   return {
     consistency: Number(consistency.toFixed(3)),
@@ -518,10 +476,7 @@ function calculateDynamicWeights(
     const consistencyAdjustment = qualityMetrics.consistency * 0.1 + 0.9
 
     adjustedWeights[baseName] =
-      baseWeight *
-      qualityAdjustment *
-      confidenceAdjustment *
-      consistencyAdjustment
+      baseWeight * qualityAdjustment * confidenceAdjustment * consistencyAdjustment
   })
 
   return adjustedWeights
@@ -634,6 +589,6 @@ export function convertToLegacyFormat(
     improvements,
     qualityMetrics,
     adjustments,
-    overallAssessment: ''
+    overallAssessment: ""
   }
 }

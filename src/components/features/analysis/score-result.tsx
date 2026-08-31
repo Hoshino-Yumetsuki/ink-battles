@@ -1,31 +1,25 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
-import type { WriterAnalysisResult } from '@/client/routes/HomePage'
-import MermaidDiagram from '@/components/renderers/mermaid-diagram'
-import MarkdownRenderer from '@/components/renderers/markdown-renderer'
+import { useState, useEffect } from "react"
+import { motion } from "framer-motion"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import type { WriterAnalysisResult } from "@/client/routes/HomePage"
+import MermaidDiagram from "@/components/renderers/mermaid-diagram"
+import MarkdownRenderer from "@/components/renderers/markdown-renderer"
 
 interface WriterScoreResultProps {
   result: WriterAnalysisResult
 }
 
-type ContentNode = { type: 'paragraph'; text: string }
+type ContentNode = { type: "paragraph"; text: string }
 
 function parseMermaidBlocks(text: string): ContentNode[] {
   const nodes: ContentNode[] = []
 
   if (text) {
-    for (const line of text.split('\n')) {
-      if (line.trim() !== '') nodes.push({ type: 'paragraph', text: line })
+    for (const line of text.split("\n")) {
+      if (line.trim() !== "") nodes.push({ type: "paragraph", text: line })
     }
   }
 
@@ -57,23 +51,23 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
   }, [result.overallScore])
 
   const getColorByScore = (score: number) => {
-    if (score >= 4.5) return 'bg-emerald-500'
-    if (score >= 4) return 'bg-green-500'
-    if (score >= 3.5) return 'bg-lime-500'
-    if (score >= 3) return 'bg-amber-500'
-    if (score >= 2.5) return 'bg-orange-500'
-    if (score >= 2) return 'bg-rose-500'
-    return 'bg-red-500'
+    if (score >= 4.5) return "bg-emerald-500"
+    if (score >= 4) return "bg-green-500"
+    if (score >= 3.5) return "bg-lime-500"
+    if (score >= 3) return "bg-amber-500"
+    if (score >= 2.5) return "bg-orange-500"
+    if (score >= 2) return "bg-rose-500"
+    return "bg-red-500"
   }
 
   const getProgressColor = (score: number, maxScore: number = 5) => {
     const percentage = (score / maxScore) * 100
-    if (percentage >= 90) return 'bg-emerald-500'
-    if (percentage >= 80) return 'bg-green-500'
-    if (percentage >= 70) return 'bg-lime-500'
-    if (percentage >= 60) return 'bg-amber-500'
-    if (percentage >= 50) return 'bg-orange-500'
-    return 'bg-rose-500'
+    if (percentage >= 90) return "bg-emerald-500"
+    if (percentage >= 80) return "bg-green-500"
+    if (percentage >= 70) return "bg-lime-500"
+    if (percentage >= 60) return "bg-amber-500"
+    if (percentage >= 50) return "bg-orange-500"
+    return "bg-rose-500"
   }
 
   const formatScore = (score: number) => {
@@ -87,10 +81,8 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
 
   const _commentParagraphs: string[] = result.comment
     ? parseMermaidBlocks(result.comment)
-        .filter((n) => n.type === 'paragraph')
-        .map((n) =>
-          (n as Extract<ContentNode, { type: 'paragraph' }>).text.trim()
-        )
+        .filter((n) => n.type === "paragraph")
+        .map((n) => (n as Extract<ContentNode, { type: "paragraph" }>).text.trim())
         .filter(Boolean)
     : []
 
@@ -107,15 +99,13 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
         transition={{
           delay: 0,
           duration: 0.5,
-          ease: 'easeOut'
+          ease: "easeOut"
         }}
       >
         <Card className="overflow-hidden">
           <CardHeader>
             <CardTitle>综合战力评分</CardTitle>
-            <CardDescription>
-              基于多维度分析得出的总体评分和建议
-            </CardDescription>
+            <CardDescription>基于多维度分析得出的总体评分和建议</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col items-center justify-center mb-6">
@@ -124,7 +114,7 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{
-                  type: 'spring',
+                  type: "spring",
                   stiffness: 200,
                   damping: 20,
                   delay: 0.2
@@ -175,7 +165,7 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
                   transition={{
                     delay: 0.8 + index * 0.1,
                     duration: 0.4,
-                    ease: 'easeOut'
+                    ease: "easeOut"
                   }}
                 >
                   <div className="flex justify-between items-center">
@@ -191,7 +181,7 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
                   </div>
                   <motion.div
                     initial={{ width: 0 }}
-                    animate={{ width: '100%' }}
+                    animate={{ width: "100%" }}
                     transition={{ delay: 1.0 + index * 0.1, duration: 0.6 }}
                   >
                     <Progress
@@ -224,7 +214,7 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
           transition={{
             delay: 0.1,
             duration: 0.5,
-            ease: 'easeOut'
+            ease: "easeOut"
           }}
         >
           <Card className="overflow-hidden">
@@ -253,7 +243,7 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
           transition={{
             delay: result.comment ? 0.15 : 0.1,
             duration: 0.5,
-            ease: 'easeOut'
+            ease: "easeOut"
           }}
         >
           <Card className="overflow-hidden">
@@ -286,7 +276,7 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
         transition={{
           delay: result.comment ? 0.2 : 0.1,
           duration: 0.5,
-          ease: 'easeOut'
+          ease: "easeOut"
         }}
       >
         <Card className="overflow-hidden">
@@ -321,7 +311,7 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
         transition={{
           delay: result.comment ? 0.3 : 0.2,
           duration: 0.5,
-          ease: 'easeOut'
+          ease: "easeOut"
         }}
       >
         <Card className="overflow-hidden">
@@ -360,7 +350,7 @@ export default function WriterScoreResult({ result }: WriterScoreResultProps) {
             transition={{
               delay: result.comment ? 0.4 + index * 0.1 : 0.3 + index * 0.1,
               duration: 0.5,
-              ease: 'easeOut'
+              ease: "easeOut"
             }}
           >
             <MermaidDiagram chart={diagram.code} title={diagram.title} />

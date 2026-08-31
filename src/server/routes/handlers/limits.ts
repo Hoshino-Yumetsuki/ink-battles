@@ -1,21 +1,21 @@
-import { json } from '@/server/http/json'
-import { ObjectId } from 'mongodb'
-import { withDatabase } from '@/utils/mongodb'
-import { verifyToken } from '@/utils/jwt'
-import { rateLimitConfig } from '@/config/rate-limit'
-import { logger } from '@/utils/logger'
-import { extractAccessTokenFromRequest } from '@/utils/auth-request'
+import { json } from "@/server/http/json"
+import { ObjectId } from "mongodb"
+import { withDatabase } from "@/utils/mongodb"
+import { verifyToken } from "@/utils/jwt"
+import { rateLimitConfig } from "@/config/rate-limit"
+import { logger } from "@/utils/logger"
+import { extractAccessTokenFromRequest } from "@/utils/auth-request"
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 export const GET = withDatabase(async (req: Request, db) => {
   try {
     // 1. Determine Identity (User or Guest)
-    const token = extractAccessTokenFromRequest(req, 'authorization')
+    const token = extractAccessTokenFromRequest(req, "authorization")
 
     let userId: string | undefined
     let isLoggedIn = false
-    let username = '游客'
+    let username = "游客"
 
     // Try to verify token
     if (token) {
@@ -24,7 +24,7 @@ export const GET = withDatabase(async (req: Request, db) => {
         userId = payload.userId
         isLoggedIn = true
         username = payload.username
-      } catch  {
+      } catch {
         // Token invalid, treat as guest
       }
     }
@@ -34,7 +34,7 @@ export const GET = withDatabase(async (req: Request, db) => {
     const maxRequestsUser = rateLimitConfig.maxRequestsUser
     let limit = isLoggedIn ? maxRequestsUser : maxRequestsGuest
 
-    const fingerprint = req.headers.get('x-fingerprint') || 'unknown'
+    const fingerprint = req.headers.get("x-fingerprint") || "unknown"
 
     const windowSeconds = rateLimitConfig.windowSeconds
     let used = 0
@@ -44,15 +44,13 @@ export const GET = withDatabase(async (req: Request, db) => {
     if (isLoggedIn && userId) {
       // Logged-in User: Check users collection
       if (ObjectId.isValid(userId)) {
-        const usersCollection = db.collection('users')
+        const usersCollection = db.collection("users")
         const userDoc = await usersCollection.findOne({
           _id: new ObjectId(userId)
         })
 
         if (userDoc?.usage) {
-          const userResetTime = userDoc.usage.resetTime
-            ? new Date(userDoc.usage.resetTime)
-            : null
+          const userResetTime = userDoc.usage.resetTime ? new Date(userDoc.usage.resetTime) : null
           if (userResetTime && now < userResetTime) {
             used = userDoc.usage.used || 0
             limit = userDoc.usage.limit || limit
@@ -74,8 +72,8 @@ export const GET = withDatabase(async (req: Request, db) => {
                 { _id: userDoc._id },
                 {
                   $set: {
-                    'usage.limit': maxRequestsUser,
-                    'usage.used': newUsed
+                    "usage.limit": maxRequestsUser,
+                    "usage.used": newUsed
                   }
                 }
               )
@@ -94,14 +92,12 @@ export const GET = withDatabase(async (req: Request, db) => {
       }
     } else {
       // Guest: Check rate_limits collection
-      const collection = db.collection('rate_limits')
+      const collection = db.collection("rate_limits")
       const record = await collection.findOne({ fingerprint })
 
       if (record) {
         const windowStart = new Date(record.windowStart)
-        const expiryTime = new Date(
-          windowStart.getTime() + windowSeconds * 1000
-        )
+        const expiryTime = new Date(windowStart.getTime() + windowSeconds * 1000)
 
         if (now < expiryTime) {
           used = record.requestCount
@@ -149,7 +145,7 @@ export const GET = withDatabase(async (req: Request, db) => {
       }
     })
   } catch (error) {
-    logger.error('Limit check error:', error)
-    return json({ error: 'Failed to fetch limits' }, { status: 500 })
+    logger.error("Limit check error:", error)
+    return json({ error: "Failed to fetch limits" }, { status: 500 })
   }
 })

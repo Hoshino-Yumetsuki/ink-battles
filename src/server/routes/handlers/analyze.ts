@@ -1,25 +1,21 @@
-import { readCookie } from '@/server/http/cookies'
-import { generateText, streamText } from 'xsai'
-import { buildPrompt } from '@/prompts'
-import { logger } from '@/utils/logger'
-import {
-  checkRateLimit,
-  recordVisit,
-  incrementRateLimit
-} from '@/utils/rate-limiter'
-import { withDatabase } from '@/utils/mongodb'
-import { verifyToken } from '@/utils/jwt'
-import { encryptObject, decryptObject } from '@/utils/crypto'
-import { calculateOverallScore } from '@/utils/score-calculator'
-import { extractCodeBlock } from '@/utils/markdown-parser'
-import { getDatabase, closeDatabaseConnection } from '@/utils/mongodb'
-import { llmConfig } from '@/config/llm'
-import { verifyCaptchaWithDb, isCaptchaEnabled } from '@/utils/captcha'
-import type { Db, MongoClient } from 'mongodb'
-import { extractAccessTokenFromRequest } from '@/utils/auth-request'
-import { getAuthCookieNames } from '@/utils/auth-session'
-import { ObjectId } from 'mongodb'
-import { fileTypeFromBuffer } from 'file-type'
+import { readCookie } from "@/server/http/cookies"
+import { generateText, streamText } from "xsai"
+import { buildPrompt } from "@/prompts"
+import { logger } from "@/utils/logger"
+import { checkRateLimit, recordVisit, incrementRateLimit } from "@/utils/rate-limiter"
+import { withDatabase } from "@/utils/mongodb"
+import { verifyToken } from "@/utils/jwt"
+import { encryptObject, decryptObject } from "@/utils/crypto"
+import { calculateOverallScore } from "@/utils/score-calculator"
+import { extractCodeBlock } from "@/utils/markdown-parser"
+import { getDatabase, closeDatabaseConnection } from "@/utils/mongodb"
+import { llmConfig } from "@/config/llm"
+import { verifyCaptchaWithDb, isCaptchaEnabled } from "@/utils/captcha"
+import type { Db, MongoClient } from "mongodb"
+import { extractAccessTokenFromRequest } from "@/utils/auth-request"
+import { getAuthCookieNames } from "@/utils/auth-session"
+import { ObjectId } from "mongodb"
+import { fileTypeFromBuffer } from "file-type"
 
 interface LlmApiConfig {
   baseUrl: string
@@ -83,20 +79,17 @@ const LONG_TEXT_CHUNKING: ChunkingConfig = {
 const MAP_CONCURRENCY = Number(process.env.ANALYSIS_MAP_CONCURRENCY) || 8
 const MAP_MAX_RETRIES = Number(process.env.ANALYSIS_MAP_MAX_RETRIES) || 2
 
-const CHUNKING_ENABLED = process.env.ANALYSIS_CHUNKING_ENABLED !== 'false'
+const CHUNKING_ENABLED = process.env.ANALYSIS_CHUNKING_ENABLED !== "false"
 
 function estimateTokenCount(text: string): number {
   return Math.max(1, Math.ceil(text.length / 2))
 }
 
 function normalizeText(text: string): string {
-  return text.replace(/\r\n?/g, '\n').trim()
+  return text.replace(/\r\n?/g, "\n").trim()
 }
 
-function splitOversizedSegment(
-  segment: string,
-  config: ChunkingConfig
-): string[] {
+function splitOversizedSegment(segment: string, config: ChunkingConfig): string[] {
   const tokenCount = estimateTokenCount(segment)
   if (tokenCount <= config.targetTokens) {
     return [segment]
@@ -122,7 +115,7 @@ function splitOversizedSegment(
   }
 
   const parts: string[] = []
-  let current = ''
+  let current = ""
   for (const sentence of sentenceSplit) {
     const candidate = current ? `${current}${sentence}` : sentence
     if (estimateTokenCount(candidate) <= config.targetTokens) {
@@ -145,10 +138,7 @@ function splitOversizedSegment(
   return parts
 }
 
-function createSemanticChunks(
-  text: string,
-  config: ChunkingConfig
-): TextChunk[] {
+function createSemanticChunks(text: string, config: ChunkingConfig): TextChunk[] {
   const normalized = normalizeText(text)
   if (!normalized) {
     return []
@@ -159,12 +149,10 @@ function createSemanticChunks(
     .map((section) => section.trim())
     .filter(Boolean)
 
-  const expandedSections = sections.flatMap((section) =>
-    splitOversizedSegment(section, config)
-  )
+  const expandedSections = sections.flatMap((section) => splitOversizedSegment(section, config))
 
   const chunks: string[] = []
-  let currentChunk = ''
+  let currentChunk = ""
 
   for (const section of expandedSections) {
     const candidate = currentChunk ? `${currentChunk}\n\n${section}` : section
@@ -179,7 +167,7 @@ function createSemanticChunks(
       currentChunk = section
     } else {
       chunks.push(section)
-      currentChunk = ''
+      currentChunk = ""
     }
   }
 
@@ -197,9 +185,7 @@ function createSemanticChunks(
     return `${overlap}\n\n${chunk}`
   })
 
-  const filtered = withOverlap.filter(
-    (chunk) => estimateTokenCount(chunk) >= config.minChunkTokens
-  )
+  const filtered = withOverlap.filter((chunk) => estimateTokenCount(chunk) >= config.minChunkTokens)
   const finalChunks = filtered.length > 0 ? filtered : withOverlap
 
   return finalChunks.map((content, index) => ({
@@ -211,60 +197,60 @@ function createSemanticChunks(
 
 function buildResponseFormat() {
   return {
-    type: 'json_schema',
+    type: "json_schema",
     json_schema: {
-      name: 'analysis_response',
+      name: "analysis_response",
       strict: true,
       schema: {
-        type: 'object',
+        type: "object",
         properties: {
-          overallAssessment: { type: 'string' },
-          title: { type: 'string' },
-          ratingTag: { type: 'string' },
+          overallAssessment: { type: "string" },
+          title: { type: "string" },
+          ratingTag: { type: "string" },
           dimensions: {
-            type: 'array',
+            type: "array",
             items: {
-              type: 'object',
+              type: "object",
               properties: {
-                name: { type: 'string' },
-                score: { type: 'integer', minimum: 1, maximum: 5 },
-                description: { type: 'string' }
+                name: { type: "string" },
+                score: { type: "integer", minimum: 1, maximum: 5 },
+                description: { type: "string" }
               },
-              required: ['name', 'score', 'description'],
+              required: ["name", "score", "description"],
               additionalProperties: false
             }
           },
-          strengths: { type: 'array', items: { type: 'string' } },
-          improvements: { type: 'array', items: { type: 'string' } },
-          comment: { type: 'string' },
+          strengths: { type: "array", items: { type: "string" } },
+          improvements: { type: "array", items: { type: "string" } },
+          comment: { type: "string" },
           structural_analysis: {
-            type: 'array',
-            items: { type: 'string' }
+            type: "array",
+            items: { type: "string" }
           },
           mermaid_diagrams: {
-            type: 'array',
+            type: "array",
             items: {
-              type: 'object',
+              type: "object",
               properties: {
-                type: { type: 'string' },
-                title: { type: 'string' },
-                code: { type: 'string' }
+                type: { type: "string" },
+                title: { type: "string" },
+                code: { type: "string" }
               },
-              required: ['type', 'title', 'code'],
+              required: ["type", "title", "code"],
               additionalProperties: false
             }
           }
         },
         required: [
-          'overallAssessment',
-          'title',
-          'ratingTag',
-          'dimensions',
-          'strengths',
-          'improvements',
-          'comment',
-          'structural_analysis',
-          'mermaid_diagrams'
+          "overallAssessment",
+          "title",
+          "ratingTag",
+          "dimensions",
+          "strengths",
+          "improvements",
+          "comment",
+          "structural_analysis",
+          "mermaid_diagrams"
         ],
         additionalProperties: false
       }
@@ -277,49 +263,49 @@ function normalizeStringValue(value: unknown, fallback?: string): string {
     return fallback
   }
 
-  if (value !== null && typeof value === 'object') {
+  if (value !== null && typeof value === "object") {
     try {
-      return JSON.stringify(value) ?? fallback ?? ''
+      return JSON.stringify(value) ?? fallback ?? ""
     } catch {
-      return fallback ?? ''
+      return fallback ?? ""
     }
   }
 
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     return value
   }
 
   if (value === null) {
-    return 'null'
+    return "null"
   }
 
   if (value === undefined) {
-    return 'undefined'
+    return "undefined"
   }
 
-  return JSON.stringify(value) ?? fallback ?? ''
+  return JSON.stringify(value) ?? fallback ?? ""
 }
 
 function normalizeAnalysisResult(result: unknown): AnalysisResult {
-  if (!result || typeof result !== 'object') {
-    throw new Error('分析结果格式无效')
+  if (!result || typeof result !== "object") {
+    throw new Error("分析结果格式无效")
   }
 
   const obj = result as Record<string, unknown>
 
   return {
-    overallAssessment: normalizeStringValue(obj.overallAssessment, ''),
-    title: normalizeStringValue(obj.title, '分析结果'),
-    ratingTag: normalizeStringValue(obj.ratingTag, '未知'),
+    overallAssessment: normalizeStringValue(obj.overallAssessment, ""),
+    title: normalizeStringValue(obj.title, "分析结果"),
+    ratingTag: normalizeStringValue(obj.ratingTag, "未知"),
     dimensions: Array.isArray(obj.dimensions)
       ? obj.dimensions
-          .filter((item) => item && typeof item === 'object')
+          .filter((item) => item && typeof item === "object")
           .map((item) => {
             const dim = item as Record<string, unknown>
             return {
-              name: normalizeStringValue(dim.name, ''),
+              name: normalizeStringValue(dim.name, ""),
               score: Math.min(5, Math.max(1, Number(dim.score || 1))),
-              description: normalizeStringValue(dim.description, '')
+              description: normalizeStringValue(dim.description, "")
             }
           })
       : [],
@@ -329,28 +315,27 @@ function normalizeAnalysisResult(result: unknown): AnalysisResult {
     improvements: Array.isArray(obj.improvements)
       ? obj.improvements.map((item) => normalizeStringValue(item))
       : [],
-    comment: normalizeStringValue(obj.comment, ''),
+    comment: normalizeStringValue(obj.comment, ""),
     structural_analysis: Array.isArray(obj.structural_analysis)
       ? obj.structural_analysis.map((item) => normalizeStringValue(item))
       : [],
     mermaid_diagrams: Array.isArray(obj.mermaid_diagrams)
       ? obj.mermaid_diagrams
-          .filter((item) => item && typeof item === 'object')
+          .filter((item) => item && typeof item === "object")
           .map((item) => {
             const diagram = item as Record<string, unknown>
             return {
-              type: normalizeStringValue(diagram.type, 'graph'),
-              title: normalizeStringValue(diagram.title, '结构图'),
-              code: normalizeStringValue(diagram.code, '')
+              type: normalizeStringValue(diagram.type, "graph"),
+              title: normalizeStringValue(diagram.title, "结构图"),
+              code: normalizeStringValue(diagram.code, "")
             }
           })
       : []
   }
 }
 
-
 function parseAnalysisText(generatedText: string): AnalysisResult {
-  const jsonText = extractCodeBlock(generatedText, 'json')
+  const jsonText = extractCodeBlock(generatedText, "json")
   const parsed = JSON.parse(jsonText)
   return normalizeAnalysisResult(parsed)
 }
@@ -375,8 +360,8 @@ async function generateAnalysisText(
     baseURL: apiConfig.baseUrl,
     ...requestConfig,
     messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userContent }
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userContent }
     ]
   }
 
@@ -391,14 +376,14 @@ async function generateAnalysisText(
         if (done) break
         textChunks.push(value)
       }
-      return textChunks.join('')
+      return textChunks.join("")
     } finally {
       reader.releaseLock()
     }
   }
 
   const { text } = await generateText(genOptions)
-  return String(text || '')
+  return String(text || "")
 }
 
 async function generateAnalysisFromMessages(
@@ -433,14 +418,14 @@ async function generateAnalysisFromMessages(
         if (done) break
         textChunks.push(value)
       }
-      return textChunks.join('')
+      return textChunks.join("")
     } finally {
       reader.releaseLock()
     }
   }
 
   const { text } = await generateText(genOptions)
-  return String(text || '')
+  return String(text || "")
 }
 
 async function withRetry<T>(
@@ -464,7 +449,7 @@ async function withRetry<T>(
     }
   }
 
-  throw lastError instanceof Error ? lastError : new Error('分析重试失败')
+  throw lastError instanceof Error ? lastError : new Error("分析重试失败")
 }
 
 async function runWithConcurrency<T, R>(
@@ -483,9 +468,8 @@ async function runWithConcurrency<T, R>(
     }
   }
 
-  const workers = Array.from(
-    { length: Math.max(1, Math.min(concurrency, items.length)) },
-    () => consume()
+  const workers = Array.from({ length: Math.max(1, Math.min(concurrency, items.length)) }, () =>
+    consume()
   )
   await Promise.all(workers)
   return results
@@ -494,14 +478,14 @@ async function runWithConcurrency<T, R>(
 function buildChunkPrompt(chunk: TextChunk): string {
   return [
     `你正在分析长文本的分块内容，这是第 ${chunk.index} / ${chunk.total} 块。`,
-    '重要：这不是全文，请只基于本块文本给出局部判断，不要假设缺失内容。',
-    '当某些维度在本块证据不足时，描述中明确说明“本块证据有限”，但依然输出完整 JSON 结构。',
-    '输出必须是 JSON（不要添加额外解释文本）。',
-    '',
-    '【分块文本开始】',
+    "重要：这不是全文，请只基于本块文本给出局部判断，不要假设缺失内容。",
+    "当某些维度在本块证据不足时，描述中明确说明“本块证据有限”，但依然输出完整 JSON 结构。",
+    "输出必须是 JSON（不要添加额外解释文本）。",
+    "",
+    "【分块文本开始】",
     chunk.content,
-    '【分块文本结束】'
-  ].join('\n')
+    "【分块文本结束】"
+  ].join("\n")
 }
 
 function buildChunkDigest(chunk: ChunkAnalysisResult): Record<string, unknown> {
@@ -522,15 +506,15 @@ function buildChunkDigest(chunk: ChunkAnalysisResult): Record<string, unknown> {
 function buildReducePrompt(chunkResults: ChunkAnalysisResult[]): string {
   const digest = chunkResults.map(buildChunkDigest)
   return [
-    '以下是同一篇长文本在不同分块上的评分结果，请你进行全局汇总。',
-    '要求：',
-    '1) 必须整合每个 chunk 的评分（dimensions）并进行全局平衡，而非简单复制某一块。',
-    '2) 如果不同 chunk 观点冲突，请在 overallAssessment / comment 中解释冲突并给出综合判断。',
-    '3) 最终输出必须严格符合 JSON schema。',
-    '4) 这是最终汇总步骤，必须输出“全篇级”结论。',
-    '',
+    "以下是同一篇长文本在不同分块上的评分结果，请你进行全局汇总。",
+    "要求：",
+    "1) 必须整合每个 chunk 的评分（dimensions）并进行全局平衡，而非简单复制某一块。",
+    "2) 如果不同 chunk 观点冲突，请在 overallAssessment / comment 中解释冲突并给出综合判断。",
+    "3) 最终输出必须严格符合 JSON schema。",
+    "4) 这是最终汇总步骤，必须输出“全篇级”结论。",
+    "",
     JSON.stringify(digest)
-  ].join('\n')
+  ].join("\n")
 }
 
 async function analyzeTextDirect(
@@ -542,20 +526,15 @@ async function analyzeTextDirect(
   const responseFormat = buildResponseFormat()
 
   sendProgress({
-    type: 'progress',
-    stage: 'analyzing',
-    message: '正在分析文本...'
+    type: "progress",
+    stage: "analyzing",
+    message: "正在分析文本..."
   })
 
-  const generatedText = await generateAnalysisText(
-    apiConfig,
-    systemPrompt,
-    content,
-    responseFormat
-  )
+  const generatedText = await generateAnalysisText(apiConfig, systemPrompt, content, responseFormat)
 
   if (!generatedText.trim()) {
-    throw new Error('分析失败，未能获取有效结果')
+    throw new Error("分析失败，未能获取有效结果")
   }
 
   return parseAnalysisText(generatedText)
@@ -570,14 +549,14 @@ async function analyzeTextByChunks(
   const responseFormat = buildResponseFormat()
   const chunks = createSemanticChunks(content, LONG_TEXT_CHUNKING)
   if (chunks.length === 0) {
-    throw new Error('文本切分失败，未生成有效分块')
+    throw new Error("文本切分失败，未生成有效分块")
   }
 
   const systemPromptTokens = estimateTokenCount(systemPrompt)
 
   for (const chunk of chunks) {
     const mapPrompt = buildChunkPrompt(chunk)
-    logger.info('Chunk token count', {
+    logger.info("Chunk token count", {
       chunkIndex: chunk.index,
       chunkTotal: chunk.total,
       systemPromptTokens,
@@ -587,8 +566,8 @@ async function analyzeTextByChunks(
   }
 
   sendProgress({
-    type: 'progress',
-    stage: 'chunking',
+    type: "progress",
+    stage: "chunking",
     message: `文本已切分为 ${chunks.length} 个分块`,
     chunksTotal: chunks.length
   })
@@ -621,8 +600,8 @@ async function analyzeTextByChunks(
 
       done += 1
       sendProgress({
-        type: 'progress',
-        stage: 'map_progress',
+        type: "progress",
+        stage: "map_progress",
         message: `已完成分块分析 ${done}/${chunks.length}`,
         chunksDone: done,
         chunksTotal: chunks.length,
@@ -640,9 +619,9 @@ async function analyzeTextByChunks(
   )
 
   sendProgress({
-    type: 'progress',
-    stage: 'reduce',
-    message: '正在汇总所有分块评分...'
+    type: "progress",
+    stage: "reduce",
+    message: "正在汇总所有分块评分..."
   })
 
   const reducePrompt = buildReducePrompt(mapped)
@@ -654,7 +633,7 @@ async function analyzeTextByChunks(
   )
 
   if (!reduceText.trim()) {
-    throw new Error('最终汇总返回空内容')
+    throw new Error("最终汇总返回空内容")
   }
 
   return parseAnalysisText(reduceText)
@@ -664,31 +643,29 @@ function isValidLlmApiConfig(config: LlmApiConfig): boolean {
   return Boolean(config.apiKey)
 }
 
-function parseFormJsonField(
-  raw: FormDataEntryValue | null
-): Record<string, boolean> {
+function parseFormJsonField(raw: FormDataEntryValue | null): Record<string, boolean> {
   if (raw == null) {
     return {}
   }
 
-  if (typeof raw !== 'string') {
+  if (typeof raw !== "string") {
     return {}
   }
 
   const trimmed = raw.trim()
-  if (!trimmed || trimmed === '[object Object]') {
+  if (!trimmed || trimmed === "[object Object]") {
     return {}
   }
 
   try {
     const parsed: unknown = JSON.parse(trimmed)
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return {}
     }
 
     const options: Record<string, boolean> = {}
     for (const [key, value] of Object.entries(parsed)) {
-      if (typeof value === 'boolean') {
+      if (typeof value === "boolean") {
         options[key] = value
       }
     }
@@ -700,395 +677,376 @@ function parseFormJsonField(
 
 export const maxDuration = 300
 
-export const POST = withDatabase(
-  async (request: Request, db: Db, dbClient: MongoClient) => {
-    let userId: string | undefined
-    const token = extractAccessTokenFromRequest(request, 'authorization')
+export const POST = withDatabase(async (request: Request, db: Db, dbClient: MongoClient) => {
+  let userId: string | undefined
+  const token = extractAccessTokenFromRequest(request, "authorization")
 
-    if (token) {
-      try {
-        const payload = await verifyToken(token)
-        userId = payload.userId
-      } catch  {
-        logger.warn('Invalid token provided for analysis request')
-      }
+  if (token) {
+    try {
+      const payload = await verifyToken(token)
+      userId = payload.userId
+    } catch {
+      logger.warn("Invalid token provided for analysis request")
     }
+  }
 
-    let userApiConfig: {
-      baseUrl: string
-      apiKey: string
-      model: string
-    } | null = null
-    if (userId) {
-      try {
-        const encKey = readCookie(request, getAuthCookieNames().encKey) ?? null
-        if (encKey) {
-          const user = await db
-            .collection('users')
-            .findOne({ _id: new ObjectId(userId) })
-          if (user?.customApiConfig) {
-            userApiConfig = await decryptObject<{
-              baseUrl: string
-              apiKey: string
-              model: string
-            }>(user.customApiConfig, encKey)
-          }
-        }
-      } catch {
-        userApiConfig = null
-      }
-    }
-
-    let rateLimitResult: {
-      allowed: boolean
-      remainingRequests?: number
-      resetTime?: Date
-      error?: string
-      identifier?: string
-    }
-    let identifier: string | undefined
-
-    if (userApiConfig) {
-      rateLimitResult = { allowed: true }
-    } else if (userId) {
-      rateLimitResult = await checkRateLimit(
-        request,
-        { db, client: dbClient },
-        userId
-      )
-      identifier = rateLimitResult.identifier
-    } else {
-      rateLimitResult = await checkRateLimit(request, { db, client: dbClient })
-      identifier = rateLimitResult.identifier
-    }
-
-    if (!rateLimitResult.allowed) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: rateLimitResult.error || '请求超过使用限制，请稍后再尝试',
-          remainingRequests: rateLimitResult.remainingRequests,
-          resetTime: rateLimitResult.resetTime
-        }),
-        {
-          status: 429,
-          headers: {
-            'Content-Type': 'application/json',
-            'X-RateLimit-Remaining': String(
-              rateLimitResult.remainingRequests || 0
-            ),
-            'X-RateLimit-Reset': rateLimitResult.resetTime?.toISOString() || ''
-          }
-        }
-      )
-    }
-
-    if (!userId && identifier && db && dbClient) {
-      await recordVisit(
-        identifier,
-        {
-          userAgent: request.headers.get('user-agent'),
-          timestamp: new Date()
-        },
-        { db, client: dbClient }
-      ).catch((err) => logger.error('Failed to record visit', err))
-    }
-
-    const formData = await request.formData()
-    const content = formData.get('content') as string | null
-    const file = formData.get('file') as File | null
-    const analysisType = formData.get('analysisType') as 'text' | 'file'
-    const optionsJson = formData.get('options')
-    const options = parseFormJsonField(optionsJson)
-    const captchaToken = formData.get('captchaToken') as string | null
-
-    const tempApiBaseUrl = formData.get('tempApiBaseUrl') as string | null
-    const tempApiKey = formData.get('tempApiKey') as string | null
-    const tempApiModel = formData.get('tempApiModel') as string | null
-    const tempStructuredOutput = formData.get('tempStructuredOutput') === 'true'
-
-    const encKeyCookieName = getAuthCookieNames().encKey
-    const encKey = readCookie(request, encKeyCookieName) || null
-
-    if (isCaptchaEnabled()) {
-      if (!captchaToken) {
-        return new Response(
-          JSON.stringify({ success: false, error: '请完成人机验证' }),
-          { status: 400, headers: { 'Content-Type': 'application/json' } }
-        )
-      }
-      const isCaptchaValid = await verifyCaptchaWithDb(captchaToken, db)
-      if (!isCaptchaValid) {
-        return new Response(
-          JSON.stringify({ success: false, error: '人机验证失败，请重试' }),
-          { status: 400, headers: { 'Content-Type': 'application/json' } }
-        )
-      }
-    }
-
-    if (!analysisType) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'analysisType 必填，应为 "text" 或 "file"'
-        }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      )
-    }
-
-    const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
-    if (file && file.size > MAX_FILE_SIZE) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: `文件过大，请上传小于 5MB 的文件（当前文件大小：${(file.size / (1024 * 1024)).toFixed(2)}MB）`
-        }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      )
-    }
-
-    if (analysisType === 'text' && (!content || content.trim().length === 0)) {
-      return new Response(
-        JSON.stringify({ success: false, error: '文本内容不能为空' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      )
-    }
-
-    if (analysisType === 'file' && !file) {
-      return new Response(
-        JSON.stringify({ success: false, error: '文件/图片数据不能为空' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Priority: user DB config > anonymous temp config > server default
-    let apiConfig: LlmApiConfig
-    if (userApiConfig?.apiKey) {
-      apiConfig = {
-        ...llmConfig,
-        baseUrl: userApiConfig.baseUrl || llmConfig.baseUrl,
-        apiKey: userApiConfig.apiKey,
-        model: userApiConfig.model || llmConfig.model,
-        useStructuredOutput: tempStructuredOutput
-      }
-    } else if (!userId && tempApiKey) {
-      apiConfig = {
-        ...llmConfig,
-        baseUrl: tempApiBaseUrl || llmConfig.baseUrl,
-        apiKey: tempApiKey,
-        model: tempApiModel || llmConfig.model,
-        useStructuredOutput: tempStructuredOutput
-      }
-    } else {
-      apiConfig = llmConfig
-    }
-
-    if (!isValidLlmApiConfig(apiConfig)) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'LLM API 配置无效，请检查环境变量设置'
-        }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      )
-    }
-
-    const encoder = new TextEncoder()
-    const stream = new ReadableStream({
-      async start(controller) {
-        let isStreamClosed = false
-
-        const sendHeartbeat = () => {
-          if (isStreamClosed) {
-            return
-          }
-          try {
-            const heartbeat = `${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n`
-            controller.enqueue(encoder.encode(heartbeat))
-          } catch  {
-            // Stream already closed, ignore
-            isStreamClosed = true
-          }
-        }
-
-        const heartbeatInterval = setInterval(sendHeartbeat, 10000)
-
-        try {
-          sendHeartbeat()
-
-          const systemPrompt = buildPrompt(options ?? {})
-          let parsedResult: AnalysisResult
-
-          if (analysisType === 'text') {
-            const textContent = content || ''
-            const sendProgress = (payload: Record<string, unknown>) => {
-              const msg = `${JSON.stringify(payload)}\n`
-              controller.enqueue(encoder.encode(msg))
-            }
-
-            if (CHUNKING_ENABLED) {
-              const progressMsg = `${JSON.stringify({
-                type: 'progress',
-                stage: 'start',
-                message: '正在进行分块分析...'
-              })}\n`
-              controller.enqueue(encoder.encode(progressMsg))
-
-              parsedResult = await analyzeTextByChunks(
-                textContent,
-                systemPrompt,
-                apiConfig,
-                sendProgress
-              )
-            } else {
-              const progressMsg = `${JSON.stringify({
-                type: 'progress',
-                stage: 'start',
-                message: '正在分析文本...'
-              })}\n`
-              controller.enqueue(encoder.encode(progressMsg))
-
-              parsedResult = await analyzeTextDirect(
-                textContent,
-                systemPrompt,
-                apiConfig,
-                sendProgress
-              )
-            }
-          } else {
-            if (!file || !(file instanceof File)) {
-              throw new Error('Invalid file object')
-            }
-
-            const isImage = file.type.startsWith('image/')
-            if (!isImage) {
-              throw new Error('Invalid file type')
-            }
-
-            const arrayBuffer = await file.arrayBuffer()
-
-            // Magic byte validation - don't trust client-provided MIME type
-            const detectedType = await fileTypeFromBuffer(
-              new Uint8Array(arrayBuffer)
-            )
-            if (!detectedType?.mime.startsWith('image/')) {
-              throw new Error(
-                'Invalid file content: file does not appear to be a valid image'
-              )
-            }
-
-            const bytes = new Uint8Array(arrayBuffer)
-            const chunkSize = 0x8000
-            let binary = ''
-            for (let i = 0; i < bytes.length; i += chunkSize) {
-              const chunk = bytes.subarray(i, i + chunkSize)
-              binary += String.fromCharCode(...chunk)
-            }
-            const base64 = btoa(binary)
-            const fileDataUrl = `data:${file.type};base64,${base64}`
-
-            const responseFormat = buildResponseFormat()
-            const progressMsg =
-              JSON.stringify({ type: 'progress', message: '正在分析中...' }) +
-              '\n'
-            controller.enqueue(encoder.encode(progressMsg))
-
-            const generatedText = await generateAnalysisFromMessages(
-              apiConfig,
-              [
-                { role: 'system', content: systemPrompt },
-                {
-                  role: 'user',
-                  content: [
-                    { type: 'text', text: '请分析此图片中的内容' },
-                    { type: 'image_url', image_url: { url: fileDataUrl } }
-                  ]
-                }
-              ],
-              responseFormat
-            )
-
-            if (!generatedText.trim()) {
-              throw new Error('分析失败，未能获取有效结果')
-            }
-
-            parsedResult = parseAnalysisText(generatedText)
-          }
-
-          // incrementRateLimit 需要独立连接，因为主连接在 stream 返回后会关闭
-          if (identifier) {
-            await incrementRateLimit(identifier).catch((err) =>
-              logger.error('Failed to increment rate limit', err)
-            )
-          }
-
-          const score = calculateOverallScore(parsedResult.dimensions)
-          parsedResult.overallScore = score
-
-          if (userId && encKey) {
-            let saveClient: MongoClient | undefined
-            try {
-              const encryptedResult = await encryptObject(parsedResult, encKey)
-
-              const dbResult = await getDatabase()
-              const saveDb = dbResult.db
-              saveClient = dbResult.client
-
-              const historyCollection = saveDb.collection('analysis_history')
-
-              await historyCollection.insertOne({
-                userId,
-                encryptedResult,
-                mode: analysisType,
-                score,
-                createdAt: new Date()
-              })
-            } catch (error) {
-              logger.error('Failed to save analysis history', error)
-            } finally {
-              if (saveClient) {
-                await closeDatabaseConnection(saveClient)
-              }
-            }
-          } else if (userId && !encKey) {
-            logger.warn(
-              'User logged in but no enc_key cookie found, history not saved',
-              { userId }
-            )
-          }
-
-          const resultMsg = `${JSON.stringify({
-            type: 'result',
-            success: true,
-            data: parsedResult
-          })}\n`
-          controller.enqueue(encoder.encode(resultMsg))
-        } catch (error: any) {
-          logger.error('Error processing analysis request', {
-            error: error.message,
-            stack: error.stack,
-            name: error.name
-          })
-          const errorMsg = `${JSON.stringify({
-            type: 'error',
-            success: false,
-            error: error.message || '处理请求时出错'
-          })}\n`
-          controller.enqueue(encoder.encode(errorMsg))
-        } finally {
-          isStreamClosed = true
-          clearInterval(heartbeatInterval)
-          controller.close()
+  let userApiConfig: {
+    baseUrl: string
+    apiKey: string
+    model: string
+  } | null = null
+  if (userId) {
+    try {
+      const encKey = readCookie(request, getAuthCookieNames().encKey) ?? null
+      if (encKey) {
+        const user = await db.collection("users").findOne({ _id: new ObjectId(userId) })
+        if (user?.customApiConfig) {
+          userApiConfig = await decryptObject<{
+            baseUrl: string
+            apiKey: string
+            model: string
+          }>(user.customApiConfig, encKey)
         }
       }
-    })
+    } catch {
+      userApiConfig = null
+    }
+  }
 
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive'
+  let rateLimitResult: {
+    allowed: boolean
+    remainingRequests?: number
+    resetTime?: Date
+    error?: string
+    identifier?: string
+  }
+  let identifier: string | undefined
+
+  if (userApiConfig) {
+    rateLimitResult = { allowed: true }
+  } else if (userId) {
+    rateLimitResult = await checkRateLimit(request, { db, client: dbClient }, userId)
+    identifier = rateLimitResult.identifier
+  } else {
+    rateLimitResult = await checkRateLimit(request, { db, client: dbClient })
+    identifier = rateLimitResult.identifier
+  }
+
+  if (!rateLimitResult.allowed) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: rateLimitResult.error || "请求超过使用限制，请稍后再尝试",
+        remainingRequests: rateLimitResult.remainingRequests,
+        resetTime: rateLimitResult.resetTime
+      }),
+      {
+        status: 429,
+        headers: {
+          "Content-Type": "application/json",
+          "X-RateLimit-Remaining": String(rateLimitResult.remainingRequests || 0),
+          "X-RateLimit-Reset": rateLimitResult.resetTime?.toISOString() || ""
+        }
       }
+    )
+  }
+
+  if (!userId && identifier && db && dbClient) {
+    await recordVisit(
+      identifier,
+      {
+        userAgent: request.headers.get("user-agent"),
+        timestamp: new Date()
+      },
+      { db, client: dbClient }
+    ).catch((err) => logger.error("Failed to record visit", err))
+  }
+
+  const formData = await request.formData()
+  const content = formData.get("content") as string | null
+  const file = formData.get("file") as File | null
+  const analysisType = formData.get("analysisType") as "text" | "file"
+  const optionsJson = formData.get("options")
+  const options = parseFormJsonField(optionsJson)
+  const captchaToken = formData.get("captchaToken") as string | null
+
+  const tempApiBaseUrl = formData.get("tempApiBaseUrl") as string | null
+  const tempApiKey = formData.get("tempApiKey") as string | null
+  const tempApiModel = formData.get("tempApiModel") as string | null
+  const tempStructuredOutput = formData.get("tempStructuredOutput") === "true"
+
+  const encKeyCookieName = getAuthCookieNames().encKey
+  const encKey = readCookie(request, encKeyCookieName) || null
+
+  if (isCaptchaEnabled()) {
+    if (!captchaToken) {
+      return new Response(JSON.stringify({ success: false, error: "请完成人机验证" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" }
+      })
+    }
+    const isCaptchaValid = await verifyCaptchaWithDb(captchaToken, db)
+    if (!isCaptchaValid) {
+      return new Response(JSON.stringify({ success: false, error: "人机验证失败，请重试" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" }
+      })
+    }
+  }
+
+  if (!analysisType) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: 'analysisType 必填，应为 "text" 或 "file"'
+      }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    )
+  }
+
+  const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+  if (file && file.size > MAX_FILE_SIZE) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: `文件过大，请上传小于 5MB 的文件（当前文件大小：${(file.size / (1024 * 1024)).toFixed(2)}MB）`
+      }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    )
+  }
+
+  if (analysisType === "text" && (!content || content.trim().length === 0)) {
+    return new Response(JSON.stringify({ success: false, error: "文本内容不能为空" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" }
     })
   }
-)
+
+  if (analysisType === "file" && !file) {
+    return new Response(JSON.stringify({ success: false, error: "文件/图片数据不能为空" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" }
+    })
+  }
+
+  // Priority: user DB config > anonymous temp config > server default
+  let apiConfig: LlmApiConfig
+  if (userApiConfig?.apiKey) {
+    apiConfig = {
+      ...llmConfig,
+      baseUrl: userApiConfig.baseUrl || llmConfig.baseUrl,
+      apiKey: userApiConfig.apiKey,
+      model: userApiConfig.model || llmConfig.model,
+      useStructuredOutput: tempStructuredOutput
+    }
+  } else if (!userId && tempApiKey) {
+    apiConfig = {
+      ...llmConfig,
+      baseUrl: tempApiBaseUrl || llmConfig.baseUrl,
+      apiKey: tempApiKey,
+      model: tempApiModel || llmConfig.model,
+      useStructuredOutput: tempStructuredOutput
+    }
+  } else {
+    apiConfig = llmConfig
+  }
+
+  if (!isValidLlmApiConfig(apiConfig)) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: "LLM API 配置无效，请检查环境变量设置"
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    )
+  }
+
+  const encoder = new TextEncoder()
+  const stream = new ReadableStream({
+    async start(controller) {
+      let isStreamClosed = false
+
+      const sendHeartbeat = () => {
+        if (isStreamClosed) {
+          return
+        }
+        try {
+          const heartbeat = `${JSON.stringify({ type: "heartbeat", timestamp: Date.now() })}\n`
+          controller.enqueue(encoder.encode(heartbeat))
+        } catch {
+          // Stream already closed, ignore
+          isStreamClosed = true
+        }
+      }
+
+      const heartbeatInterval = setInterval(sendHeartbeat, 10000)
+
+      try {
+        sendHeartbeat()
+
+        const systemPrompt = buildPrompt(options ?? {})
+        let parsedResult: AnalysisResult
+
+        if (analysisType === "text") {
+          const textContent = content || ""
+          const sendProgress = (payload: Record<string, unknown>) => {
+            const msg = `${JSON.stringify(payload)}\n`
+            controller.enqueue(encoder.encode(msg))
+          }
+
+          if (CHUNKING_ENABLED) {
+            const progressMsg = `${JSON.stringify({
+              type: "progress",
+              stage: "start",
+              message: "正在进行分块分析..."
+            })}\n`
+            controller.enqueue(encoder.encode(progressMsg))
+
+            parsedResult = await analyzeTextByChunks(
+              textContent,
+              systemPrompt,
+              apiConfig,
+              sendProgress
+            )
+          } else {
+            const progressMsg = `${JSON.stringify({
+              type: "progress",
+              stage: "start",
+              message: "正在分析文本..."
+            })}\n`
+            controller.enqueue(encoder.encode(progressMsg))
+
+            parsedResult = await analyzeTextDirect(
+              textContent,
+              systemPrompt,
+              apiConfig,
+              sendProgress
+            )
+          }
+        } else {
+          if (!file || !(file instanceof File)) {
+            throw new Error("Invalid file object")
+          }
+
+          const isImage = file.type.startsWith("image/")
+          if (!isImage) {
+            throw new Error("Invalid file type")
+          }
+
+          const arrayBuffer = await file.arrayBuffer()
+
+          // Magic byte validation - don't trust client-provided MIME type
+          const detectedType = await fileTypeFromBuffer(new Uint8Array(arrayBuffer))
+          if (!detectedType?.mime.startsWith("image/")) {
+            throw new Error("Invalid file content: file does not appear to be a valid image")
+          }
+
+          const bytes = new Uint8Array(arrayBuffer)
+          const chunkSize = 0x8000
+          let binary = ""
+          for (let i = 0; i < bytes.length; i += chunkSize) {
+            const chunk = bytes.subarray(i, i + chunkSize)
+            binary += String.fromCharCode(...chunk)
+          }
+          const base64 = btoa(binary)
+          const fileDataUrl = `data:${file.type};base64,${base64}`
+
+          const responseFormat = buildResponseFormat()
+          const progressMsg = JSON.stringify({ type: "progress", message: "正在分析中..." }) + "\n"
+          controller.enqueue(encoder.encode(progressMsg))
+
+          const generatedText = await generateAnalysisFromMessages(
+            apiConfig,
+            [
+              { role: "system", content: systemPrompt },
+              {
+                role: "user",
+                content: [
+                  { type: "text", text: "请分析此图片中的内容" },
+                  { type: "image_url", image_url: { url: fileDataUrl } }
+                ]
+              }
+            ],
+            responseFormat
+          )
+
+          if (!generatedText.trim()) {
+            throw new Error("分析失败，未能获取有效结果")
+          }
+
+          parsedResult = parseAnalysisText(generatedText)
+        }
+
+        // incrementRateLimit 需要独立连接，因为主连接在 stream 返回后会关闭
+        if (identifier) {
+          await incrementRateLimit(identifier).catch((err) =>
+            logger.error("Failed to increment rate limit", err)
+          )
+        }
+
+        const score = calculateOverallScore(parsedResult.dimensions)
+        parsedResult.overallScore = score
+
+        if (userId && encKey) {
+          let saveClient: MongoClient | undefined
+          try {
+            const encryptedResult = await encryptObject(parsedResult, encKey)
+
+            const dbResult = await getDatabase()
+            const saveDb = dbResult.db
+            saveClient = dbResult.client
+
+            const historyCollection = saveDb.collection("analysis_history")
+
+            await historyCollection.insertOne({
+              userId,
+              encryptedResult,
+              mode: analysisType,
+              score,
+              createdAt: new Date()
+            })
+          } catch (error) {
+            logger.error("Failed to save analysis history", error)
+          } finally {
+            if (saveClient) {
+              await closeDatabaseConnection(saveClient)
+            }
+          }
+        } else if (userId && !encKey) {
+          logger.warn("User logged in but no enc_key cookie found, history not saved", { userId })
+        }
+
+        const resultMsg = `${JSON.stringify({
+          type: "result",
+          success: true,
+          data: parsedResult
+        })}\n`
+        controller.enqueue(encoder.encode(resultMsg))
+      } catch (error: any) {
+        logger.error("Error processing analysis request", {
+          error: error.message,
+          stack: error.stack,
+          name: error.name
+        })
+        const errorMsg = `${JSON.stringify({
+          type: "error",
+          success: false,
+          error: error.message || "处理请求时出错"
+        })}\n`
+        controller.enqueue(encoder.encode(errorMsg))
+      } finally {
+        isStreamClosed = true
+        clearInterval(heartbeatInterval)
+        controller.close()
+      }
+    }
+  })
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive"
+    }
+  })
+})

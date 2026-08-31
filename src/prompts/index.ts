@@ -1,5 +1,5 @@
-import { basePrompt } from './base'
-import { promptModes, type PromptMode } from './modes'
+import { basePrompt } from "./base"
+import { promptModes, type PromptMode } from "./modes"
 
 export function buildPrompt(enabledModes: Record<string, boolean>): string {
   let finalPrompt = basePrompt
@@ -8,7 +8,7 @@ export function buildPrompt(enabledModes: Record<string, boolean>): string {
     .map(([key]) => promptModes[key].prompt)
 
   if (enabledPrompts.length > 0) {
-    finalPrompt += `\n\n额外评分指南:\n${enabledPrompts.join('\n\n')}`
+    finalPrompt += `\n\n额外评分指南:\n${enabledPrompts.join("\n\n")}`
   }
 
   return finalPrompt

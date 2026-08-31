@@ -1,18 +1,12 @@
-'use client'
+"use client"
 
-import { useState, useEffect, useCallback } from 'react'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription
-} from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { KeyRound, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
-import { buildApiUrl } from '@/utils/api-url'
-import { authFetch } from '@/utils/auth-client'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect, useCallback } from "react"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { KeyRound, Trash2, ChevronDown, ChevronUp } from "lucide-react"
+import { buildApiUrl } from "@/utils/api-url"
+import { authFetch } from "@/utils/auth-client"
+import { motion, AnimatePresence } from "framer-motion"
 
 export interface CustomApiConfig {
   baseUrl: string
@@ -34,21 +28,21 @@ export default function CustomApiCard({
 }: CustomApiCardProps) {
   const [expanded, setExpanded] = useState(false)
   const [hasSaved, setHasSaved] = useState(false)
-  const [savedModel, setSavedModel] = useState('')
-  const [baseUrl, setBaseUrl] = useState('')
-  const [apiKey, setApiKey] = useState('')
-  const [model, setModel] = useState('')
+  const [savedModel, setSavedModel] = useState("")
+  const [baseUrl, setBaseUrl] = useState("")
+  const [apiKey, setApiKey] = useState("")
+  const [model, setModel] = useState("")
   const [structuredOutput, setStructuredOutput] = useState(false)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState("")
 
   // 已登录时，加载已保存的凭据状态
   const loadSavedConfig = useCallback(async () => {
     if (!isLoggedIn) return
     try {
-      const res = await authFetch(buildApiUrl('/api/user/custom-api'), {
-        method: 'GET'
+      const res = await authFetch(buildApiUrl("/api/user/custom-api"), {
+        method: "GET"
       })
       if (res.ok) {
         const data = (await res.json()) as {
@@ -56,7 +50,7 @@ export default function CustomApiCard({
           model?: string
         }
         setHasSaved(data.hasConfig)
-        setSavedModel(data.model || '')
+        setSavedModel(data.model || "")
         if (data.hasConfig) {
           // 通知父组件已有保存的配置（服务端会自动读取，传 null 表示用服务端存储的）
           onChange(null)
@@ -72,33 +66,33 @@ export default function CustomApiCard({
   }, [loadSavedConfig])
 
   const handleSave = async () => {
-    setError('')
+    setError("")
     if (!baseUrl || !apiKey || !model) {
-      setError('所有字段均为必填项')
+      setError("所有字段均为必填项")
       return
     }
     try {
       new URL(baseUrl)
     } catch {
-      setError('请输入有效的 Base URL')
+      setError("请输入有效的 Base URL")
       return
     }
 
     if (isLoggedIn) {
       setSaving(true)
       try {
-        const res = await authFetch(buildApiUrl('/api/user/custom-api'), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const res = await authFetch(buildApiUrl("/api/user/custom-api"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ baseUrl, apiKey, model })
         })
         const data = (await res.json()) as { error?: string }
-        if (!res.ok) throw new Error(data.error || '保存失败')
+        if (!res.ok) throw new Error(data.error || "保存失败")
         setHasSaved(true)
         setSavedModel(model)
-        setBaseUrl('')
-        setApiKey('')
-        setModel('')
+        setBaseUrl("")
+        setApiKey("")
+        setModel("")
         setExpanded(false)
         onChange(null) // 服务端会自动读取
       } catch (err: any) {
@@ -115,17 +109,17 @@ export default function CustomApiCard({
 
   const handleDelete = async () => {
     setDeleting(true)
-    setError('')
+    setError("")
     try {
-      const res = await authFetch(buildApiUrl('/api/user/custom-api'), {
-        method: 'DELETE'
+      const res = await authFetch(buildApiUrl("/api/user/custom-api"), {
+        method: "DELETE"
       })
       if (!res.ok) {
         const data = (await res.json()) as { error?: string }
-        throw new Error(data.error || '删除失败')
+        throw new Error(data.error || "删除失败")
       }
       setHasSaved(false)
-      setSavedModel('')
+      setSavedModel("")
       onChange(null)
     } catch (err: any) {
       setError(err.message)
@@ -136,8 +130,8 @@ export default function CustomApiCard({
 
   const handleEdit = () => {
     setExpanded(true)
-    setBaseUrl('')
-    setApiKey('')
+    setBaseUrl("")
+    setApiKey("")
     setModel(savedModel)
   }
 
@@ -181,24 +175,19 @@ export default function CustomApiCard({
           <motion.div
             key="saved"
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
+            animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
           >
             <CardContent className="pt-0 space-y-3">
               <div className="space-y-2">
                 {[
-                  { label: 'Base URL', value: '••••••••••••••••' },
-                  { label: 'API Key', value: '••••••••••••••••' },
-                  { label: 'Model', value: savedModel || llmConfigPlaceholder }
+                  { label: "Base URL", value: "••••••••••••••••" },
+                  { label: "API Key", value: "••••••••••••••••" },
+                  { label: "Model", value: savedModel || llmConfigPlaceholder }
                 ].map(({ label, value }) => (
-                  <div
-                    key={label}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span className="text-muted-foreground w-20 shrink-0">
-                      {label}
-                    </span>
+                  <div key={label} className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground w-20 shrink-0">{label}</span>
                     <span className="font-mono text-xs text-muted-foreground truncate">
                       {value}
                     </span>
@@ -225,11 +214,7 @@ export default function CustomApiCard({
                   <Trash2 className="w-3.5 h-3.5" />
                 </Button>
               </div>
-              {error && (
-                <p className="text-xs text-red-600 dark:text-red-400">
-                  {error}
-                </p>
-              )}
+              {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
             </CardContent>
           </motion.div>
         )}
@@ -239,7 +224,7 @@ export default function CustomApiCard({
           <motion.div
             key="form"
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
+            animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
           >
@@ -280,10 +265,7 @@ export default function CustomApiCard({
                   />
                 </div>
                 <div>
-                  <label
-                    htmlFor="byok-model"
-                    className="text-xs text-muted-foreground mb-1 block"
-                  >
+                  <label htmlFor="byok-model" className="text-xs text-muted-foreground mb-1 block">
                     Model <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -298,9 +280,7 @@ export default function CustomApiCard({
                 </div>
                 <div className="flex items-center justify-between py-1">
                   <div>
-                    <span className="text-xs text-muted-foreground">
-                      启用结构化输出
-                    </span>
+                    <span className="text-xs text-muted-foreground">启用结构化输出</span>
                     <p className="text-xs text-muted-foreground/60 mt-0.5">
                       要求模型以 JSON Schema 格式返回结果
                     </p>
@@ -311,20 +291,16 @@ export default function CustomApiCard({
                     aria-checked={structuredOutput}
                     onClick={() => setStructuredOutput((v) => !v)}
                     disabled={disabled || saving}
-                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${structuredOutput ? 'bg-primary' : 'bg-input'}`}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${structuredOutput ? "bg-primary" : "bg-input"}`}
                   >
                     <span
-                      className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform duration-200 ${structuredOutput ? 'translate-x-4' : 'translate-x-0'}`}
+                      className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform duration-200 ${structuredOutput ? "translate-x-4" : "translate-x-0"}`}
                     />
                   </button>
                 </div>
               </div>
 
-              {error && (
-                <p className="text-xs text-red-600 dark:text-red-400">
-                  {error}
-                </p>
-              )}
+              {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
 
               <div className="flex gap-2">
                 <Button
@@ -333,7 +309,7 @@ export default function CustomApiCard({
                   onClick={handleSave}
                   disabled={disabled || saving}
                 >
-                  {saving ? '保存中...' : isLoggedIn ? '保存凭据' : '本次使用'}
+                  {saving ? "保存中..." : isLoggedIn ? "保存凭据" : "本次使用"}
                 </Button>
                 <Button
                   variant="outline"
@@ -341,7 +317,7 @@ export default function CustomApiCard({
                   className="text-xs"
                   onClick={() => {
                     setExpanded(false)
-                    setError('')
+                    setError("")
                   }}
                   disabled={saving}
                 >
@@ -354,9 +330,7 @@ export default function CustomApiCard({
                   凭据经过加密后安全存储，即使是服务端也无法读取明文
                 </p>
               ) : (
-                <p className="text-xs text-muted-foreground">
-                  登录后可保存凭据供下次使用
-                </p>
+                <p className="text-xs text-muted-foreground">登录后可保存凭据供下次使用</p>
               )}
             </CardContent>
           </motion.div>
@@ -367,4 +341,4 @@ export default function CustomApiCard({
 }
 
 // 占位符文本（服务端默认模型名不暴露给前端）
-const llmConfigPlaceholder = '服务端默认'
+const llmConfigPlaceholder = "服务端默认"

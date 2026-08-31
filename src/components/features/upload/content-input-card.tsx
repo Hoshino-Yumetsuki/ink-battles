@@ -1,28 +1,15 @@
-'use client'
+"use client"
 
-import { useState, useEffect, type RefObject } from 'react'
-import { Textarea } from '@/components/ui/textarea'
-import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader
-} from '@/components/ui/card'
-import {
-  Upload,
-  Sparkles,
-  Loader2,
-  User as UserIcon,
-  FileText,
-  Clock
-} from 'lucide-react'
-import { compressImage, toReadableSize } from '@/utils/image-compressor'
-import { decodeTextFromFile } from '@/utils/decode-text'
-import { CapWidget, type CapWidgetRef } from '@/components/wed/cap-widget'
-import { buildApiUrl } from '@/utils/api-url'
+import { useState, useEffect, type RefObject } from "react"
+import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card"
+import { Upload, Sparkles, Loader2, User as UserIcon, FileText, Clock } from "lucide-react"
+import { compressImage, toReadableSize } from "@/utils/image-compressor"
+import { decodeTextFromFile } from "@/utils/decode-text"
+import { CapWidget, type CapWidgetRef } from "@/components/wed/cap-widget"
+import { buildApiUrl } from "@/utils/api-url"
 
 interface UsageInfo {
   isLoggedIn: boolean
@@ -40,8 +27,8 @@ interface ContentInputCardProps {
   previewUrl: string | null
   isLoading: boolean
   onAnalyzeAction: () => void
-  analysisType: 'text' | 'file'
-  setAnalysisTypeAction: (type: 'text' | 'file') => void
+  analysisType: "text" | "file"
+  setAnalysisTypeAction: (type: "text" | "file") => void
   setUploadedTextAction: (content: string) => void
   usageInfo?: UsageInfo
   isCaptchaEnabled?: boolean
@@ -75,7 +62,7 @@ export default function ContentInputCard({
   const inputWordCount = content.length
 
   // 刷新倒计时逻辑
-  const [timeLeft, setTimeLeft] = useState('--:--')
+  const [timeLeft, setTimeLeft] = useState("--:--")
 
   useEffect(() => {
     const updateTimer = () => {
@@ -85,7 +72,7 @@ export default function ContentInputCard({
         const resetDate = new Date(usageInfo.resetTime)
         diff = resetDate.getTime() - Date.now()
       } else {
-        setTimeLeft('--:--')
+        setTimeLeft("--:--")
         return
       }
 
@@ -103,20 +90,17 @@ export default function ContentInputCard({
 
   // 默认显示值（如未加载完成）
   const displayUsed = usageInfo?.used ?? 0
-  const displayLimit = usageInfo?.limit ?? '-'
+  const displayLimit = usageInfo?.limit ?? "-"
   const displayPercentage =
-    usageInfo && usageInfo.limit > 0
-      ? Math.min((usageInfo.used / usageInfo.limit) * 100, 100)
-      : 0
+    usageInfo && usageInfo.limit > 0 ? Math.min((usageInfo.used / usageInfo.limit) * 100, 100) : 0
   const processFile = async (selectedFile: File) => {
-    const isImage = selectedFile.type.startsWith('image/')
+    const isImage = selectedFile.type.startsWith("image/")
     const isText =
-      selectedFile.type === 'text/plain' ||
-      selectedFile.name.toLowerCase().endsWith('.txt')
-    const isDocx = selectedFile.name.toLowerCase().endsWith('.docx')
+      selectedFile.type === "text/plain" || selectedFile.name.toLowerCase().endsWith(".txt")
+    const isDocx = selectedFile.name.toLowerCase().endsWith(".docx")
 
     if (!isImage && !isText && !isDocx) {
-      toast.error('仅支持 .txt/.docx 或图片')
+      toast.error("仅支持 .txt/.docx 或图片")
       return
     }
 
@@ -125,13 +109,13 @@ export default function ContentInputCard({
       try {
         const decoded = await decodeTextFromFile(selectedFile)
         if (!decoded?.trim()) {
-          toast.error('无法从文件中提取文本')
+          toast.error("无法从文件中提取文本")
           return
         }
         setUploadedTextAction(decoded)
       } catch (e: any) {
         console.error(e)
-        toast.error('文本解码失败，请重试或更换文件编码')
+        toast.error("文本解码失败，请重试或更换文件编码")
         return
       }
     }
@@ -142,9 +126,7 @@ export default function ContentInputCard({
       // 检查文件大小，如果大于 4.5MB 则显示压缩提示
       const TARGET_SIZE = 4.5 * 1024 * 1024
       if (selectedFile.size > TARGET_SIZE) {
-        toast.info(
-          `图片较大（${toReadableSize(selectedFile.size)}），正在压缩...`
-        )
+        toast.info(`图片较大（${toReadableSize(selectedFile.size)}），正在压缩...`)
       }
 
       const result = await compressImage(selectedFile)
@@ -157,16 +139,14 @@ export default function ContentInputCard({
       }
     }
     setFileAction(fileToUpload)
-    setAnalysisTypeAction('file')
+    setAnalysisTypeAction("file")
   }
   return (
     <Card className="h-full flex flex-col border-none shadow-lg bg-card/50 backdrop-blur-sm">
       <CardHeader className="pb-2">
         <div className="flex items-center gap-2 mb-2">
           <FileText className="w-5 h-5 text-blue-600" />
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-            作品输入
-          </h3>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">作品输入</h3>
         </div>
         <CardDescription className="text-gray-500 dark:text-gray-400 mt-0">
           请粘贴您要分析的完整作品内容，支持小说、散文、诗歌等各类文体
@@ -178,11 +158,11 @@ export default function ContentInputCard({
             <div className="flex items-center gap-2">
               <UserIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
               <span className="font-bold text-gray-900 dark:text-white">
-                {usageInfo?.isLoggedIn ? usageInfo.username : '游客用户'}
+                {usageInfo?.isLoggedIn ? usageInfo.username : "游客用户"}
               </span>
             </div>
             <span className="text-xs px-3 py-1 bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-full font-medium">
-              {usageInfo?.isLoggedIn ? '已登录' : '游客用户'}
+              {usageInfo?.isLoggedIn ? "已登录" : "游客用户"}
             </span>
           </div>
 
@@ -198,24 +178,20 @@ export default function ContentInputCard({
 
             <div className="h-2.5 w-full bg-gray-200 dark:bg-zinc-700 rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all duration-500 ${displayPercentage >= 100 ? 'bg-red-500' : 'bg-blue-600'}`}
+                className={`h-full rounded-full transition-all duration-500 ${displayPercentage >= 100 ? "bg-red-500" : "bg-blue-600"}`}
                 style={{ width: `${displayPercentage}%` }}
               />
             </div>
 
             <div className="flex gap-2 text-xs">
               <div className="flex-1 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-700 rounded-lg p-2.5 flex justify-between items-center shadow-sm">
-                <span className="text-muted-foreground whitespace-nowrap">
-                  今日已用
-                </span>
+                <span className="text-muted-foreground whitespace-nowrap">今日已用</span>
                 <span className="font-medium text-gray-900 dark:text-white ml-1">
                   {displayUsed} 次
                 </span>
               </div>
               <div className="flex-1 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-700 rounded-lg p-2.5 flex justify-between items-center shadow-sm">
-                <span className="text-muted-foreground whitespace-nowrap">
-                  每日限额
-                </span>
+                <span className="text-muted-foreground whitespace-nowrap">每日限额</span>
                 <span className="font-medium text-gray-900 dark:text-white ml-1">
                   {displayLimit} 次
                 </span>
@@ -228,22 +204,14 @@ export default function ContentInputCard({
 
             <div className="flex justify-between items-center pt-1">
               {!usageInfo?.isLoggedIn && (
-                <span className="text-xs text-muted-foreground">
-                  登录可获得更高次数限制
-                </span>
+                <span className="text-xs text-muted-foreground">登录可获得更高次数限制</span>
               )}
               {!usageInfo?.isLoggedIn ? (
                 <div className="flex gap-3 text-sm font-medium ml-auto">
-                  <a
-                    href="/login"
-                    className="text-blue-600 hover:text-blue-700 hover:underline"
-                  >
+                  <a href="/login" className="text-blue-600 hover:text-blue-700 hover:underline">
                     登录
                   </a>
-                  <a
-                    href="/register"
-                    className="text-blue-600 hover:text-blue-700 hover:underline"
-                  >
+                  <a href="/register" className="text-blue-600 hover:text-blue-700 hover:underline">
                     注册
                   </a>
                 </div>
@@ -286,20 +254,13 @@ export default function ContentInputCard({
 
       <CardContent className="flex-1 p-6 pt-2">
         {/* 文本输入区域 - 去掉 Tab 样式，直接展示输入框 */}
-        <div
-          className="h-full flex flex-col relative"
-          style={{ minHeight: '300px' }}
-        >
-          {analysisType === 'file' && file ? (
+        <div className="h-full flex flex-col relative" style={{ minHeight: "300px" }}>
+          {analysisType === "file" && file ? (
             <div className="flex-1 border-2 border-dashed border-gray-200 dark:border-zinc-700 rounded-lg flex flex-col items-center justify-center p-8 bg-gray-50/50 dark:bg-zinc-800/30">
-              {previewUrl && file.type.startsWith('image/') ? (
+              {previewUrl && file.type.startsWith("image/") ? (
                 <div className="relative w-full h-full flex flex-col items-center justify-center min-h-50">
                   <div className="relative w-full flex-1 min-h-50 mb-4">
-                    <img
-                      src={previewUrl}
-                      alt="Preview"
-                      className="object-contain"
-                    />
+                    <img src={previewUrl} alt="Preview" className="object-contain" />
                   </div>
                   <p className="text-sm text-muted-foreground mb-4">
                     {file.name} ({toReadableSize(file.size)})
@@ -321,7 +282,7 @@ export default function ContentInputCard({
                 size="sm"
                 onClick={() => {
                   setFileAction(null)
-                  setAnalysisTypeAction('text')
+                  setAnalysisTypeAction("text")
                 }}
               >
                 移除文件
@@ -350,7 +311,7 @@ export default function ContentInputCard({
             {isCaptchaEnabled && (
               <CapWidget
                 ref={capWidgetRef}
-                endpoint={buildApiUrl('/api/cap')}
+                endpoint={buildApiUrl("/api/cap")}
                 onSolve={onCaptchaSolveAction}
                 onError={(msg) => toast.error(msg)}
                 onReset={onCaptchaResetAction}
@@ -358,11 +319,7 @@ export default function ContentInputCard({
             )}
             <Button
               onClick={onAnalyzeAction}
-              disabled={
-                isLoading ||
-                (!content && !file) ||
-                (isCaptchaEnabled && !captchaToken)
-              }
+              disabled={isLoading || (!content && !file) || (isCaptchaEnabled && !captchaToken)}
               className="w-full px-8 sm:w-auto"
             >
               {isLoading ? (

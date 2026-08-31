@@ -2,9 +2,9 @@
  * 迁移期临时文件：将旧格式历史记录（明文密码加密）迁移到新格式（enc_key 加密）
  * 迁移完成后（所有用户 historyMigrated=true），可直接删除此文件及 login route 中的调用
  */
-import type { Db, ObjectId } from 'mongodb'
-import { logger } from '@/utils/logger'
-import { decryptObject, encryptObject } from '@/utils/crypto'
+import type { Db, ObjectId } from "mongodb"
+import { logger } from "@/utils/logger"
+import { decryptObject, encryptObject } from "@/utils/crypto"
 
 export async function migrateHistoryEncryption(
   db: Db,
@@ -13,8 +13,8 @@ export async function migrateHistoryEncryption(
   plainPassword: string,
   encKey: string
 ): Promise<void> {
-  const historyCollection = db.collection('analysis_history')
-  const usersCollection = db.collection('users')
+  const historyCollection = db.collection("analysis_history")
+  const usersCollection = db.collection("users")
 
   const histories = await historyCollection
     .find({ userId, encryptedResult: { $exists: true } })
@@ -32,10 +32,7 @@ export async function migrateHistoryEncryption(
         }
 
         try {
-          const decrypted = await decryptObject<unknown>(
-            h.encryptedResult,
-            plainPassword
-          )
+          const decrypted = await decryptObject<unknown>(h.encryptedResult, plainPassword)
           const reEncrypted = await encryptObject(decrypted, encKey)
           return { id: h._id, encryptedResult: reEncrypted }
         } catch {
@@ -50,7 +47,7 @@ export async function migrateHistoryEncryption(
       ): r is PromiseFulfilledResult<{
         id: ObjectId
         encryptedResult: string
-      } | null> => r.status === 'fulfilled' && r.value !== null
+      } | null> => r.status === "fulfilled" && r.value !== null
     )
     .map((r) => r.value as { id: ObjectId; encryptedResult: string })
 
@@ -67,8 +64,5 @@ export async function migrateHistoryEncryption(
   }
 
   // 标记迁移完成，下次登录跳过
-  await usersCollection.updateOne(
-    { _id: userObjectId },
-    { $set: { historyMigrated: true } }
-  )
+  await usersCollection.updateOne({ _id: userObjectId }, { $set: { historyMigrated: true } })
 }

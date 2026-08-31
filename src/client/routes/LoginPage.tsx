@@ -1,47 +1,47 @@
-'use client'
+"use client"
 
-import { useState, useRef } from 'react'
-import { useRouter } from '@/client/navigation'
-import { Button } from '@/components/ui/button'
-import { AuthLayout } from '@/components/layout/auth-layout'
-import { User, Lock, Mail } from 'lucide-react'
-import { CapWidget, type CapWidgetRef } from '@/components/wed/cap-widget'
-import { buildApiUrl } from '@/utils/api-url'
+import { useState, useRef } from "react"
+import { useRouter } from "@/client/navigation"
+import { Button } from "@/components/ui/button"
+import { AuthLayout } from "@/components/layout/auth-layout"
+import { User, Lock, Mail } from "lucide-react"
+import { CapWidget, type CapWidgetRef } from "@/components/wed/cap-widget"
+import { buildApiUrl } from "@/utils/api-url"
 
-const isCaptchaEnabled = import.meta.env.VITE_CAP_ENABLED === 'true'
+const isCaptchaEnabled = import.meta.env.VITE_CAP_ENABLED === "true"
 
 export function LoginPage() {
   const router = useRouter()
   const capWidgetRef = useRef<CapWidgetRef>(null)
 
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [captchaToken, setCaptchaToken] = useState('')
-  const [error, setError] = useState('')
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const [captchaToken, setCaptchaToken] = useState("")
+  const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
+    setError("")
 
     if (!username || !password) {
-      setError('请填写所有字段')
+      setError("请填写所有字段")
       return
     }
 
     if (isCaptchaEnabled && !captchaToken) {
-      setError('请完成人机验证')
+      setError("请完成人机验证")
       return
     }
 
     setLoading(true)
 
     try {
-      const response = await fetch(buildApiUrl('/api/auth/login'), {
-        method: 'POST',
-        credentials: 'include',
+      const response = await fetch(buildApiUrl("/api/auth/login"), {
+        method: "POST",
+        credentials: "include",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           username,
@@ -59,15 +59,15 @@ export function LoginPage() {
 
       if (!response.ok) {
         // Token is consumed on failed attempt, reset to allow re-solve
-        setCaptchaToken('')
+        setCaptchaToken("")
         if (isCaptchaEnabled) {
           capWidgetRef.current?.reset()
         }
-        throw new Error(data.error || '登录失败')
+        throw new Error(data.error || "登录失败")
       }
 
-      window.dispatchEvent(new Event('auth-change'))
-      router.push('/')
+      window.dispatchEvent(new Event("auth-change"))
+      router.push("/")
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -78,12 +78,8 @@ export function LoginPage() {
   return (
     <AuthLayout title="Ink Battles">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-          欢迎回来
-        </h2>
-        <p className="mt-2 text-gray-500 dark:text-gray-400">
-          登录您的账户以继续
-        </p>
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">欢迎回来</h2>
+        <p className="mt-2 text-gray-500 dark:text-gray-400">登录您的账户以继续</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -96,7 +92,7 @@ export function LoginPage() {
         <div className="space-y-4">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              {username.includes('@') ? (
+              {username.includes("@") ? (
                 <Mail className="h-5 w-5 text-gray-400 dark:text-gray-500" />
               ) : (
                 <User className="h-5 w-5 text-gray-400 dark:text-gray-500" />
@@ -133,10 +129,10 @@ export function LoginPage() {
           <div className="flex justify-center">
             <CapWidget
               ref={capWidgetRef}
-              endpoint={buildApiUrl('/api/cap')}
+              endpoint={buildApiUrl("/api/cap")}
               onSolve={(token) => setCaptchaToken(token)}
               onError={(message) => setError(message)}
-              onReset={() => setCaptchaToken('')}
+              onReset={() => setCaptchaToken("")}
             />
           </div>
         )}
@@ -156,7 +152,7 @@ export function LoginPage() {
             className="flex-1 py-6 bg-blue-500 hover:bg-blue-600 text-white text-base font-normal shadow-md shadow-blue-500/20"
             disabled={loading}
           >
-            {loading ? '登录中...' : '登录'}
+            {loading ? "登录中..." : "登录"}
           </Button>
         </div>
       </form>

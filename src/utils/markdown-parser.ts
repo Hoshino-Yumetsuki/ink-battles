@@ -1,14 +1,14 @@
-import { unified } from 'unified'
-import remarkParse from 'remark-parse'
-import type { Code } from 'mdast'
-import { logger } from './logger'
+import { unified } from "unified"
+import remarkParse from "remark-parse"
+import type { Code } from "mdast"
+import { logger } from "./logger"
 
 export function extractCodeBlock(markdown: string, language?: string): string {
   try {
     const tree = unified().use(remarkParse).parse(markdown)
 
     for (const node of tree.children) {
-      if (node.type === 'code') {
+      if (node.type === "code") {
         const codeNode = node as Code
         if (!language || codeNode.lang === language || !codeNode.lang) {
           return codeNode.value
@@ -18,7 +18,7 @@ export function extractCodeBlock(markdown: string, language?: string): string {
 
     return markdown.trim()
   } catch (error) {
-    logger.error('Failed to parse markdown:', error)
+    logger.error("Failed to parse markdown:", error)
     return markdown.trim()
   }
 }
@@ -31,7 +31,7 @@ export function extractAllCodeBlocks(
     const codeBlocks: Array<{ language: string | null; value: string }> = []
 
     for (const node of tree.children) {
-      if (node.type === 'code') {
+      if (node.type === "code") {
         const codeNode = node as Code
         codeBlocks.push({
           language: codeNode.lang || null,
@@ -42,7 +42,7 @@ export function extractAllCodeBlocks(
 
     return codeBlocks
   } catch (error) {
-    logger.error('Failed to parse markdown:', error)
+    logger.error("Failed to parse markdown:", error)
     return []
   }
 }

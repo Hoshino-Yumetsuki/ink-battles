@@ -5,7 +5,7 @@
 
 export function requestWithJsonBody(request: Request, body: unknown): Request {
   const headers = new Headers(request.headers)
-  headers.set('content-type', 'application/json')
+  headers.set("content-type", "application/json")
 
   return new Request(request.url, {
     body: JSON.stringify(body ?? {}),
@@ -19,32 +19,32 @@ export function requestWithJsonBody(request: Request, body: unknown): Request {
 }
 
 function stringifyFormValue(value: unknown): string {
-  if (value !== null && typeof value === 'object') {
-    return JSON.stringify(value) ?? ''
+  if (value !== null && typeof value === "object") {
+    return JSON.stringify(value) ?? ""
   }
 
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     return value
   }
 
   if (value === null) {
-    return 'null'
+    return "null"
   }
 
   if (value === undefined) {
-    return 'undefined'
+    return "undefined"
   }
 
   if (
-    typeof value === 'number' ||
-    typeof value === 'boolean' ||
-    typeof value === 'bigint' ||
-    typeof value === 'symbol'
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    typeof value === "bigint" ||
+    typeof value === "symbol"
   ) {
     return value.toString()
   }
 
-  return ''
+  return ""
 }
 
 function bodyToFormData(body: unknown): FormData {
@@ -54,7 +54,7 @@ function bodyToFormData(body: unknown): FormData {
 
   const formData = new FormData()
 
-  if (!body || typeof body !== 'object') {
+  if (!body || typeof body !== "object") {
     return formData
   }
 
@@ -87,7 +87,7 @@ function bodyToFormData(body: unknown): FormData {
 
 export function requestWithFormBody(request: Request, body: unknown): Request {
   const headers = new Headers(request.headers)
-  headers.delete('content-type')
+  headers.delete("content-type")
 
   return new Request(request.url, {
     body: bodyToFormData(body),
@@ -100,16 +100,12 @@ export function requestWithFormBody(request: Request, body: unknown): Request {
   })
 }
 
-export function forwardJsonHandler(
-  handler: (request: Request) => Response | Promise<Response>
-) {
+export function forwardJsonHandler(handler: (request: Request) => Response | Promise<Response>) {
   return ({ request, body }: { request: Request; body: unknown }) =>
     handler(requestWithJsonBody(request, body))
 }
 
-export function forwardFormHandler(
-  handler: (request: Request) => Response | Promise<Response>
-) {
+export function forwardFormHandler(handler: (request: Request) => Response | Promise<Response>) {
   return ({ request, body }: { request: Request; body: unknown }) =>
     handler(requestWithFormBody(request, body))
 }

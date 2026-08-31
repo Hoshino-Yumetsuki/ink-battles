@@ -1,14 +1,14 @@
-'use client'
+"use client"
 
-import type React from 'react'
-import { useRef } from 'react'
-import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
-import { motion } from 'framer-motion'
-import { decodeTextFromFile } from '@/utils/decode-text'
-import { UploadCloud, X, FileText, Loader2, Sparkles } from 'lucide-react'
-import { cn } from '@/utils/utils'
-import { compressImage, toReadableSize } from '@/utils/image-compressor'
+import type React from "react"
+import { useRef } from "react"
+import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
+import { motion } from "framer-motion"
+import { decodeTextFromFile } from "@/utils/decode-text"
+import { UploadCloud, X, FileText, Loader2, Sparkles } from "lucide-react"
+import { cn } from "@/utils/utils"
+import { compressImage, toReadableSize } from "@/utils/image-compressor"
 
 interface FileUploaderProps {
   setFileAction: (file: File | null) => void
@@ -30,14 +30,13 @@ export default function FileUploader({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const processFile = async (selectedFile: File) => {
-    const isImage = selectedFile.type.startsWith('image/')
+    const isImage = selectedFile.type.startsWith("image/")
     const isText =
-      selectedFile.type === 'text/plain' ||
-      selectedFile.name.toLowerCase().endsWith('.txt')
-    const isDocx = selectedFile.name.toLowerCase().endsWith('.docx')
+      selectedFile.type === "text/plain" || selectedFile.name.toLowerCase().endsWith(".txt")
+    const isDocx = selectedFile.name.toLowerCase().endsWith(".docx")
 
     if (!isImage && !isText && !isDocx) {
-      toast.error('仅支持 .txt/.docx 或图片')
+      toast.error("仅支持 .txt/.docx 或图片")
       return
     }
 
@@ -46,13 +45,13 @@ export default function FileUploader({
       try {
         const decoded = await decodeTextFromFile(selectedFile)
         if (!decoded?.trim()) {
-          toast.error('无法从文件中提取文本')
+          toast.error("无法从文件中提取文本")
           return
         }
         setUploadedTextAction?.(decoded)
       } catch (e: any) {
         console.error(e)
-        toast.error('文本解码失败，请重试或更换文件编码')
+        toast.error("文本解码失败，请重试或更换文件编码")
         return
       }
     }
@@ -63,9 +62,7 @@ export default function FileUploader({
       // 检查文件大小，如果大于 4.5MB 则显示压缩提示
       const TARGET_SIZE = 4.5 * 1024 * 1024
       if (selectedFile.size > TARGET_SIZE) {
-        toast.info(
-          `图片较大（${toReadableSize(selectedFile.size)}），正在压缩...`
-        )
+        toast.info(`图片较大（${toReadableSize(selectedFile.size)}），正在压缩...`)
       }
 
       const result = await compressImage(selectedFile)
@@ -80,9 +77,7 @@ export default function FileUploader({
     setFileAction(fileToUpload)
   }
 
-  const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
     await processFile(file)
@@ -101,9 +96,9 @@ export default function FileUploader({
     e.preventDefault()
     e.stopPropagation()
     setFileAction(null)
-    setUploadedTextAction?.('')
+    setUploadedTextAction?.("")
     if (fileInputRef.current) {
-      fileInputRef.current.value = ''
+      fileInputRef.current.value = ""
     }
   }
 
@@ -111,10 +106,10 @@ export default function FileUploader({
     <div className="flex flex-col h-full w-full">
       <label
         className={cn(
-          'relative flex-1 border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer w-full transition-all duration-200 group min-h-100',
+          "relative flex-1 border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer w-full transition-all duration-200 group min-h-100",
           file
-            ? 'border-primary/50 bg-primary/5'
-            : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-accent/50'
+            ? "border-primary/50 bg-primary/5"
+            : "border-muted-foreground/25 hover:border-primary/50 hover:bg-accent/50"
         )}
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
@@ -133,15 +128,9 @@ export default function FileUploader({
               <UploadCloud className="w-10 h-10 text-muted-foreground group-hover:text-primary transition-colors" />
             </div>
             <div className="space-y-2">
-              <p className="text-lg font-medium text-foreground">
-                点击或拖拽文件到此处
-              </p>
-              <p className="text-sm text-muted-foreground">
-                支持 .txt, .docx 文档或图片格式
-              </p>
-              <p className="text-xs text-muted-foreground/60">
-                图片将自动压缩以保证上传速度
-              </p>
+              <p className="text-lg font-medium text-foreground">点击或拖拽文件到此处</p>
+              <p className="text-sm text-muted-foreground">支持 .txt, .docx 文档或图片格式</p>
+              <p className="text-xs text-muted-foreground/60">图片将自动压缩以保证上传速度</p>
             </div>
           </div>
         ) : (
@@ -151,7 +140,7 @@ export default function FileUploader({
                 <img
                   src={previewUrl}
                   alt="预览图片"
-                  style={{ objectFit: 'contain' }}
+                  style={{ objectFit: "contain" }}
                   className="rounded-lg shadow-sm"
                 />
               </div>
@@ -159,12 +148,8 @@ export default function FileUploader({
               <div className="flex flex-col items-center gap-4 p-8">
                 <FileText className="w-16 h-16 text-primary" />
                 <div className="text-center">
-                  <p className="font-medium text-lg break-all line-clamp-2">
-                    {file.name}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {toReadableSize(file.size)}
-                  </p>
+                  <p className="font-medium text-lg break-all line-clamp-2">{file.name}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{toReadableSize(file.size)}</p>
                 </div>
               </div>
             )}

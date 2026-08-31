@@ -1,28 +1,23 @@
-import { createHash, pbkdf2, randomUUID } from 'node:crypto'
-import { promisify } from 'node:util'
-import type { Db } from 'mongodb'
-import { logger } from '@/utils/logger'
+import { createHash, pbkdf2, randomUUID } from "node:crypto"
+import { promisify } from "node:util"
+import type { Db } from "mongodb"
+import { logger } from "@/utils/logger"
 import {
   getRefreshTokenExpiresIn,
   type JWTPayload,
   signRefreshToken,
   verifyRefreshToken
-} from '@/utils/jwt'
+} from "@/utils/jwt"
 
 const pbkdf2Async = promisify(pbkdf2)
 
-const ACCESS_COOKIE_NAME = 'auth_token'
+const ACCESS_COOKIE_NAME = "auth_token"
 const REFRESH_COOKIE_NAME =
-  process.env.NODE_ENV === 'production'
-    ? '__Host-refresh_token'
-    : 'refresh_token'
-const ENC_KEY_COOKIE_NAME =
-  process.env.NODE_ENV === 'production' ? '__Host-enc_key' : 'enc_key'
+  process.env.NODE_ENV === "production" ? "__Host-refresh_token" : "refresh_token"
+const ENC_KEY_COOKIE_NAME = process.env.NODE_ENV === "production" ? "__Host-enc_key" : "enc_key"
 const rawSameSite = process.env.AUTH_COOKIE_SAME_SITE?.toLowerCase()
-const DEFAULT_REFRESH_COOKIE_SAME_SITE: 'strict' | 'lax' | 'none' =
-  rawSameSite === 'strict' || rawSameSite === 'none' || rawSameSite === 'lax'
-    ? rawSameSite
-    : 'lax'
+const DEFAULT_REFRESH_COOKIE_SAME_SITE: "strict" | "lax" | "none" =
+  rawSameSite === "strict" || rawSameSite === "none" || rawSameSite === "lax" ? rawSameSite : "lax"
 
 // 永久 cookie 的 Max-Age：10 年
 const PERMANENT_MAX_AGE = 10 * 365 * 24 * 60 * 60
@@ -31,13 +26,10 @@ const PERMANENT_MAX_AGE = 10 * 365 * 24 * 60 * 60
  * 用用户密码和 userId 派生加密密钥（服务端执行，密码不落客户端）
  * 使用 PBKDF2-SHA256，100000 次迭代，输出 32 字节 hex
  */
-export async function deriveEncryptionKey(
-  password: string,
-  userId: string
-): Promise<string> {
-  const salt = Buffer.from(userId.padEnd(16, '0').slice(0, 16))
-  const key = await pbkdf2Async(password, salt, 100000, 32, 'sha256')
-  return key.toString('hex')
+export async function deriveEncryptionKey(password: string, userId: string): Promise<string> {
+  const salt = Buffer.from(userId.padEnd(16, "0").slice(0, 16))
+  const key = await pbkdf2Async(password, salt, 100000, 32, "sha256")
+  return key.toString("hex")
 }
 
 export interface AuthSessionUser {
@@ -59,11 +51,11 @@ export interface RefreshSessionDocument {
 }
 
 function hashToken(token: string): string {
-  return createHash('sha256').update(token).digest('hex')
+  return createHash("sha256").update(token).digest("hex")
 }
 
 function getRefreshCollection(db: Db) {
-  return db.collection<RefreshSessionDocument>('refresh_sessions')
+  return db.collection<RefreshSessionDocument>("refresh_sessions")
 }
 
 let refreshIndexReady = false
@@ -94,21 +86,21 @@ export function getAuthCookieOptions() {
   return {
     access: {
       httpOnly: true,
-      path: '/',
-      sameSite: 'lax' as const,
-      secure: process.env.NODE_ENV === 'production'
+      path: "/",
+      sameSite: "lax" as const,
+      secure: process.env.NODE_ENV === "production"
     },
     refresh: {
       httpOnly: true,
-      path: '/',
+      path: "/",
       sameSite: DEFAULT_REFRESH_COOKIE_SAME_SITE,
-      secure: process.env.NODE_ENV === 'production'
+      secure: process.env.NODE_ENV === "production"
     },
     encKey: {
       httpOnly: true,
-      path: '/',
-      sameSite: 'lax' as const,
-      secure: process.env.NODE_ENV === 'production',
+      path: "/",
+      sameSite: "lax" as const,
+      secure: process.env.NODE_ENV === "production",
       maxAge: PERMANENT_MAX_AGE
     }
   }
@@ -160,7 +152,7 @@ export async function rotateRefreshSession(
 
   const existing = await collection.findOne({ tokenHash })
   if (!existing) {
-    throw new Error('Refresh session not found')
+    throw new Error("Refresh session not found")
   }
   if (existing.revokedAt) {
     // Token reuse detected - potential theft. Revoke entire family.
@@ -171,10 +163,10 @@ export async function rotateRefreshSession(
       { familyId: existing.familyId, revokedAt: null },
       { $set: { revokedAt: new Date(), updatedAt: new Date() } }
     )
-    throw new Error('Refresh token reuse detected')
+    throw new Error("Refresh token reuse detected")
   }
   if (existing.expiresAt.getTime() <= Date.now()) {
-    throw new Error('Refresh session expired')
+    throw new Error("Refresh session expired")
   }
 
   if (
@@ -182,7 +174,7 @@ export async function rotateRefreshSession(
     existing.username !== payload.username ||
     existing.familyId !== payload.familyId
   ) {
-    throw new Error('Refresh session mismatch')
+    throw new Error("Refresh session mismatch")
   }
 
   const nextJti = randomUUID()
@@ -194,9 +186,7 @@ export async function rotateRefreshSession(
   })
   const nextTokenHash = hashToken(nextRefreshToken)
   const now = new Date()
-  const nextExpiresAt = new Date(
-    getRefreshTokenExpiresIn() * 1000 + now.getTime()
-  )
+  const nextExpiresAt = new Date(getRefreshTokenExpiresIn() * 1000 + now.getTime())
 
   await collection.insertOne({
     userId: payload.userId,
@@ -225,16 +215,13 @@ export async function rotateRefreshSession(
     accessPayload: {
       userId: payload.userId,
       username: payload.username,
-      tokenType: 'access'
+      tokenType: "access"
     },
     refreshToken: nextRefreshToken
   }
 }
 
-export async function revokeRefreshSessionByToken(
-  db: Db,
-  refreshToken: string
-): Promise<void> {
+export async function revokeRefreshSessionByToken(db: Db, refreshToken: string): Promise<void> {
   try {
     const tokenHash = hashToken(refreshToken)
     await getRefreshCollection(db).updateOne(
@@ -247,14 +234,11 @@ export async function revokeRefreshSessionByToken(
       }
     )
   } catch (error) {
-    logger.warn('Failed to revoke refresh session by token', error)
+    logger.warn("Failed to revoke refresh session by token", error)
   }
 }
 
-export async function revokeAllRefreshSessionsForUser(
-  db: Db,
-  userId: string
-): Promise<void> {
+export async function revokeAllRefreshSessionsForUser(db: Db, userId: string): Promise<void> {
   await getRefreshCollection(db).updateMany(
     { userId, revokedAt: null },
     {

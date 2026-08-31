@@ -1,21 +1,14 @@
-'use client'
+"use client"
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { usePathname, useRouter } from '@/client/navigation'
-import { motion } from 'framer-motion'
-import {
-  Camera,
-  FileText,
-  LayoutDashboard,
-  LogOut,
-  Settings,
-  User
-} from 'lucide-react'
-import AnimatedBackground from '@/components/common/animated-background'
-import { UserProvider, useUser } from '@/components/providers/user-context'
-import { compressImage } from '@/utils/image-compressor'
-import { buildApiUrl } from '@/utils/api-url'
-import { authFetch, clearAuthStorage } from '@/utils/auth-client'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
+import { usePathname, useRouter } from "@/client/navigation"
+import { motion } from "framer-motion"
+import { Camera, FileText, LayoutDashboard, LogOut, Settings, User } from "lucide-react"
+import AnimatedBackground from "@/components/common/animated-background"
+import { UserProvider, useUser } from "@/components/providers/user-context"
+import { compressImage } from "@/utils/image-compressor"
+import { buildApiUrl } from "@/utils/api-url"
+import { authFetch, clearAuthStorage } from "@/utils/auth-client"
 
 function HomeGridIcon() {
   return (
@@ -35,12 +28,12 @@ function DashboardShell({ children }: { children: ReactNode }) {
   const [avatarLoading, setAvatarLoading] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
 
-  const dashboardBackground = '/G13s14MbIAADlgb.jpg'
+  const dashboardBackground = "/G13s14MbIAADlgb.jpg"
 
   const isActive = useCallback(
     (href: string) => {
-      if (href === '/dashboard') {
-        return pathname === '/dashboard'
+      if (href === "/dashboard") {
+        return pathname === "/dashboard"
       }
       return pathname?.startsWith(href)
     },
@@ -49,7 +42,7 @@ function DashboardShell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace('/login')
+      router.replace("/login")
     }
   }, [loading, user, router])
 
@@ -57,14 +50,14 @@ function DashboardShell({ children }: { children: ReactNode }) {
     clearAuthStorage(false)
 
     try {
-      await fetch(buildApiUrl('/api/auth/logout'), {
-        method: 'POST',
-        credentials: 'include'
+      await fetch(buildApiUrl("/api/auth/logout"), {
+        method: "POST",
+        credentials: "include"
       })
     } catch (error) {
-      console.error('Logout request failed', error)
+      console.error("Logout request failed", error)
     } finally {
-      window.location.href = '/'
+      window.location.href = "/"
     }
   }, [])
 
@@ -85,13 +78,13 @@ function DashboardShell({ children }: { children: ReactNode }) {
           const reader = new FileReader()
           reader.readAsDataURL(compressedFile)
           reader.onload = () => resolve(reader.result as string)
-          reader.onerror = () => reject(new Error('读取头像文件失败'))
+          reader.onerror = () => reject(new Error("读取头像文件失败"))
         })
 
-        const response = await authFetch(buildApiUrl('/api/auth/avatar'), {
-          method: 'POST',
+        const response = await authFetch(buildApiUrl("/api/auth/avatar"), {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json"
           },
           body: JSON.stringify({ avatar: base64 })
         })
@@ -100,25 +93,25 @@ function DashboardShell({ children }: { children: ReactNode }) {
           const data = (await response.json().catch(() => null)) as {
             error?: string
           } | null
-          throw new Error(data?.error || '上传失败')
+          throw new Error(data?.error || "上传失败")
         }
 
         setUser((prev) => (prev ? { ...prev, avatar: base64 } : prev))
       } catch (error) {
-        console.error('Avatar upload failed', error)
-        alert('头像上传失败，请重试')
+        console.error("Avatar upload failed", error)
+        alert("头像上传失败，请重试")
       } finally {
         setAvatarLoading(false)
-        event.target.value = ''
+        event.target.value = ""
       }
     },
     [setUser]
   )
 
   const navItems = [
-    { title: '概览', href: '/dashboard', icon: LayoutDashboard },
-    { title: '历史', href: '/dashboard/history', icon: FileText },
-    { title: '设置', href: '/dashboard/settings', icon: Settings }
+    { title: "概览", href: "/dashboard", icon: LayoutDashboard },
+    { title: "历史", href: "/dashboard/history", icon: FileText },
+    { title: "设置", href: "/dashboard/settings", icon: Settings }
   ]
 
   return (
@@ -141,7 +134,7 @@ function DashboardShell({ children }: { children: ReactNode }) {
         initial={{ x: -20, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{
-          type: 'spring',
+          type: "spring",
           stiffness: 100,
           damping: 15,
           delay: 0.1
@@ -174,7 +167,7 @@ function DashboardShell({ children }: { children: ReactNode }) {
                 key={item.href}
                 href={item.href}
                 title={item.title}
-                className={`w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors ${active ? 'bg-white/30' : 'bg-white/20 hover:bg-white/30'}`}
+                className={`w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors ${active ? "bg-white/30" : "bg-white/20 hover:bg-white/30"}`}
               >
                 <Icon className="w-5 h-5 text-white" />
               </a>
@@ -192,10 +185,10 @@ function DashboardShell({ children }: { children: ReactNode }) {
       </motion.aside>
 
       <motion.div
-        initial={{ y: 20, opacity: 0, x: '-50%' }}
-        animate={{ y: 0, opacity: 1, x: '-50%' }}
+        initial={{ y: 20, opacity: 0, x: "-50%" }}
+        animate={{ y: 0, opacity: 1, x: "-50%" }}
         transition={{
-          type: 'spring',
+          type: "spring",
           stiffness: 100,
           damping: 15,
           delay: 0.2
@@ -210,7 +203,7 @@ function DashboardShell({ children }: { children: ReactNode }) {
             <a
               key={item.href}
               href={item.href}
-              className={`flex-1 flex items-center justify-center py-3 rounded-full transition-colors ${active ? 'bg-white/30' : 'bg-white/20 hover:bg-white/30'}`}
+              className={`flex-1 flex items-center justify-center py-3 rounded-full transition-colors ${active ? "bg-white/30" : "bg-white/20 hover:bg-white/30"}`}
             >
               <Icon className="w-5 h-5" />
             </a>
@@ -231,7 +224,7 @@ function DashboardShell({ children }: { children: ReactNode }) {
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{
-          type: 'spring',
+          type: "spring",
           stiffness: 100,
           damping: 15
         }}
@@ -242,11 +235,7 @@ function DashboardShell({ children }: { children: ReactNode }) {
             <div className="flex flex-col items-center gap-2">
               <div className="w-12 h-12 md:w-16 md:h-16 rounded-full border-4 border-white shadow-lg overflow-hidden relative group">
                 {user?.avatar ? (
-                  <img
-                    src={user.avatar}
-                    alt="User Avatar"
-                    className="h-full w-full object-cover"
-                  />
+                  <img src={user.avatar} alt="User Avatar" className="h-full w-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                     <User className="w-8 h-8 text-gray-400" />
@@ -282,22 +271,20 @@ function DashboardShell({ children }: { children: ReactNode }) {
               <button
                 type="button"
                 className="bg-black/80 backdrop-blur-md text-white rounded-full px-3 py-1 md:px-6 md:py-2 flex items-center gap-2 shadow-lg cursor-pointer hover:bg-black transition-colors"
-                onClick={() => router.push('/dashboard/settings')}
+                onClick={() => router.push("/dashboard/settings")}
               >
                 <User className="w-3 h-3 md:w-4 md:h-4" />
                 <span className="text-xs md:text-sm font-medium hidden md:inline">
-                  {user?.username || '设置'}
+                  {user?.username || "设置"}
                 </span>
-                <span className="text-xs md:hidden inline">
-                  {user ? '' : '设置'}
-                </span>
+                <span className="text-xs md:hidden inline">{user ? "" : "设置"}</span>
               </button>
 
               <div className="flex items-center gap-1 md:gap-3 ml-1 md:ml-2">
                 <button
                   type="button"
                   className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-black/80 text-white flex items-center justify-center hover:bg-black transition-colors shadow-lg"
-                  onClick={() => router.push('/dashboard/settings')}
+                  onClick={() => router.push("/dashboard/settings")}
                   aria-label="设置"
                 >
                   <Settings className="w-4 h-4 md:w-5 md:h-5" />

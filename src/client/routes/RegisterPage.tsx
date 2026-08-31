@@ -1,63 +1,63 @@
-'use client'
+"use client"
 
-import { useState, useRef } from 'react'
-import { useRouter } from '@/client/navigation'
-import { Toaster, toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { AuthLayout } from '@/components/layout/auth-layout'
-import { User, Lock, KeyRound, Mail, ShieldCheck } from 'lucide-react'
-import { CapWidget, type CapWidgetRef } from '@/components/wed/cap-widget'
-import { buildApiUrl } from '@/utils/api-url'
+import { useState, useRef } from "react"
+import { useRouter } from "@/client/navigation"
+import { Toaster, toast } from "sonner"
+import { Button } from "@/components/ui/button"
+import { AuthLayout } from "@/components/layout/auth-layout"
+import { User, Lock, KeyRound, Mail, ShieldCheck } from "lucide-react"
+import { CapWidget, type CapWidgetRef } from "@/components/wed/cap-widget"
+import { buildApiUrl } from "@/utils/api-url"
 
-const isCaptchaEnabled = import.meta.env.VITE_CAP_ENABLED === 'true'
+const isCaptchaEnabled = import.meta.env.VITE_CAP_ENABLED === "true"
 
 export function RegisterPage() {
   const router = useRouter()
   const capWidgetRef = useRef<CapWidgetRef>(null)
 
-  const [username, setUsername] = useState('')
-  const [email, setEmail] = useState('')
-  const [code, setCode] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [captchaToken, setCaptchaToken] = useState('')
+  const [username, setUsername] = useState("")
+  const [email, setEmail] = useState("")
+  const [code, setCode] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [captchaToken, setCaptchaToken] = useState("")
   const [loading, setLoading] = useState(false)
   const [countdown, setCountdown] = useState(0)
 
   const handleSendCode = async () => {
     if (!email) {
-      toast.error('请输入邮箱地址')
+      toast.error("请输入邮箱地址")
       return
     }
     if (!/\S+@\S+\.\S+/.test(email)) {
-      toast.error('请输入有效的邮箱地址')
+      toast.error("请输入有效的邮箱地址")
       return
     }
     if (isCaptchaEnabled && !captchaToken) {
-      toast.error('请完成人机验证')
+      toast.error("请完成人机验证")
       return
     }
 
     try {
       setCountdown(60)
-      const res = await fetch(buildApiUrl('/api/auth/verify-email'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch(buildApiUrl("/api/auth/verify-email"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, captchaToken })
       })
       const data = (await res.json()) as { error?: string }
 
       if (!res.ok) {
         setCountdown(0)
-        setCaptchaToken('')
+        setCaptchaToken("")
         // Reset the Cap widget to allow user to solve again
         if (isCaptchaEnabled) {
           capWidgetRef.current?.reset()
         }
-        throw new Error(data.error || '发送失败')
+        throw new Error(data.error || "发送失败")
       }
 
-      setCaptchaToken('')
+      setCaptchaToken("")
       // Reset the Cap widget so user can solve it again for the register step
       if (isCaptchaEnabled) {
         capWidgetRef.current?.reset()
@@ -73,7 +73,7 @@ export function RegisterPage() {
         })
       }, 1000)
 
-      toast.success('验证码已发送至邮箱')
+      toast.success("验证码已发送至邮箱")
     } catch (err: any) {
       toast.error(err.message)
     }
@@ -84,33 +84,33 @@ export function RegisterPage() {
 
     // 验证表单
     if (!username || !email || !code || !password || !confirmPassword) {
-      toast.error('请填写所有字段')
+      toast.error("请填写所有字段")
       return
     }
 
     if (password !== confirmPassword) {
-      toast.error('两次输入的密码不一致')
+      toast.error("两次输入的密码不一致")
       return
     }
 
     if (password.length < 8) {
-      toast.error('密码长度至少为8个字符')
+      toast.error("密码长度至少为8个字符")
       return
     }
 
     if (isCaptchaEnabled && !captchaToken) {
-      toast.error('请完成人机验证')
+      toast.error("请完成人机验证")
       return
     }
 
     setLoading(true)
 
     try {
-      const response = await fetch(buildApiUrl('/api/auth/register'), {
-        method: 'POST',
-        credentials: 'include',
+      const response = await fetch(buildApiUrl("/api/auth/register"), {
+        method: "POST",
+        credentials: "include",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           username,
@@ -129,20 +129,20 @@ export function RegisterPage() {
       }
 
       if (!response.ok) {
-        setCaptchaToken('')
+        setCaptchaToken("")
         // Reset the Cap widget to allow user to solve again
         if (isCaptchaEnabled) {
           capWidgetRef.current?.reset()
         }
-        throw new Error(data.error || '注册失败')
+        throw new Error(data.error || "注册失败")
       }
 
       // token 和加密密钥现在通过 httpOnly cookie 管理，无需前端存储
 
-      window.dispatchEvent(new Event('auth-change'))
+      window.dispatchEvent(new Event("auth-change"))
 
       // 跳转到dashboard
-      router.push('/dashboard')
+      router.push("/dashboard")
     } catch (err: any) {
       toast.error(err.message)
     } finally {
@@ -153,9 +153,7 @@ export function RegisterPage() {
   return (
     <AuthLayout title="Join Ink Battles">
       <div className="mb-8 mt-4">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-          创建账户
-        </h2>
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">创建账户</h2>
         <p className="mt-2 text-gray-500 dark:text-gray-400">开启您的旅程</p>
       </div>
 
@@ -210,7 +208,7 @@ export function RegisterPage() {
               disabled={countdown > 0 || loading}
               className="w-32 py-3 h-auto"
             >
-              {countdown > 0 ? `${countdown}s` : '发送'}
+              {countdown > 0 ? `${countdown}s` : "发送"}
             </Button>
           </div>
 
@@ -247,10 +245,10 @@ export function RegisterPage() {
           <div className="flex justify-center">
             <CapWidget
               ref={capWidgetRef}
-              endpoint={buildApiUrl('/api/cap')}
+              endpoint={buildApiUrl("/api/cap")}
               onSolve={(token) => setCaptchaToken(token)}
               onError={(message) => toast.error(message)}
-              onReset={() => setCaptchaToken('')}
+              onReset={() => setCaptchaToken("")}
             />
           </div>
         )}
@@ -270,7 +268,7 @@ export function RegisterPage() {
             className="flex-1 py-6 bg-blue-600 hover:bg-blue-700 text-white text-base font-normal shadow-md shadow-blue-500/20"
             disabled={loading}
           >
-            {loading ? '注册中...' : '立即注册'}
+            {loading ? "注册中..." : "立即注册"}
           </Button>
         </div>
       </form>

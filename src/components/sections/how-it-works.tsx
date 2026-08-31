@@ -1,26 +1,23 @@
-'use client'
+"use client"
 
-import { motion } from 'framer-motion'
-import { PenLine, Sliders, Sparkles, ArrowRight } from 'lucide-react'
+import { motion } from "framer-motion"
+import { PenLine, Sliders, Sparkles, ArrowRight } from "lucide-react"
 
 const steps = [
   {
     icon: PenLine,
-    title: '1. 输入作品',
-    description:
-      '直接粘贴文本，或上传 TXT、Word 文档及图片。支持长篇小说片段或短篇故事。'
+    title: "1. 输入作品",
+    description: "直接粘贴文本，或上传 TXT、Word 文档及图片。支持长篇小说片段或短篇故事。"
   },
   {
     icon: Sliders,
-    title: '2. 选择模式',
-    description:
-      '根据需要开启“毒舌模式”、“出版建议”或“深度解析”等多种评分视角。'
+    title: "2. 选择模式",
+    description: "根据需要开启“毒舌模式”、“出版建议”或“深度解析”等多种评分视角。"
   },
   {
     icon: Sparkles,
-    title: '3. 获取报告',
-    description:
-      'AI 将从剧情、人设、节奏等维度进行深度拆解，生成详细的评分报告与改进建议。'
+    title: "3. 获取报告",
+    description: "AI 将从剧情、人设、节奏等维度进行深度拆解，生成详细的评分报告与改进建议。"
   }
 ]
 
@@ -58,9 +55,7 @@ export default function HowItWorks() {
               </div>
 
               <h3 className="text-xl font-semibold mb-3">{step.title}</h3>
-              <p className="text-muted-foreground leading-relaxed px-4">
-                {step.description}
-              </p>
+              <p className="text-muted-foreground leading-relaxed px-4">{step.description}</p>
 
               {/* 移动端箭头 */}
               {index < steps.length - 1 && (

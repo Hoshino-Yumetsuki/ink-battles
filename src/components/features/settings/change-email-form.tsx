@@ -1,13 +1,13 @@
-'use client'
+"use client"
 
-import { useState, useRef } from 'react'
-import { Button } from '@/components/ui/button'
-import { Loader2, Mail, Lock, ShieldCheck } from 'lucide-react'
-import { CapWidget, type CapWidgetRef } from '@/components/wed/cap-widget'
-import { buildApiUrl } from '@/utils/api-url'
-import { authFetch } from '@/utils/auth-client'
+import { useState, useRef } from "react"
+import { Button } from "@/components/ui/button"
+import { Loader2, Mail, Lock, ShieldCheck } from "lucide-react"
+import { CapWidget, type CapWidgetRef } from "@/components/wed/cap-widget"
+import { buildApiUrl } from "@/utils/api-url"
+import { authFetch } from "@/utils/auth-client"
 
-const isCaptchaEnabled = import.meta.env.VITE_CAP_ENABLED === 'true'
+const isCaptchaEnabled = import.meta.env.VITE_CAP_ENABLED === "true"
 
 interface ChangeEmailFormProps {
   hasEmail: boolean
@@ -17,37 +17,37 @@ interface ChangeEmailFormProps {
 export function ChangeEmailForm({ hasEmail, onSuccess }: ChangeEmailFormProps) {
   const capWidgetRef = useRef<CapWidgetRef>(null)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
   const [countdown, setCountdown] = useState(0)
-  const [captchaToken, setCaptchaToken] = useState('')
+  const [captchaToken, setCaptchaToken] = useState("")
 
   // Form states
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [code, setCode] = useState('')
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [code, setCode] = useState("")
 
   const handleSendCode = async () => {
     if (!email) {
-      setError('请输入新邮箱地址')
+      setError("请输入新邮箱地址")
       return
     }
     if (isCaptchaEnabled && !captchaToken) {
-      setError('请完成人机验证')
+      setError("请完成人机验证")
       return
     }
-    setError('')
-    setSuccess('')
+    setError("")
+    setSuccess("")
 
     try {
       setCountdown(60)
-      const res = await authFetch(buildApiUrl('/api/auth/send-code'), {
-        method: 'POST',
+      const res = await authFetch(buildApiUrl("/api/auth/send-code"), {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          type: 'bind_email',
+          type: "bind_email",
           email,
           captchaToken
         })
@@ -56,16 +56,16 @@ export function ChangeEmailForm({ hasEmail, onSuccess }: ChangeEmailFormProps) {
 
       if (!res.ok) {
         setCountdown(0)
-        setCaptchaToken('')
+        setCaptchaToken("")
         // Reset the Cap widget to allow user to solve again
         if (isCaptchaEnabled) {
           capWidgetRef.current?.reset()
         }
-        throw new Error(data.error || '发送验证码失败')
+        throw new Error(data.error || "发送验证码失败")
       }
 
-      setSuccess('验证码已发送至您的新邮箱')
-      setCaptchaToken('')
+      setSuccess("验证码已发送至您的新邮箱")
+      setCaptchaToken("")
 
       const timer = setInterval(() => {
         setCountdown((prev) => {
@@ -84,31 +84,31 @@ export function ChangeEmailForm({ hasEmail, onSuccess }: ChangeEmailFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email || !password || !code) {
-      setError('请填写所有字段')
+      setError("请填写所有字段")
       return
     }
-    setError('')
-    setSuccess('')
+    setError("")
+    setSuccess("")
     setLoading(true)
 
     try {
-      const res = await authFetch(buildApiUrl('/api/user/change-email'), {
-        method: 'POST',
+      const res = await authFetch(buildApiUrl("/api/user/change-email"), {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({ email, password, code })
       })
       const data = (await res.json()) as { error?: string }
 
       if (!res.ok) {
-        throw new Error(data.error || '修改失败')
+        throw new Error(data.error || "修改失败")
       }
 
-      setSuccess(hasEmail ? '邮箱修改成功' : '邮箱绑定成功')
-      setEmail('')
-      setPassword('')
-      setCode('')
+      setSuccess(hasEmail ? "邮箱修改成功" : "邮箱绑定成功")
+      setEmail("")
+      setPassword("")
+      setCode("")
       onSuccess()
     } catch (err: any) {
       setError(err.message)
@@ -149,7 +149,7 @@ export function ChangeEmailForm({ hasEmail, onSuccess }: ChangeEmailFormProps) {
 
       <div className="space-y-2">
         <label className="text-sm font-medium" htmlFor="email-input">
-          {hasEmail ? '新邮箱地址' : '绑定邮箱地址'}
+          {hasEmail ? "新邮箱地址" : "绑定邮箱地址"}
         </label>
         <div className="relative">
           <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
@@ -187,7 +187,7 @@ export function ChangeEmailForm({ hasEmail, onSuccess }: ChangeEmailFormProps) {
             disabled={countdown > 0}
             className="w-32"
           >
-            {countdown > 0 ? `${countdown}s` : '发送验证码'}
+            {countdown > 0 ? `${countdown}s` : "发送验证码"}
           </Button>
         </div>
       </div>
@@ -196,17 +196,17 @@ export function ChangeEmailForm({ hasEmail, onSuccess }: ChangeEmailFormProps) {
         <div className="flex justify-center">
           <CapWidget
             ref={capWidgetRef}
-            endpoint={buildApiUrl('/api/cap')}
+            endpoint={buildApiUrl("/api/cap")}
             onSolve={(token) => setCaptchaToken(token)}
             onError={(message) => setError(message)}
-            onReset={() => setCaptchaToken('')}
+            onReset={() => setCaptchaToken("")}
           />
         </div>
       )}
 
       <Button type="submit" className="w-full" disabled={loading}>
         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        {hasEmail ? '确认修改邮箱' : '确认绑定邮箱'}
+        {hasEmail ? "确认修改邮箱" : "确认绑定邮箱"}
       </Button>
     </form>
   )

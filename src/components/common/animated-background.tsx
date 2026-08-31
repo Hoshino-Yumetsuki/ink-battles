@@ -1,7 +1,7 @@
-'use client'
+"use client"
 
-import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
+import { useEffect, useState } from "react"
+import { motion } from "framer-motion"
 
 export default function AnimatedBackground() {
   const [mounted, setMounted] = useState(false)
@@ -17,7 +17,7 @@ export default function AnimatedBackground() {
       transition={{
         duration: 10,
         repeat: Infinity,
-        repeatType: 'reverse'
+        repeatType: "reverse"
       }}
     />
   )

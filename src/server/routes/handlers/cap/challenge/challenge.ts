@@ -1,6 +1,6 @@
-import { json } from '@/server/http/json'
-import { withDatabase } from '@/utils/mongodb'
-import { createCapInstance } from '@/utils/captcha'
+import { json } from "@/server/http/json"
+import { withDatabase } from "@/utils/mongodb"
+import { createCapInstance } from "@/utils/captcha"
 
 export const POST = withDatabase(async (_req, db) => {
   try {
@@ -14,7 +14,7 @@ export const POST = withDatabase(async (_req, db) => {
 
     return json(challenge)
   } catch (error) {
-    console.error('Error creating challenge:', error)
-    return json({ error: 'Failed to create challenge' }, { status: 500 })
+    console.error("Error creating challenge:", error)
+    return json({ error: "Failed to create challenge" }, { status: 500 })
   }
 })

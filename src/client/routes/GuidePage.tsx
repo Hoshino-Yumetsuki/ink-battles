@@ -1,8 +1,8 @@
-'use client'
+"use client"
 
-import { motion } from 'framer-motion'
-import HowItWorks from '@/components/sections/how-it-works'
-import FAQSection from '@/components/sections/faq-section'
+import { motion } from "framer-motion"
+import HowItWorks from "@/components/sections/how-it-works"
+import FAQSection from "@/components/sections/faq-section"
 
 export function GuidePage() {
   return (

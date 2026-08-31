@@ -1,7 +1,7 @@
-'use client'
+"use client"
 
-import { useEffect, useState } from 'react'
-import { getFingerprint } from '@/utils/fingerprint'
+import { useEffect, useState } from "react"
+import { getFingerprint } from "@/utils/fingerprint"
 
 export function useFingerprint() {
   const [fingerprint, setFingerprint] = useState<string | null>(null)
@@ -20,9 +20,7 @@ export function useFingerprint() {
         }
       } catch (err) {
         if (mounted) {
-          setError(
-            err instanceof Error ? err : new Error('Failed to get fingerprint')
-          )
+          setError(err instanceof Error ? err : new Error("Failed to get fingerprint"))
           setLoading(false)
         }
       }

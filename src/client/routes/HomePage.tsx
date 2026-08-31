@@ -1,25 +1,23 @@
-'use client'
+"use client"
 
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { Toaster, toast } from 'sonner'
-import { AnimatePresence, motion } from 'framer-motion'
+import { useState, useEffect, useCallback, useRef } from "react"
+import { Toaster, toast } from "sonner"
+import { AnimatePresence, motion } from "framer-motion"
 
-import PageHeader from '@/components/layout/page-header'
-import ContentInputCard from '@/components/features/upload/content-input-card'
-import LoadingProgress from '@/components/common/loading-progress'
-import AnalysisOptions from '@/components/features/analysis/analysis-options'
-import WriterScoreResult from '@/components/features/analysis/score-result'
-import AnimatedBackground from '@/components/common/animated-background'
-import FeaturesSection from '@/components/sections/features-section'
-import CustomApiCard, {
-  type CustomApiConfig
-} from '@/components/features/analysis/custom-api-card'
-import { calculateOverallScore } from '@/utils/score-calculator'
-import { useFingerprint } from '@/hooks/use-fingerprint'
-import { buildApiUrl } from '@/utils/api-url'
-import type { CapWidgetRef } from '@/components/wed/cap-widget'
+import PageHeader from "@/components/layout/page-header"
+import ContentInputCard from "@/components/features/upload/content-input-card"
+import LoadingProgress from "@/components/common/loading-progress"
+import AnalysisOptions from "@/components/features/analysis/analysis-options"
+import WriterScoreResult from "@/components/features/analysis/score-result"
+import AnimatedBackground from "@/components/common/animated-background"
+import FeaturesSection from "@/components/sections/features-section"
+import CustomApiCard, { type CustomApiConfig } from "@/components/features/analysis/custom-api-card"
+import { calculateOverallScore } from "@/utils/score-calculator"
+import { useFingerprint } from "@/hooks/use-fingerprint"
+import { buildApiUrl } from "@/utils/api-url"
+import type { CapWidgetRef } from "@/components/wed/cap-widget"
 
-const isCaptchaEnabled = import.meta.env.VITE_CAP_ENABLED === 'true'
+const isCaptchaEnabled = import.meta.env.VITE_CAP_ENABLED === "true"
 
 export interface MermaidDiagram {
   type: string
@@ -61,11 +59,11 @@ interface ApiErrorResponse {
 export function HomePage() {
   const { fingerprint } = useFingerprint()
   const capWidgetRef = useRef<CapWidgetRef>(null)
-  const [content, setContent] = useState<string>('')
-  const [uploadedText, setUploadedText] = useState<string>('')
+  const [content, setContent] = useState<string>("")
+  const [uploadedText, setUploadedText] = useState<string>("")
   const [file, setFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [analysisType, setAnalysisType] = useState<'text' | 'file'>('text')
+  const [analysisType, setAnalysisType] = useState<"text" | "file">("text")
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [progress, setProgress] = useState<number>(0)
   const [result, setResult] = useState<WriterAnalysisResult | null>(null)
@@ -92,23 +90,22 @@ export function HomePage() {
     speedReview: false
   })
 
-  const [captchaToken, setCaptchaToken] = useState('')
-  const [customApiConfig, setCustomApiConfig] =
-    useState<CustomApiConfig | null>(null)
+  const [captchaToken, setCaptchaToken] = useState("")
+  const [customApiConfig, setCustomApiConfig] = useState<CustomApiConfig | null>(null)
 
   const fetchLimits = useCallback(async () => {
     if (!fingerprint) return
     const headers: HeadersInit = {
-      'x-fingerprint': fingerprint
+      "x-fingerprint": fingerprint
     }
 
     try {
-      const url = new URL(buildApiUrl('/api/limits'), window.location.origin)
-      url.searchParams.append('_t', Date.now().toString())
+      const url = new URL(buildApiUrl("/api/limits"), window.location.origin)
+      url.searchParams.append("_t", Date.now().toString())
 
       const res = await fetch(url.toString(), {
         headers,
-        credentials: 'include'
+        credentials: "include"
       })
       if (res.ok) {
         const data = (await res.json()) as LimitsResponse
@@ -121,7 +118,7 @@ export function HomePage() {
         })
       }
     } catch (e) {
-      console.error('Failed to fetch limits', e)
+      console.error("Failed to fetch limits", e)
     }
   }, [fingerprint])
 
@@ -134,8 +131,8 @@ export function HomePage() {
       setTimeout(fetchLimits, 100)
     }
 
-    window.addEventListener('auth-change', handleAuthChange)
-    return () => window.removeEventListener('auth-change', handleAuthChange)
+    window.addEventListener("auth-change", handleAuthChange)
+    return () => window.removeEventListener("auth-change", handleAuthChange)
   }, [fetchLimits])
 
   const handleOptionChange = (key: string, value: boolean) => {
@@ -143,7 +140,7 @@ export function HomePage() {
   }
 
   useEffect(() => {
-    if (file?.type.startsWith('image/')) {
+    if (file?.type.startsWith("image/")) {
       const url = URL.createObjectURL(file)
       setPreviewUrl(url)
       return () => URL.revokeObjectURL(url)
@@ -154,29 +151,29 @@ export function HomePage() {
 
   const handleAnalyze = async () => {
     const isFileModeText =
-      analysisType === 'file' &&
+      analysisType === "file" &&
       !!file &&
-      (file.type === 'text/plain' ||
-        file.name.toLowerCase().endsWith('.txt') ||
-        file.name.toLowerCase().endsWith('.docx'))
+      (file.type === "text/plain" ||
+        file.name.toLowerCase().endsWith(".txt") ||
+        file.name.toLowerCase().endsWith(".docx"))
 
-    if (analysisType === 'text' && !content.trim()) {
-      toast.error('文本内容为空，请先输入或正确导入文本')
+    if (analysisType === "text" && !content.trim()) {
+      toast.error("文本内容为空，请先输入或正确导入文本")
       return
     }
 
     if (isFileModeText && !uploadedText.trim()) {
-      toast.error('上传的文本内容为空，请检查文件内容')
+      toast.error("上传的文本内容为空，请检查文件内容")
       return
     }
 
-    if (analysisType === 'file' && !isFileModeText && !file) {
-      toast.error('请先上传图片文件再进行分析')
+    if (analysisType === "file" && !isFileModeText && !file) {
+      toast.error("请先上传图片文件再进行分析")
       return
     }
 
     if (isCaptchaEnabled && !captchaToken) {
-      toast.error('请先完成人机验证')
+      toast.error("请先完成人机验证")
       return
     }
 
@@ -201,46 +198,46 @@ export function HomePage() {
         const formData = new FormData()
 
         const contentToSubmit =
-          analysisType === 'text' ? content : isFileModeText ? uploadedText : ''
+          analysisType === "text" ? content : isFileModeText ? uploadedText : ""
 
         if (contentToSubmit) {
-          formData.append('content', contentToSubmit)
+          formData.append("content", contentToSubmit)
         }
 
-        if (analysisType === 'file' && !isFileModeText && file) {
-          formData.append('file', file)
+        if (analysisType === "file" && !isFileModeText && file) {
+          formData.append("file", file)
         }
 
-        formData.append('analysisType', isFileModeText ? 'text' : analysisType)
-        formData.append('options', JSON.stringify(enabledOptions))
+        formData.append("analysisType", isFileModeText ? "text" : analysisType)
+        formData.append("options", JSON.stringify(enabledOptions))
 
         // 添加人机验证 token
         if (isCaptchaEnabled && captchaToken) {
-          formData.append('captchaToken', captchaToken)
+          formData.append("captchaToken", captchaToken)
         }
 
         // 未登录用户传临时凭据（已登录用户服务端自动读取 DB）
         if (!usageInfo?.isLoggedIn && customApiConfig) {
-          formData.append('tempApiBaseUrl', customApiConfig.baseUrl)
-          formData.append('tempApiKey', customApiConfig.apiKey)
+          formData.append("tempApiBaseUrl", customApiConfig.baseUrl)
+          formData.append("tempApiKey", customApiConfig.apiKey)
           if (customApiConfig.model) {
-            formData.append('tempApiModel', customApiConfig.model)
+            formData.append("tempApiModel", customApiConfig.model)
           }
           if (customApiConfig.structuredOutput) {
-            formData.append('tempStructuredOutput', 'true')
+            formData.append("tempStructuredOutput", "true")
           }
         }
 
         const headers: HeadersInit = {}
         if (fingerprint) {
-          headers['x-fingerprint'] = fingerprint
+          headers["x-fingerprint"] = fingerprint
         }
 
-        const response = await fetch(buildApiUrl('/api/analyze'), {
-          method: 'POST',
+        const response = await fetch(buildApiUrl("/api/analyze"), {
+          method: "POST",
           body: formData,
           headers,
-          credentials: 'include'
+          credentials: "include"
         })
 
         if (!response.ok) {
@@ -259,12 +256,12 @@ export function HomePage() {
         }
 
         if (!response.body) {
-          throw new Error('响应体为空')
+          throw new Error("响应体为空")
         }
 
         const reader = response.body.getReader()
         const decoder = new TextDecoder()
-        let buffer = ''
+        let buffer = ""
 
         while (true) {
           const { done, value } = await reader.read()
@@ -272,8 +269,8 @@ export function HomePage() {
           if (done) break
 
           buffer += decoder.decode(value, { stream: true })
-          const lines = buffer.split('\n')
-          buffer = lines.pop() || ''
+          const lines = buffer.split("\n")
+          buffer = lines.pop() || ""
 
           for (const line of lines) {
             if (!line.trim()) continue
@@ -281,57 +278,41 @@ export function HomePage() {
             try {
               const message = JSON.parse(line)
 
-              if (message.type === 'heartbeat') {
-                console.log(
-                  '收到心跳:',
-                  new Date(message.timestamp).toLocaleTimeString()
-                )
-              } else if (message.type === 'progress') {
-                console.log('进度:', message.message)
-              } else if (message.type === 'result' && message.success) {
+              if (message.type === "heartbeat") {
+                console.log("收到心跳:", new Date(message.timestamp).toLocaleTimeString())
+              } else if (message.type === "progress") {
+                console.log("进度:", message.message)
+              } else if (message.type === "result" && message.success) {
                 // 后端已经处理好 JSON，直接使用
                 const parsedData = message.data
-                if (!parsedData || typeof parsedData !== 'object') {
-                  throw new Error('返回的分析结果格式无效')
+                if (!parsedData || typeof parsedData !== "object") {
+                  throw new Error("返回的分析结果格式无效")
                 }
 
                 // 验证和补充数据
-                if (
-                  !('dimensions' in parsedData) ||
-                  !Array.isArray(parsedData.dimensions)
-                ) {
-                  toast.warning('分析数据不完整，部分功能可能受到影响')
+                if (!("dimensions" in parsedData) || !Array.isArray(parsedData.dimensions)) {
+                  toast.warning("分析数据不完整，部分功能可能受到影响")
                   parsedData.dimensions = parsedData.dimensions || []
                 }
 
-                const overallScore = calculateOverallScore(
-                  parsedData.dimensions
-                )
+                const overallScore = calculateOverallScore(parsedData.dimensions)
 
                 const contentToSave =
-                  analysisType === 'text'
-                    ? content
-                    : isFileModeText
-                      ? uploadedText
-                      : ''
+                  analysisType === "text" ? content : isFileModeText ? uploadedText : ""
 
-                let autoTitle = '分析结果'
+                let autoTitle = "分析结果"
                 if (contentToSave) {
-                  const firstLine = contentToSave
-                    .split('\n')
-                    .find((l) => l.trim().length > 0)
+                  const firstLine = contentToSave.split("\n").find((l) => l.trim().length > 0)
                   if (firstLine) {
-                    autoTitle =
-                      firstLine.substring(0, 15) +
-                      (firstLine.length > 15 ? '...' : '')
+                    autoTitle = firstLine.substring(0, 15) + (firstLine.length > 15 ? "..." : "")
                   }
                 }
 
                 const defaultResult: WriterAnalysisResult = {
                   overallScore: overallScore,
-                  overallAssessment: '暂无整体评估',
+                  overallAssessment: "暂无整体评估",
                   title: autoTitle,
-                  ratingTag: '未知',
+                  ratingTag: "未知",
                   dimensions: [],
                   strengths: [],
                   improvements: [],
@@ -341,10 +322,7 @@ export function HomePage() {
 
                 const finalResult = { ...defaultResult, ...parsedData }
 
-                if (
-                  finalResult.title === '分析结果' &&
-                  autoTitle !== '分析结果'
-                ) {
+                if (finalResult.title === "分析结果" && autoTitle !== "分析结果") {
                   finalResult.title = autoTitle
                 }
 
@@ -352,31 +330,31 @@ export function HomePage() {
                 setProgress(100)
                 setResult(finalResult)
                 void fetchLimits() // 刷新用量
-              } else if (message.type === 'error') {
+              } else if (message.type === "error") {
                 clearInterval(progressInterval)
                 setProgress(0)
-                toast.error(`分析失败: ${message.error || '未知错误'}`)
+                toast.error(`分析失败: ${message.error || "未知错误"}`)
                 await reader.cancel()
                 return
               }
             } catch (parseError) {
-              console.warn('解析消息失败:', line, parseError)
+              console.warn("解析消息失败:", line, parseError)
             }
           }
         }
       } catch (error: any) {
-        console.error('Analysis data error:', error)
-        toast.error(`分析错误: ${error?.message || '未知错误'}`)
+        console.error("Analysis data error:", error)
+        toast.error(`分析错误: ${error?.message || "未知错误"}`)
       }
     } catch (error: any) {
-      console.error('Analysis process error:', error)
-      toast.error(`分析失败: ${error?.message || '请检查您的网络并稍后重试'}`)
+      console.error("Analysis process error:", error)
+      toast.error(`分析失败: ${error?.message || "请检查您的网络并稍后重试"}`)
     } finally {
       setIsLoading(false)
       setTimeout(() => setProgress(0), 1000)
       // 每次分析完成（无论成功还是失败）均重置验证码
       if (isCaptchaEnabled) {
-        setCaptchaToken('')
+        setCaptchaToken("")
         capWidgetRef.current?.reset()
       }
     }
@@ -390,9 +368,7 @@ export function HomePage() {
         <div className="mb-16" id="analysis-tool">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold mb-2">开始您的创作分析</h2>
-            <p className="text-muted-foreground">
-              选择输入方式和评分模式，获取深度洞察
-            </p>
+            <p className="text-muted-foreground">选择输入方式和评分模式，获取深度洞察</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 align-start">
@@ -403,7 +379,7 @@ export function HomePage() {
               transition={{
                 duration: 0.7,
                 ease: [0.23, 1, 0.32, 1],
-                type: 'spring',
+                type: "spring",
                 stiffness: 100,
                 damping: 15
               }}
@@ -423,7 +399,7 @@ export function HomePage() {
                 isCaptchaEnabled={isCaptchaEnabled}
                 captchaToken={captchaToken}
                 onCaptchaSolveAction={setCaptchaToken}
-                onCaptchaResetAction={() => setCaptchaToken('')}
+                onCaptchaResetAction={() => setCaptchaToken("")}
                 capWidgetRef={capWidgetRef}
               />
             </motion.div>
@@ -436,7 +412,7 @@ export function HomePage() {
                 duration: 0.7,
                 ease: [0.23, 1, 0.32, 1],
                 delay: 0.15,
-                type: 'spring',
+                type: "spring",
                 stiffness: 100,
                 damping: 15
               }}
@@ -473,19 +449,19 @@ export function HomePage() {
                       opacity: 0,
                       scale: 0.9,
                       y: 20,
-                      filter: 'blur(4px)'
+                      filter: "blur(4px)"
                     }}
                     animate={{
                       opacity: 1,
                       scale: 1,
                       y: 0,
-                      filter: 'blur(0px)'
+                      filter: "blur(0px)"
                     }}
                     exit={{
                       opacity: 0,
                       scale: 0.9,
                       y: -10,
-                      filter: 'blur(4px)'
+                      filter: "blur(4px)"
                     }}
                     transition={{
                       duration: 0.5,
@@ -505,18 +481,18 @@ export function HomePage() {
                       opacity: 0,
                       y: 30,
                       scale: 0.95,
-                      filter: 'blur(4px)'
+                      filter: "blur(4px)"
                     }}
                     animate={{
                       opacity: 1,
                       y: 0,
                       scale: 1,
-                      filter: 'blur(0px)'
+                      filter: "blur(0px)"
                     }}
                     transition={{
                       duration: 0.6,
                       ease: [0.23, 1, 0.32, 1],
-                      type: 'spring',
+                      type: "spring",
                       stiffness: 120,
                       damping: 20
                     }}

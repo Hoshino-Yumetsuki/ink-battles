@@ -1,34 +1,34 @@
-import nodemailer from 'nodemailer'
-import { logger } from './logger'
+import nodemailer from "nodemailer"
+import { logger } from "./logger"
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT) || 587,
-  secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+  secure: process.env.SMTP_SECURE === "true", // true for 465, false for other ports
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS
   }
 })
 
-export type EmailType = 'register' | 'bind_email' | 'change_password'
+export type EmailType = "register" | "bind_email" | "change_password"
 
 export async function sendVerificationEmail(
   to: string,
   code: string,
-  type: EmailType = 'register'
+  type: EmailType = "register"
 ) {
-  let title = '欢迎加入 Ink Battles!'
-  let actionText = '您正在注册账号，请使用以下验证码完成验证：'
+  let title = "欢迎加入 Ink Battles!"
+  let actionText = "您正在注册账号，请使用以下验证码完成验证："
 
   switch (type) {
-    case 'bind_email':
-      title = '绑定邮箱验证'
-      actionText = '您正在进行邮箱绑定操作，请使用以下验证码完成验证：'
+    case "bind_email":
+      title = "绑定邮箱验证"
+      actionText = "您正在进行邮箱绑定操作，请使用以下验证码完成验证："
       break
-    case 'change_password':
-      title = '修改密码验证'
-      actionText = '您正在进行修改密码操作，请使用以下验证码完成验证：'
+    case "change_password":
+      title = "修改密码验证"
+      actionText = "您正在进行修改密码操作，请使用以下验证码完成验证："
       break
   }
 
@@ -53,7 +53,7 @@ export async function sendVerificationEmail(
     logger.info(`Verification email sent to ${to}: ${info.messageId}`)
     return true
   } catch (error) {
-    logger.error('Error sending verification email:', error)
+    logger.error("Error sending verification email:", error)
     return false
   }
 }

@@ -1,10 +1,7 @@
-import { json } from '@/server/http/json'
-import { deleteCookie, readCookie } from '@/server/http/cookies'
-import { withDatabase } from '@/utils/mongodb'
-import {
-  getAuthCookieNames,
-  revokeRefreshSessionByToken
-} from '@/utils/auth-session'
+import { json } from "@/server/http/json"
+import { deleteCookie, readCookie } from "@/server/http/cookies"
+import { withDatabase } from "@/utils/mongodb"
+import { getAuthCookieNames, revokeRefreshSessionByToken } from "@/utils/auth-session"
 
 export const POST = withDatabase(async (request: Request, db) => {
   const cookieNames = getAuthCookieNames()

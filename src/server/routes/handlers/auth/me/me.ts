@@ -1,23 +1,23 @@
-import { json } from '@/server/http/json'
-import { ObjectId } from 'mongodb'
-import { withDatabase } from '@/utils/mongodb'
-import { verifyToken } from '@/utils/jwt'
-import { rateLimitConfig } from '@/config/rate-limit'
-import { logger } from '@/utils/logger'
-import { extractAccessTokenFromRequest } from '@/utils/auth-request'
+import { json } from "@/server/http/json"
+import { ObjectId } from "mongodb"
+import { withDatabase } from "@/utils/mongodb"
+import { verifyToken } from "@/utils/jwt"
+import { rateLimitConfig } from "@/config/rate-limit"
+import { logger } from "@/utils/logger"
+import { extractAccessTokenFromRequest } from "@/utils/auth-request"
 
 export const GET = withDatabase(async (req: Request, db) => {
   try {
     // 提取并验证token
-    const token = extractAccessTokenFromRequest(req, 'authorization')
+    const token = extractAccessTokenFromRequest(req, "authorization")
 
     if (!token) {
-      return json({ error: '未提供认证令牌' }, { status: 401 })
+      return json({ error: "未提供认证令牌" }, { status: 401 })
     }
 
     const payload = await verifyToken(token)
 
-    const usersCollection = db.collection('users')
+    const usersCollection = db.collection("users")
 
     // 查找用户
     const user = await usersCollection.findOne(
@@ -26,7 +26,7 @@ export const GET = withDatabase(async (req: Request, db) => {
     )
 
     if (!user) {
-      return json({ error: '用户不存在' }, { status: 404 })
+      return json({ error: "用户不存在" }, { status: 404 })
     }
 
     // 获取配额配置
@@ -39,9 +39,7 @@ export const GET = withDatabase(async (req: Request, db) => {
 
     if (user.usage) {
       // 如果记录存在
-      const userResetTime = user.usage.resetTime
-        ? new Date(user.usage.resetTime)
-        : null
+      const userResetTime = user.usage.resetTime ? new Date(user.usage.resetTime) : null
 
       // 如果未过期，使用记录中的值
       if (userResetTime && now < userResetTime) {
@@ -65,8 +63,8 @@ export const GET = withDatabase(async (req: Request, db) => {
             { _id: user._id },
             {
               $set: {
-                'usage.limit': configMaxRequests,
-                'usage.used': newUsed
+                "usage.limit": configMaxRequests,
+                "usage.used": newUsed
               }
             }
           )
@@ -101,7 +99,7 @@ export const GET = withDatabase(async (req: Request, db) => {
       }
     })
   } catch (error) {
-    logger.error('Get user error:', error)
-    return json({ error: '认证失败' }, { status: 401 })
+    logger.error("Get user error:", error)
+    return json({ error: "认证失败" }, { status: 401 })
   }
 })

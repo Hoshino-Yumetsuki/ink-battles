@@ -1,7 +1,7 @@
-import { type Db, type MongoClient, ObjectId } from 'mongodb'
-import { getDatabase, closeDatabaseConnection } from './mongodb'
-import { logger } from './logger'
-import { rateLimitConfig } from '@/config/rate-limit'
+import { type Db, type MongoClient, ObjectId } from "mongodb"
+import { getDatabase, closeDatabaseConnection } from "./mongodb"
+import { logger } from "./logger"
+import { rateLimitConfig } from "@/config/rate-limit"
 
 interface RateLimitRecord {
   fingerprint: string
@@ -12,7 +12,7 @@ interface RateLimitRecord {
 }
 
 function extractFingerprint(request: Request): string | null {
-  return request.headers.get('x-fingerprint')
+  return request.headers.get("x-fingerprint")
 }
 
 function formatWaitTime(seconds: number): string {
@@ -31,7 +31,7 @@ function formatWaitTime(seconds: number): string {
   if (minutes > 0) parts.push(`${minutes}分钟`)
   if (secs > 0 && days === 0) parts.push(`${secs}秒`)
 
-  return parts.join('')
+  return parts.join("")
 }
 
 export async function checkRateLimit(
@@ -64,26 +64,22 @@ export async function checkRateLimit(
     }
 
     const now = new Date()
-    const windowStart = new Date(
-      now.getTime() - rateLimitConfig.windowSeconds * 1000
-    )
+    const windowStart = new Date(now.getTime() - rateLimitConfig.windowSeconds * 1000)
 
     // 如果是登录用户，检查 users 集合
     if (userId && ObjectId.isValid(userId)) {
       const identifier = `user:${userId}`
-      const usersCollection = db.collection('users')
+      const usersCollection = db.collection("users")
       const user = await usersCollection.findOne({ _id: new ObjectId(userId) })
 
       if (!user) {
-        return { allowed: false, error: '用户不存在' }
+        return { allowed: false, error: "用户不存在" }
       }
 
       const usage = user.usage || {
         used: 0,
         limit: rateLimitConfig.maxRequestsUser,
-        resetTime: new Date(
-          now.getTime() + rateLimitConfig.windowSeconds * 1000
-        )
+        resetTime: new Date(now.getTime() + rateLimitConfig.windowSeconds * 1000)
       }
 
       // 检查配额配置是否变化 (Lazy Update)
@@ -102,8 +98,8 @@ export async function checkRateLimit(
           { _id: user._id },
           {
             $set: {
-              'usage.limit': rateLimitConfig.maxRequestsUser,
-              'usage.used': newUsed
+              "usage.limit": rateLimitConfig.maxRequestsUser,
+              "usage.used": newUsed
             }
           }
         )
@@ -123,9 +119,7 @@ export async function checkRateLimit(
         return {
           allowed: true,
           remainingRequests: rateLimitConfig.maxRequestsUser - 1,
-          resetTime: new Date(
-            now.getTime() + rateLimitConfig.windowSeconds * 1000
-          ),
+          resetTime: new Date(now.getTime() + rateLimitConfig.windowSeconds * 1000),
           identifier
         }
       }
@@ -134,9 +128,7 @@ export async function checkRateLimit(
         const resetTime = usage.resetTime
           ? new Date(usage.resetTime)
           : new Date(now.getTime() + rateLimitConfig.windowSeconds * 1000)
-        const waitSeconds = Math.ceil(
-          (resetTime.getTime() - now.getTime()) / 1000
-        )
+        const waitSeconds = Math.ceil((resetTime.getTime() - now.getTime()) / 1000)
 
         return {
           allowed: false,
@@ -148,8 +140,7 @@ export async function checkRateLimit(
 
       return {
         allowed: true,
-        remainingRequests:
-          (usage.limit || rateLimitConfig.maxRequestsUser) - usage.used - 1,
+        remainingRequests: (usage.limit || rateLimitConfig.maxRequestsUser) - usage.used - 1,
         resetTime: usage.resetTime
           ? new Date(usage.resetTime)
           : new Date(now.getTime() + rateLimitConfig.windowSeconds * 1000),
@@ -160,14 +151,14 @@ export async function checkRateLimit(
     // 匿名用户逻辑
     const identifier = extractFingerprint(request)
     if (!identifier) {
-      logger.warn('Rate limit enabled but no identifier provided')
+      logger.warn("Rate limit enabled but no identifier provided")
       return {
         allowed: false,
-        error: '缺少用户标识，请刷新页面后重试'
+        error: "缺少用户标识，请刷新页面后重试"
       }
     }
 
-    const collection = db.collection<RateLimitRecord>('rate_limits')
+    const collection = db.collection<RateLimitRecord>("rate_limits")
     await collection.createIndex({ fingerprint: 1 })
     await collection.createIndex(
       { windowStart: 1 },
@@ -182,26 +173,20 @@ export async function checkRateLimit(
       return {
         allowed: true,
         remainingRequests: rateLimitConfig.maxRequestsGuest - 1,
-        resetTime: new Date(
-          now.getTime() + rateLimitConfig.windowSeconds * 1000
-        ),
+        resetTime: new Date(now.getTime() + rateLimitConfig.windowSeconds * 1000),
         identifier
       }
     }
 
     // Lazy Update: 检查配额配置是否变化
-    const recordMaxRequests =
-      record.maxRequests || rateLimitConfig.maxRequestsGuest
+    const recordMaxRequests = record.maxRequests || rateLimitConfig.maxRequestsGuest
     if (recordMaxRequests !== rateLimitConfig.maxRequestsGuest) {
       const quotaDiff = rateLimitConfig.maxRequestsGuest - recordMaxRequests
       let newRequestCount = record.requestCount
 
       if (quotaDiff < 0) {
         // 配额减少，调整计数确保不超过新配额
-        newRequestCount = Math.min(
-          record.requestCount,
-          rateLimitConfig.maxRequestsGuest
-        )
+        newRequestCount = Math.min(record.requestCount, rateLimitConfig.maxRequestsGuest)
       }
 
       await collection.updateOne(
@@ -224,29 +209,24 @@ export async function checkRateLimit(
 
     if (record.windowStart < windowStart) {
       await collection.deleteOne({ fingerprint: identifier })
-      logger.info('Rate limit record expired and cleaned', { identifier })
+      logger.info("Rate limit record expired and cleaned", { identifier })
       return {
         allowed: true,
         remainingRequests: rateLimitConfig.maxRequestsGuest - 1,
-        resetTime: new Date(
-          now.getTime() + rateLimitConfig.windowSeconds * 1000
-        ),
+        resetTime: new Date(now.getTime() + rateLimitConfig.windowSeconds * 1000),
         identifier
       }
     }
 
-    const currentMaxRequests =
-      record.maxRequests || rateLimitConfig.maxRequestsGuest
+    const currentMaxRequests = record.maxRequests || rateLimitConfig.maxRequestsGuest
 
     if (record.requestCount >= currentMaxRequests) {
       const resetTime = new Date(
         record.windowStart.getTime() + rateLimitConfig.windowSeconds * 1000
       )
-      const waitSeconds = Math.ceil(
-        (resetTime.getTime() - now.getTime()) / 1000
-      )
+      const waitSeconds = Math.ceil((resetTime.getTime() - now.getTime()) / 1000)
 
-      logger.warn('Rate limit exceeded', {
+      logger.warn("Rate limit exceeded", {
         identifier,
         requestCount: record.requestCount,
         maxRequests: currentMaxRequests
@@ -263,14 +243,12 @@ export async function checkRateLimit(
     return {
       allowed: true,
       remainingRequests: currentMaxRequests - record.requestCount - 1,
-      resetTime: new Date(
-        record.windowStart.getTime() + rateLimitConfig.windowSeconds * 1000
-      ),
+      resetTime: new Date(record.windowStart.getTime() + rateLimitConfig.windowSeconds * 1000),
       identifier
     }
   } catch (error) {
-    logger.error('Error checking rate limit', error)
-    return { allowed: false, error: 'Rate limit check failed' }
+    logger.error("Error checking rate limit", error)
+    return { allowed: false, error: "Rate limit check failed" }
   } finally {
     if (shouldCloseConnection && client) {
       await closeDatabaseConnection(client)
@@ -287,7 +265,7 @@ export async function incrementRateLimit(
   }
 
   if (!identifier) {
-    logger.warn('Cannot increment rate limit: identifier is missing')
+    logger.warn("Cannot increment rate limit: identifier is missing")
     return
   }
 
@@ -308,19 +286,17 @@ export async function incrementRateLimit(
     const now = new Date()
 
     // 登录用户处理逻辑
-    if (identifier.startsWith('user:')) {
-      const userId = identifier.split(':')[1]
+    if (identifier.startsWith("user:")) {
+      const userId = identifier.split(":")[1]
       if (ObjectId.isValid(userId)) {
-        const usersCollection = db.collection('users')
+        const usersCollection = db.collection("users")
         const user = await usersCollection.findOne({
           _id: new ObjectId(userId)
         })
 
         if (user) {
           // 检查是否需要重置窗口
-          const currentResetTime = user.usage?.resetTime
-            ? new Date(user.usage.resetTime)
-            : null
+          const currentResetTime = user.usage?.resetTime ? new Date(user.usage.resetTime) : null
           const shouldReset = !currentResetTime || currentResetTime < now
 
           if (shouldReset) {
@@ -328,11 +304,9 @@ export async function incrementRateLimit(
               { _id: new ObjectId(userId) },
               {
                 $set: {
-                  'usage.used': 1,
-                  'usage.limit': rateLimitConfig.maxRequestsUser,
-                  'usage.resetTime': new Date(
-                    now.getTime() + rateLimitConfig.windowSeconds * 1000
-                  )
+                  "usage.used": 1,
+                  "usage.limit": rateLimitConfig.maxRequestsUser,
+                  "usage.resetTime": new Date(now.getTime() + rateLimitConfig.windowSeconds * 1000)
                 },
                 $inc: { totalAnalysisCount: 1 }
               }
@@ -342,11 +316,11 @@ export async function incrementRateLimit(
               { _id: new ObjectId(userId) },
               {
                 $inc: {
-                  'usage.used': 1,
+                  "usage.used": 1,
                   totalAnalysisCount: 1
                 },
                 $set: {
-                  'usage.limit': rateLimitConfig.maxRequestsUser
+                  "usage.limit": rateLimitConfig.maxRequestsUser
                 }
               }
             )
@@ -357,10 +331,8 @@ export async function incrementRateLimit(
     }
 
     // 匿名用户逻辑
-    const collection = db.collection<RateLimitRecord>('rate_limits')
-    const windowStart = new Date(
-      now.getTime() - rateLimitConfig.windowSeconds * 1000
-    )
+    const collection = db.collection<RateLimitRecord>("rate_limits")
+    const windowStart = new Date(now.getTime() - rateLimitConfig.windowSeconds * 1000)
 
     // 查找当前记录
     const record = await collection.findOne({ fingerprint: identifier })
@@ -378,7 +350,7 @@ export async function incrementRateLimit(
         await collection.deleteOne({ fingerprint: identifier })
       }
       await collection.insertOne(newRecord)
-      logger.info('Rate limit record created/reset', {
+      logger.info("Rate limit record created/reset", {
         fingerprint: identifier
       })
     } else {
@@ -390,13 +362,13 @@ export async function incrementRateLimit(
         }
       )
 
-      logger.info('Rate limit count incremented', {
+      logger.info("Rate limit count incremented", {
         fingerprint: identifier,
         newCount: record.requestCount + 1
       })
     }
   } catch (error) {
-    logger.error('Error incrementing rate limit', error)
+    logger.error("Error incrementing rate limit", error)
   } finally {
     if (shouldCloseConnection && client) {
       await closeDatabaseConnection(client)
@@ -407,25 +379,23 @@ export async function incrementRateLimit(
 async function cleanExpiredRecords(db: Db, windowStart: Date) {
   try {
     const [rateLimitResult, visitsResult] = await Promise.all([
-      db.collection('rate_limits').deleteMany({
+      db.collection("rate_limits").deleteMany({
         windowStart: { $lt: windowStart }
       }),
-      db.collection('visits').deleteMany({
+      db.collection("visits").deleteMany({
         timestamp: { $lt: windowStart }
       })
     ])
 
     if (rateLimitResult.deletedCount > 0) {
-      logger.info(
-        `Cleaned ${rateLimitResult.deletedCount} expired rate limit records`
-      )
+      logger.info(`Cleaned ${rateLimitResult.deletedCount} expired rate limit records`)
     }
 
     if (visitsResult.deletedCount > 0) {
       logger.info(`Cleaned ${visitsResult.deletedCount} expired visit records`)
     }
   } catch (error) {
-    logger.error('Error cleaning expired records', error)
+    logger.error("Error cleaning expired records", error)
   }
 }
 
@@ -447,7 +417,7 @@ export async function recordVisit(
       db = dbConnection.db
       client = dbConnection.client
     }
-    const collection = db.collection('visits')
+    const collection = db.collection("visits")
 
     await collection.insertOne({
       fingerprint,
@@ -458,7 +428,7 @@ export async function recordVisit(
     await collection.createIndex({ fingerprint: 1 })
     await collection.createIndex({ timestamp: 1 })
   } catch (error) {
-    logger.error('Error recording visit', error)
+    logger.error("Error recording visit", error)
   } finally {
     if (shouldCloseConnection && client) {
       await closeDatabaseConnection(client)

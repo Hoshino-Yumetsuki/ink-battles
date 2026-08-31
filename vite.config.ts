@@ -1,21 +1,14 @@
-import nodePolyfills from '@rolldown/plugin-node-polyfills'
-import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import nodePolyfills from "@rolldown/plugin-node-polyfills"
+import react from "@vitejs/plugin-react"
+import { defineConfig } from "vite"
 
-const nodePolyfillIds = [
-  'buffer',
-  'events',
-  'process',
-  'stream',
-  'string_decoder',
-  'util'
-]
+const nodePolyfillIds = ["buffer", "events", "process", "stream", "string_decoder", "util"]
 
 const nodePolyfillResolvePlugin = {
-  name: 'node-polyfill-resolve',
-  enforce: 'pre' as const,
+  name: "node-polyfill-resolve",
+  enforce: "pre" as const,
   resolveId(id: string) {
-    const importId = id.startsWith('node:') ? id.slice(5) : id
+    const importId = id.startsWith("node:") ? id.slice(5) : id
 
     if (!nodePolyfillIds.includes(importId)) {
       return null
@@ -31,7 +24,7 @@ const nodePolyfillResolvePlugin = {
 export default defineConfig({
   plugins: [nodePolyfillResolvePlugin, react(), nodePolyfills()],
   build: {
-    outDir: 'dist/client',
+    outDir: "dist/client",
     rolldownOptions: {
       plugins: [nodePolyfills()]
     }
@@ -44,7 +37,7 @@ export default defineConfig({
   resolve: {
     tsconfigPaths: true,
     alias: {
-      '@': '/src'
+      "@": "/src"
     }
   }
 })

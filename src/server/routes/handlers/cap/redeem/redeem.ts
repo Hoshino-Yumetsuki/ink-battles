@@ -1,6 +1,6 @@
-import { json } from '@/server/http/json'
-import { withDatabase } from '@/utils/mongodb'
-import { createCapInstance } from '@/utils/captcha'
+import { json } from "@/server/http/json"
+import { withDatabase } from "@/utils/mongodb"
+import { createCapInstance } from "@/utils/captcha"
 
 export const POST = withDatabase(async (req, db) => {
   try {
@@ -11,10 +11,7 @@ export const POST = withDatabase(async (req, db) => {
     const { token, solutions } = body
 
     if (!token || !solutions || !Array.isArray(solutions)) {
-      return json(
-        { success: false, error: 'Missing token or solutions' },
-        { status: 400 }
-      )
+      return json({ success: false, error: "Missing token or solutions" }, { status: 400 })
     }
 
     const cap = createCapInstance(db)
@@ -22,10 +19,7 @@ export const POST = withDatabase(async (req, db) => {
 
     return json(result)
   } catch (error) {
-    console.error('Error redeeming challenge:', error)
-    return json(
-      { success: false, error: 'Failed to redeem challenge' },
-      { status: 500 }
-    )
+    console.error("Error redeeming challenge:", error)
+    return json({ success: false, error: "Failed to redeem challenge" }, { status: 500 })
   }
 })

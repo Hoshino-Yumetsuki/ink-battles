@@ -1,53 +1,47 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { AlertTriangle, Trash2, X } from 'lucide-react'
-import { buildApiUrl } from '@/utils/api-url'
-import { authFetch, clearAuthStorage } from '@/utils/auth-client'
+import { useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { AlertTriangle, Trash2, X } from "lucide-react"
+import { buildApiUrl } from "@/utils/api-url"
+import { authFetch, clearAuthStorage } from "@/utils/auth-client"
 
 export function DeleteAccountForm() {
   const [isOpen, setIsOpen] = useState(false)
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState("")
   const [isConfirmed, setIsConfirmed] = useState(false)
 
   const handleDelete = async () => {
-    setError('')
+    setError("")
 
     if (password !== confirmPassword) {
-      setError('两次输入的密码不一致')
+      setError("两次输入的密码不一致")
       return
     }
 
     if (!password) {
-      setError('请输入密码')
+      setError("请输入密码")
       return
     }
 
     if (!isConfirmed) {
-      setError('请确认您已知晓注销后果')
+      setError("请确认您已知晓注销后果")
       return
     }
 
     setLoading(true)
 
     try {
-      const res = await authFetch(buildApiUrl('/api/user/delete'), {
-        method: 'POST',
+      const res = await authFetch(buildApiUrl("/api/user/delete"), {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({ password })
       })
@@ -55,14 +49,14 @@ export function DeleteAccountForm() {
       const data = (await res.json()) as { error?: string }
 
       if (!res.ok) {
-        throw new Error(data.error || '注销失败')
+        throw new Error(data.error || "注销失败")
       }
 
       // 清除本地存储
       clearAuthStorage(false)
 
       // 跳转首页并刷新
-      window.location.href = '/'
+      window.location.href = "/"
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -165,22 +159,16 @@ export function DeleteAccountForm() {
               </div>
 
               <div className="flex gap-3 pt-2">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => setIsOpen(false)}
-                >
+                <Button variant="outline" className="flex-1" onClick={() => setIsOpen(false)}>
                   取消
                 </Button>
                 <Button
                   variant="destructive"
                   className="flex-1 bg-red-600 hover:bg-red-700"
-                  disabled={
-                    loading || !password || !confirmPassword || !isConfirmed
-                  }
+                  disabled={loading || !password || !confirmPassword || !isConfirmed}
                   onClick={handleDelete}
                 >
-                  {loading ? '注销中...' : '确认永久注销'}
+                  {loading ? "注销中..." : "确认永久注销"}
                 </Button>
               </div>
             </div>

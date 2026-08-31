@@ -1,23 +1,13 @@
-'use client'
+"use client"
 
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState
-} from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react"
 
-import type React from 'react'
+import type React from "react"
 
-declare module 'react' {
+declare module "react" {
   namespace JSX {
     interface IntrinsicElements {
-      'cap-widget': React.DetailedHTMLProps<
-        React.HTMLAttributes<HTMLElement>,
-        HTMLElement
-      >
+      "cap-widget": React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>
     }
   }
 }
@@ -29,8 +19,7 @@ declare global {
   }
 }
 
-interface CapWidgetProps
-  extends Omit<React.ComponentProps<'div'>, 'onError' | 'onProgress'> {
+interface CapWidgetProps extends Omit<React.ComponentProps<"div">, "onError" | "onProgress"> {
   endpoint: string
   workerCount?: number
   override?: {
@@ -89,7 +78,7 @@ const CapWidget = forwardRef<CapWidgetRef, CapWidgetProps>(
 
     const handleSolve = useCallback(
       (e: Event) => {
-        console.log('handleSolve', e)
+        console.log("handleSolve", e)
         const customEvent = e as CustomEvent<{ token?: string }>
         const token = customEvent.detail?.token
         if (!token) return
@@ -125,7 +114,7 @@ const CapWidget = forwardRef<CapWidgetRef, CapWidgetProps>(
       let mounted = true
 
       const loadWidget = async () => {
-        await import('@cap.js/widget')
+        await import("@cap.js/widget")
 
         if (mounted) {
           setLoading(false)
@@ -133,7 +122,7 @@ const CapWidget = forwardRef<CapWidgetRef, CapWidgetProps>(
       }
 
       // 只在客户端执行
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         void loadWidget()
       }
 
@@ -148,30 +137,22 @@ const CapWidget = forwardRef<CapWidgetRef, CapWidgetProps>(
       window.CAP_CUSTOM_WASM_URL = wasmUrl
       const widget = widgetRef.current
       if (widget) {
-        widget.addEventListener('solve', handleSolve)
-        widget.addEventListener('error', handleError)
-        widget.addEventListener('progress', handleProgress)
-        widget.addEventListener('reset', handleReset)
+        widget.addEventListener("solve", handleSolve)
+        widget.addEventListener("error", handleError)
+        widget.addEventListener("progress", handleProgress)
+        widget.addEventListener("reset", handleReset)
       }
       return () => {
         window.CAP_CUSTOM_FETCH = undefined
         window.CAP_CUSTOM_WASM_URL = undefined
         if (widget) {
-          widget.removeEventListener('solve', handleSolve)
-          widget.removeEventListener('error', handleError)
-          widget.removeEventListener('progress', handleProgress)
-          widget.removeEventListener('reset', handleReset)
+          widget.removeEventListener("solve", handleSolve)
+          widget.removeEventListener("error", handleError)
+          widget.removeEventListener("progress", handleProgress)
+          widget.removeEventListener("reset", handleReset)
         }
       }
-    }, [
-      loading,
-      wasmUrl,
-      customFetch,
-      handleReset,
-      handleProgress,
-      handleError,
-      handleSolve
-    ])
+    }, [loading, wasmUrl, customFetch, handleReset, handleProgress, handleError, handleSolve])
 
     if (loading) return null
 
@@ -179,14 +160,14 @@ const CapWidget = forwardRef<CapWidgetRef, CapWidgetProps>(
       <div
         style={
           {
-            '--cap-background': 'var(--background)',
-            '--cap-border-color': 'var(--border)',
-            '--cap-border-radius': '14px',
-            '--cap-color': 'var(--foreground)',
-            '--cap-checkbox-border': '1px solid var(--ring)',
-            '--cap-checkbox-background': 'var(--secondary)',
-            '--cap-spinner-color': 'var(--primary)',
-            '--cap-spinner-background-color': 'var(--primary-foreground)',
+            "--cap-background": "var(--background)",
+            "--cap-border-color": "var(--border)",
+            "--cap-border-radius": "14px",
+            "--cap-color": "var(--foreground)",
+            "--cap-checkbox-border": "1px solid var(--ring)",
+            "--cap-checkbox-background": "var(--secondary)",
+            "--cap-spinner-color": "var(--primary)",
+            "--cap-spinner-background-color": "var(--primary-foreground)",
             ...style
           } as React.CSSProperties
         }
@@ -211,7 +192,7 @@ const CapWidget = forwardRef<CapWidgetRef, CapWidgetProps>(
   }
 )
 
-CapWidget.displayName = 'CapWidget'
+CapWidget.displayName = "CapWidget"
 
 export { CapWidget }
 export type { CapWidgetRef }

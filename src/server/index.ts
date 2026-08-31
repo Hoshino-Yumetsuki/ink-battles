@@ -1,9 +1,9 @@
-import { createServer, type IncomingMessage } from 'node:http'
-import { Readable } from 'node:stream'
-import type { ReadableStream as NodeReadableStream } from 'node:stream/web'
-import { createServerApp } from '@/server/app'
+import { createServer, type IncomingMessage } from "node:http"
+import { Readable } from "node:stream"
+import type { ReadableStream as NodeReadableStream } from "node:stream/web"
+import { createServerApp } from "@/server/app"
 
-const port = Number.parseInt(process.env.PORT ?? '3000', 10)
+const port = Number.parseInt(process.env.PORT ?? "3000", 10)
 const app = createServerApp()
 
 function requestHeaders(req: IncomingMessage) {
@@ -27,15 +27,13 @@ function requestHeaders(req: IncomingMessage) {
 
 function toRequest(req: IncomingMessage) {
   const host = req.headers.host ?? `localhost:${port}`
-  const url = new URL(req.url ?? '/', `http://${host}`)
-  const method = req.method ?? 'GET'
-  const hasBody = method !== 'GET' && method !== 'HEAD'
-  const body = hasBody
-    ? (Readable.toWeb(req) as ReadableStream<Uint8Array>)
-    : undefined
-  const init: RequestInit & { duplex?: 'half' } = {
+  const url = new URL(req.url ?? "/", `http://${host}`)
+  const method = req.method ?? "GET"
+  const hasBody = method !== "GET" && method !== "HEAD"
+  const body = hasBody ? (Readable.toWeb(req) as ReadableStream<Uint8Array>) : undefined
+  const init: RequestInit & { duplex?: "half" } = {
     body,
-    duplex: body ? 'half' : undefined,
+    duplex: body ? "half" : undefined,
     headers: requestHeaders(req),
     method
   }
@@ -52,7 +50,7 @@ createServer(async (req, res) => {
       res.setHeader(name, value)
     })
 
-    if (!response.body || req.method === 'HEAD') {
+    if (!response.body || req.method === "HEAD") {
       res.end()
       return
     }
@@ -60,8 +58,8 @@ createServer(async (req, res) => {
     Readable.fromWeb(response.body as NodeReadableStream).pipe(res)
   } catch (error) {
     console.error(error)
-    res.writeHead(500, { 'content-type': 'text/plain; charset=utf-8' })
-    res.end('Internal server error')
+    res.writeHead(500, { "content-type": "text/plain; charset=utf-8" })
+    res.end("Internal server error")
   }
 }).listen(port, () => {
   console.log(`Ink Battles server listening on http://localhost:${port}`)

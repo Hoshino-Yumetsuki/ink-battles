@@ -1,65 +1,59 @@
-import { json } from '@/server/http/json'
-import { readCookie, setCookie } from '@/server/http/cookies'
-import { withDatabase } from '@/utils/mongodb'
-import { z } from 'zod'
-import { logger } from '@/utils/logger'
-import { verifyToken } from '@/utils/jwt'
-import { ObjectId } from 'mongodb'
-import { hash } from 'bcryptjs'
-import { extractAccessTokenFromRequest } from '@/utils/auth-request'
-import {
-  deriveEncryptionKey,
-  getAuthCookieNames,
-  getAuthCookieOptions
-} from '@/utils/auth-session'
-import { decryptObject, encryptObject } from '@/utils/crypto'
+import { json } from "@/server/http/json"
+import { readCookie, setCookie } from "@/server/http/cookies"
+import { withDatabase } from "@/utils/mongodb"
+import { z } from "zod"
+import { logger } from "@/utils/logger"
+import { verifyToken } from "@/utils/jwt"
+import { ObjectId } from "mongodb"
+import { hash } from "bcryptjs"
+import { extractAccessTokenFromRequest } from "@/utils/auth-request"
+import { deriveEncryptionKey, getAuthCookieNames, getAuthCookieOptions } from "@/utils/auth-session"
+import { decryptObject, encryptObject } from "@/utils/crypto"
 
 const changePasswordSchema = z.object({
-  code: z.string().length(6, '验证码错误'),
-  newPassword: z.string().min(8, '新密码长度至少8位')
+  code: z.string().length(6, "验证码错误"),
+  newPassword: z.string().min(8, "新密码长度至少8位")
 })
 
 export const POST = withDatabase(async (request: Request, db) => {
   try {
-    const token = extractAccessTokenFromRequest(request, 'Authorization')
-    if (!token) return json({ error: '未登录' }, { status: 401 })
+    const token = extractAccessTokenFromRequest(request, "Authorization")
+    if (!token) return json({ error: "未登录" }, { status: 401 })
 
     let payload: any
     try {
       payload = await verifyToken(token)
     } catch {
-      return json({ error: '无效的会话' }, { status: 401 })
+      return json({ error: "无效的会话" }, { status: 401 })
     }
 
     const body = await request.json()
     const result = changePasswordSchema.safeParse(body)
-    if (!result.success)
-      return json({ error: result.error.issues[0].message }, { status: 400 })
+    if (!result.success) return json({ error: result.error.issues[0].message }, { status: 400 })
 
     const { code, newPassword } = result.data
     const { userId } = payload
 
-    const usersCollection = db.collection('users')
-    const verificationsCollection = db.collection('email_verifications')
-    const historyCollection = db.collection('analysis_history')
+    const usersCollection = db.collection("users")
+    const verificationsCollection = db.collection("email_verifications")
+    const historyCollection = db.collection("analysis_history")
 
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) })
-    if (!user) return json({ error: '用户不存在' }, { status: 404 })
+    if (!user) return json({ error: "用户不存在" }, { status: 404 })
 
-    if (!user.email)
-      return json({ error: '未绑定邮箱，无法重置密码' }, { status: 400 })
+    if (!user.email) return json({ error: "未绑定邮箱，无法重置密码" }, { status: 400 })
 
     // 1. 验证验证码
     const verification = await verificationsCollection.findOne({
       email: user.email,
       code,
-      type: 'change_password',
+      type: "change_password",
       userId
     })
 
-    if (!verification) return json({ error: '验证码无效' }, { status: 400 })
+    if (!verification) return json({ error: "验证码无效" }, { status: 400 })
     if (new Date() > new Date(verification.expiresAt))
-      return json({ error: '验证码已过期' }, { status: 400 })
+      return json({ error: "验证码已过期" }, { status: 400 })
 
     // 2. 获取旧 enc_key（从 cookie）
     const cookieNames = getAuthCookieNames()
@@ -79,10 +73,7 @@ export const POST = withDatabase(async (request: Request, db) => {
         await Promise.allSettled(
           histories.map(async (h) => {
             try {
-              const decrypted = await decryptObject<unknown>(
-                h.encryptedResult,
-                oldEncKey
-              )
+              const decrypted = await decryptObject<unknown>(h.encryptedResult, oldEncKey)
               const reEncrypted = await encryptObject(decrypted, newEncKey)
               return { id: h._id, encryptedResult: reEncrypted }
             } catch {
@@ -98,7 +89,7 @@ export const POST = withDatabase(async (request: Request, db) => {
           ): r is PromiseFulfilledResult<{
             id: any
             encryptedResult: string
-          } | null> => r.status === 'fulfilled' && r.value !== null
+          } | null> => r.status === "fulfilled" && r.value !== null
         )
         .map((r) => r.value as { id: any; encryptedResult: string })
 
@@ -127,13 +118,13 @@ export const POST = withDatabase(async (request: Request, db) => {
     // 7. 更新 enc_key cookie
     const response = json({
       success: true,
-      message: '密码修改成功'
+      message: "密码修改成功"
     })
     setCookie(response, cookieNames.encKey, newEncKey, cookieOptions.encKey)
 
     return response
   } catch (error) {
-    logger.error('Error changing password:', error)
-    return json({ error: '操作失败' }, { status: 500 })
+    logger.error("Error changing password:", error)
+    return json({ error: "操作失败" }, { status: 500 })
   }
 })

@@ -2,7 +2,7 @@
 // AES-256-GCM (16 byte IV, 16 byte Auth Tag)
 // Format: Salt (32) + IV (16) + Auth Tag (16) + Ciphertext
 
-const ALGORITHM = 'AES-GCM'
+const ALGORITHM = "AES-GCM"
 const KEY_LENGTH = 256
 const IV_LENGTH = 16
 const SALT_LENGTH = 32
@@ -11,7 +11,7 @@ const ITERATIONS = 100000
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer)
-  let binary = ''
+  let binary = ""
   for (let i = 0; i < bytes.length; i++) {
     binary += String.fromCharCode(bytes[i])
   }
@@ -27,30 +27,27 @@ function base64ToArrayBuffer(base64: string): ArrayBuffer {
   return bytes.buffer
 }
 
-async function deriveKey(
-  password: string,
-  salt: Uint8Array
-): Promise<CryptoKey> {
+async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
   const encoder = new TextEncoder()
   const keyMaterial = await globalThis.crypto.subtle.importKey(
-    'raw',
+    "raw",
     encoder.encode(password),
-    { name: 'PBKDF2' },
+    { name: "PBKDF2" },
     false,
-    ['deriveKey']
+    ["deriveKey"]
   )
 
   return globalThis.crypto.subtle.deriveKey(
     {
-      name: 'PBKDF2',
+      name: "PBKDF2",
       salt: salt,
       iterations: ITERATIONS,
-      hash: 'SHA-256'
+      hash: "SHA-256"
     } as Pbkdf2Params,
     keyMaterial,
     { name: ALGORITHM, length: KEY_LENGTH },
     false,
-    ['encrypt', 'decrypt']
+    ["encrypt", "decrypt"]
   )
 }
 
@@ -84,9 +81,7 @@ export async function encrypt(text: string, password: string): Promise<string> {
   const ciphertext = encryptedBytes.slice(0, encryptedBytes.length - TAG_LENGTH)
 
   // Combine: Salt + IV + Tag + Ciphertext
-  const result = new Uint8Array(
-    SALT_LENGTH + IV_LENGTH + TAG_LENGTH + ciphertext.length
-  )
+  const result = new Uint8Array(SALT_LENGTH + IV_LENGTH + TAG_LENGTH + ciphertext.length)
   result.set(salt, 0)
   result.set(iv, SALT_LENGTH)
   result.set(tag, SALT_LENGTH + IV_LENGTH)
@@ -101,10 +96,7 @@ export async function encrypt(text: string, password: string): Promise<string> {
  * @param password 用户密码
  * @returns 解密后的文本
  */
-export async function decrypt(
-  encryptedText: string,
-  password: string
-): Promise<string> {
+export async function decrypt(encryptedText: string, password: string): Promise<string> {
   try {
     const buffer = base64ToArrayBuffer(encryptedText)
     const bytes = new Uint8Array(buffer)
@@ -112,10 +104,7 @@ export async function decrypt(
     // Extract parts
     const salt = bytes.slice(0, SALT_LENGTH)
     const iv = bytes.slice(SALT_LENGTH, SALT_LENGTH + IV_LENGTH)
-    const tag = bytes.slice(
-      SALT_LENGTH + IV_LENGTH,
-      SALT_LENGTH + IV_LENGTH + TAG_LENGTH
-    )
+    const tag = bytes.slice(SALT_LENGTH + IV_LENGTH, SALT_LENGTH + IV_LENGTH + TAG_LENGTH)
     const ciphertext = bytes.slice(SALT_LENGTH + IV_LENGTH + TAG_LENGTH)
 
     // Reconstruct ciphertext for Web Crypto (Ciphertext + Tag)
@@ -134,18 +123,15 @@ export async function decrypt(
     )
 
     return new TextDecoder().decode(decryptedContent)
-  } catch  {
-    throw new Error('解密失败：密码错误或数据损坏')
+  } catch {
+    throw new Error("解密失败：密码错误或数据损坏")
   }
 }
 
 /**
  * 加密对象
  */
-export async function encryptObject<T>(
-  obj: T,
-  password: string
-): Promise<string> {
+export async function encryptObject<T>(obj: T, password: string): Promise<string> {
   const json = JSON.stringify(obj)
   return encrypt(json, password)
 }
@@ -153,10 +139,7 @@ export async function encryptObject<T>(
 /**
  * 解密对象
  */
-export async function decryptObject<T>(
-  encryptedText: string,
-  password: string
-): Promise<T> {
+export async function decryptObject<T>(encryptedText: string, password: string): Promise<T> {
   const json = await decrypt(encryptedText, password)
   return JSON.parse(json)
 }

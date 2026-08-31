@@ -1,17 +1,17 @@
-'use client'
+"use client"
 
-import { useCallback, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
-import { Card } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ChangeEmailForm } from '@/components/features/settings/change-email-form'
-import { ChangePasswordForm } from '@/components/features/settings/change-password-form'
-import { DeleteAccountForm } from '@/components/features/settings/delete-account-form'
-import { Camera, User } from 'lucide-react'
-import { compressImage } from '@/utils/image-compressor'
-import { useUser } from '@/components/providers/user-context'
-import { buildApiUrl } from '@/utils/api-url'
-import { authFetch } from '@/utils/auth-client'
+import { useCallback, useRef, useState } from "react"
+import { motion } from "framer-motion"
+import { Card } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ChangeEmailForm } from "@/components/features/settings/change-email-form"
+import { ChangePasswordForm } from "@/components/features/settings/change-password-form"
+import { DeleteAccountForm } from "@/components/features/settings/delete-account-form"
+import { Camera, User } from "lucide-react"
+import { compressImage } from "@/utils/image-compressor"
+import { useUser } from "@/components/providers/user-context"
+import { buildApiUrl } from "@/utils/api-url"
+import { authFetch } from "@/utils/auth-client"
 
 export function DashboardSettingsPage() {
   const { user, refreshUser, setUser } = useUser()
@@ -35,13 +35,13 @@ export function DashboardSettingsPage() {
           const reader = new FileReader()
           reader.readAsDataURL(compressedFile)
           reader.onload = () => resolve(reader.result as string)
-          reader.onerror = () => reject(new Error('读取头像文件失败'))
+          reader.onerror = () => reject(new Error("读取头像文件失败"))
         })
 
-        const response = await authFetch(buildApiUrl('/api/auth/avatar'), {
-          method: 'POST',
+        const response = await authFetch(buildApiUrl("/api/auth/avatar"), {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json"
           },
           body: JSON.stringify({ avatar: base64 })
         })
@@ -50,16 +50,16 @@ export function DashboardSettingsPage() {
           const data = (await response.json().catch(() => null)) as {
             error?: string
           } | null
-          throw new Error(data?.error || '上传失败')
+          throw new Error(data?.error || "上传失败")
         }
 
         setUser((prev) => (prev ? { ...prev, avatar: base64 } : prev))
       } catch (error) {
-        console.error('Avatar upload failed', error)
-        alert('头像上传失败，请重试')
+        console.error("Avatar upload failed", error)
+        alert("头像上传失败，请重试")
       } finally {
         setAvatarLoading(false)
-        event.target.value = ''
+        event.target.value = ""
       }
     },
     [setUser]
@@ -68,9 +68,9 @@ export function DashboardSettingsPage() {
   return (
     <motion.div
       key="settings"
-      initial={{ opacity: 0, y: 20, filter: 'blur(4px)' }}
-      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-      exit={{ opacity: 0, y: -20, filter: 'blur(4px)' }}
+      initial={{ opacity: 0, y: 20, filter: "blur(4px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      exit={{ opacity: 0, y: -20, filter: "blur(4px)" }}
       transition={{
         duration: 0.4,
         ease: [0.23, 1, 0.32, 1]
@@ -85,7 +85,7 @@ export function DashboardSettingsPage() {
               {user?.avatar ? (
                 <img
                   src={user.avatar}
-                  alt={user.username || 'Avatar'}
+                  alt={user.username || "Avatar"}
                   className="h-full w-full object-cover"
                 />
               ) : (
@@ -127,15 +127,13 @@ export function DashboardSettingsPage() {
             <div>
               <p className="text-sm text-muted-foreground">注册时间</p>
               <p className="font-medium">
-                {user?.createdAt &&
-                  new Date(user.createdAt).toLocaleString('zh-CN')}
+                {user?.createdAt && new Date(user.createdAt).toLocaleString("zh-CN")}
               </p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">上次登录</p>
               <p className="font-medium">
-                {user?.lastLoginAt &&
-                  new Date(user.lastLoginAt).toLocaleString('zh-CN')}
+                {user?.lastLoginAt && new Date(user.lastLoginAt).toLocaleString("zh-CN")}
               </p>
             </div>
           </div>

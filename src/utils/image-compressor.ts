@@ -1,4 +1,4 @@
-import { logger } from './logger'
+import { logger } from "./logger"
 
 export interface CompressImageOptions {
   targetSize?: number
@@ -63,9 +63,9 @@ export async function compressImage(
     let newWidth = Math.floor(originalWidth * sizeRatio)
     let newHeight = Math.floor(originalHeight * sizeRatio)
 
-    const canvas = document.createElement('canvas')
-    const ctx = canvas.getContext('2d')
-    if (!ctx) throw new Error('无法获取 Canvas 2D 上下文')
+    const canvas = document.createElement("canvas")
+    const ctx = canvas.getContext("2d")
+    if (!ctx) throw new Error("无法获取 Canvas 2D 上下文")
 
     canvas.width = newWidth
     canvas.height = newHeight
@@ -77,7 +77,7 @@ export async function compressImage(
 
     while (quality >= minQuality) {
       blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, 'image/jpeg', quality)
+        canvas.toBlob(resolve, "image/jpeg", quality)
       )
       if (!blob || blob.size <= targetSize) break
       quality -= 0.05
@@ -92,14 +92,14 @@ export async function compressImage(
       canvas.height = newHeight
       ctx.drawImage(img, 0, 0, newWidth, newHeight)
       blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, 'image/jpeg', minQuality)
+        canvas.toBlob(resolve, "image/jpeg", minQuality)
       )
     }
 
-    if (!blob) throw new Error('Canvas 导出 Blob 失败')
+    if (!blob) throw new Error("Canvas 导出 Blob 失败")
 
-    const fileName = file.name.replace(/\.[^.]+$/, '.jpg')
-    const compressedFile = new File([blob], fileName, { type: 'image/jpeg' })
+    const fileName = file.name.replace(/\.[^.]+$/, ".jpg")
+    const compressedFile = new File([blob], fileName, { type: "image/jpeg" })
 
     return {
       file: compressedFile,
@@ -108,7 +108,7 @@ export async function compressImage(
       compressedSize: compressedFile.size
     }
   } catch (error) {
-    logger.error('图片压缩失败:', error)
+    logger.error("图片压缩失败:", error)
     return { file, compressed: false, originalSize, compressedSize: file.size }
   }
 }

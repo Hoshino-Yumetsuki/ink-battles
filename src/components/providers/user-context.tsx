@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import {
   createContext,
@@ -10,9 +10,9 @@ import {
   type Dispatch,
   type ReactNode,
   type SetStateAction
-} from 'react'
-import { buildApiUrl } from '@/utils/api-url'
-import { authFetch } from '@/utils/auth-client'
+} from "react"
+import { buildApiUrl } from "@/utils/api-url"
+import { authFetch } from "@/utils/auth-client"
 
 export interface UserInfo {
   id: string
@@ -45,9 +45,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true)
       const response = await authFetch(
-        buildApiUrl('/api/auth/me'),
+        buildApiUrl("/api/auth/me"),
         {
-          method: 'GET'
+          method: "GET"
         },
         { retryOnUnauthorized: false }
       )
@@ -60,7 +60,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const data: { success?: boolean; user?: UserInfo } = await response.json()
       setUser(data.user ?? null)
     } catch (error) {
-      console.error('Failed to fetch user info', error)
+      console.error("Failed to fetch user info", error)
       setUser(null)
     } finally {
       setLoading(false)
@@ -87,7 +87,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 export function useUser() {
   const context = useContext(UserContext)
   if (!context) {
-    throw new Error('useUser must be used within UserProvider')
+    throw new Error("useUser must be used within UserProvider")
   }
   return context
 }

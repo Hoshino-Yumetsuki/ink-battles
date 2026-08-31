@@ -1,19 +1,19 @@
-'use client'
+"use client"
 
-import { usePathname, useRouter } from '@/client/navigation'
-import { ThemeSwitcher } from '@/components/common/theme-switcher'
-import { Button } from '@/components/ui/button'
+import { usePathname, useRouter } from "@/client/navigation"
+import { ThemeSwitcher } from "@/components/common/theme-switcher"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu'
-import { motion, useScroll, useMotionValueEvent } from 'framer-motion'
-import { useId, useState, useEffect } from 'react'
-import { User, LogOut, LayoutDashboard } from 'lucide-react'
-import { buildApiUrl } from '@/utils/api-url'
-import { authFetch, clearAuthStorage } from '@/utils/auth-client'
+} from "@/components/ui/dropdown-menu"
+import { motion, useScroll, useMotionValueEvent } from "framer-motion"
+import { useId, useState, useEffect } from "react"
+import { User, LogOut, LayoutDashboard } from "lucide-react"
+import { buildApiUrl } from "@/utils/api-url"
+import { authFetch, clearAuthStorage } from "@/utils/auth-client"
 
 export default function Navbar() {
   const pathname = usePathname()
@@ -26,8 +26,8 @@ export default function Navbar() {
   const logoTitleId = useId()
 
   const navItems = [
-    { label: '首页', path: '/' },
-    { label: '使用指南', path: '/guide' }
+    { label: "首页", path: "/" },
+    { label: "使用指南", path: "/guide" }
   ]
 
   useEffect(() => {
@@ -36,9 +36,9 @@ export default function Navbar() {
       // access token 是 httpOnly cookie，直接请求 /api/auth/me 判断登录状态
       try {
         const res = await authFetch(
-          buildApiUrl('/api/auth/me'),
+          buildApiUrl("/api/auth/me"),
           {
-            method: 'GET'
+            method: "GET"
           },
           { retryOnUnauthorized: false }
         )
@@ -57,36 +57,36 @@ export default function Navbar() {
           setAvatar(null)
         }
       } catch (error) {
-        console.error('Failed to fetch user info', error)
+        console.error("Failed to fetch user info", error)
         // 网络异常时不强制登出，保持当前状态
       }
     }
 
     void checkLoginStatus()
     // 监听 storage 和 auth-change 事件以响应登录/登出变化
-    window.addEventListener('storage', checkLoginStatus)
-    window.addEventListener('auth-change', checkLoginStatus)
+    window.addEventListener("storage", checkLoginStatus)
+    window.addEventListener("auth-change", checkLoginStatus)
 
     return () => {
-      window.removeEventListener('storage', checkLoginStatus)
-      window.removeEventListener('auth-change', checkLoginStatus)
+      window.removeEventListener("storage", checkLoginStatus)
+      window.removeEventListener("auth-change", checkLoginStatus)
     }
   }, []) // 依赖 pathname 变化来重新检查登录状态
 
   const handleLogout = async () => {
     clearAuthStorage(false)
-    await fetch(buildApiUrl('/api/auth/logout'), {
-      method: 'POST',
-      credentials: 'include'
+    await fetch(buildApiUrl("/api/auth/logout"), {
+      method: "POST",
+      credentials: "include"
     })
 
     // 直接刷新页面以更新状态
-    window.location.href = '/'
+    window.location.href = "/"
   }
 
-  useMotionValueEvent(scrollY, 'change', (latest) => {
+  useMotionValueEvent(scrollY, "change", (latest) => {
     // Dashboard 页面不隐藏
-    if (pathname?.startsWith('/dashboard')) {
+    if (pathname?.startsWith("/dashboard")) {
       return
     }
 
@@ -101,11 +101,7 @@ export default function Navbar() {
   })
 
   // 在登录和注册页面以及 Dashboard 页面隐藏 Navbar
-  if (
-    pathname === '/login' ||
-    pathname === '/register' ||
-    pathname?.startsWith('/dashboard')
-  ) {
+  if (pathname === "/login" || pathname === "/register" || pathname?.startsWith("/dashboard")) {
     return null
   }
 
@@ -114,10 +110,10 @@ export default function Navbar() {
       className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60"
       variants={{
         visible: { y: 0 },
-        hidden: { y: '-100%' }
+        hidden: { y: "-100%" }
       }}
-      animate={hidden ? 'hidden' : 'visible'}
-      transition={{ duration: 0.35, ease: 'easeInOut' }}
+      animate={hidden ? "hidden" : "visible"}
+      transition={{ duration: 0.35, ease: "easeInOut" }}
     >
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -155,8 +151,8 @@ export default function Navbar() {
                     href={item.path}
                     className={`transition-colors hover:text-blue-600 ${
                       pathname === item.path
-                        ? 'text-blue-600 font-medium'
-                        : 'text-gray-600 dark:text-gray-300'
+                        ? "text-blue-600 font-medium"
+                        : "text-gray-600 dark:text-gray-300"
                     }`}
                   >
                     {item.label}
@@ -175,11 +171,7 @@ export default function Navbar() {
                     className="relative h-10 w-10 rounded-full p-0 overflow-hidden"
                   >
                     {avatar ? (
-                      <img
-                        src={avatar}
-                        alt="User Avatar"
-                        className="h-full w-full object-cover"
-                      />
+                      <img src={avatar} alt="User Avatar" className="h-full w-full object-cover" />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-muted">
                         <User className="h-6 w-6" />
@@ -188,7 +180,7 @@ export default function Navbar() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => router.push('/dashboard')}>
+                  <DropdownMenuItem onClick={() => router.push("/dashboard")}>
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     控制台
                   </DropdownMenuItem>
@@ -199,7 +191,7 @@ export default function Navbar() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button onClick={() => router.push('/login')} size="sm">
+              <Button onClick={() => router.push("/login")} size="sm">
                 登录
               </Button>
             )}

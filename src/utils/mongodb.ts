@@ -1,11 +1,11 @@
-import { MongoClient, type Db } from 'mongodb'
-import { logger } from './logger'
+import { MongoClient, type Db } from "mongodb"
+import { logger } from "./logger"
 
 export async function connectToDatabase() {
   const mongoUrl = process.env.MONGODB_URI
 
   if (!mongoUrl) {
-    throw new Error('MONGODB_URI is not defined in environment variables')
+    throw new Error("MONGODB_URI is not defined in environment variables")
   }
 
   try {
@@ -15,24 +15,24 @@ export async function connectToDatabase() {
       socketTimeoutMS: 45000
     })
     await client.connect()
-    logger.info('MongoDB connection established')
+    logger.info("MongoDB connection established")
     return client
   } catch (error) {
-    logger.error('Failed to connect to MongoDB', error)
-    throw new Error('Failed to connect to database')
+    logger.error("Failed to connect to MongoDB", error)
+    throw new Error("Failed to connect to database")
   }
 }
 
 export async function closeDatabaseConnection(client: MongoClient) {
   try {
     await client.close()
-    logger.info('MongoDB connection closed')
+    logger.info("MongoDB connection closed")
   } catch (error) {
-    logger.error('Error closing MongoDB connection', error)
+    logger.error("Error closing MongoDB connection", error)
   }
 }
 
-export async function getDatabase(dbName: string = 'ink-battles') {
+export async function getDatabase(dbName: string = "ink-battles") {
   const client = await connectToDatabase()
   return {
     db: client.db(dbName),
@@ -61,11 +61,7 @@ export function withDatabase<T = Response>(
 }
 
 export function withOptionalDatabase<T = Response>(
-  handler: (
-    request: Request,
-    db: Db | null,
-    client: MongoClient | null
-  ) => Promise<T>
+  handler: (request: Request, db: Db | null, client: MongoClient | null) => Promise<T>
 ) {
   return async (request: Request): Promise<T> => {
     let client: MongoClient | null = null
@@ -76,7 +72,7 @@ export function withOptionalDatabase<T = Response>(
       client = dbConnection.client
       db = dbConnection.db
     } catch (error) {
-      logger.warn('Database connection failed, continuing without DB', error)
+      logger.warn("Database connection failed, continuing without DB", error)
     }
 
     try {

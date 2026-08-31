@@ -1,19 +1,16 @@
-'use client'
+"use client"
 
-import { useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
-import mermaid from 'mermaid'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useEffect, useRef, useState } from "react"
+import { createPortal } from "react-dom"
+import mermaid from "mermaid"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface MermaidDiagramProps {
   chart: string
   title?: string
 }
 
-export default function MermaidDiagram({
-  chart,
-  title = 'Mermaid 图表'
-}: MermaidDiagramProps) {
+export default function MermaidDiagram({ chart, title = "Mermaid 图表" }: MermaidDiagramProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [error, setError] = useState<string | null>(null)
   const [, setIsRendered] = useState(false)
@@ -37,12 +34,12 @@ export default function MermaidDiagram({
 
         mermaid.initialize({
           startOnLoad: false,
-          theme: 'default',
-          securityLevel: 'strict',
-          fontFamily: 'inherit'
+          theme: "default",
+          securityLevel: "strict",
+          fontFamily: "inherit"
         })
 
-        container.innerHTML = ''
+        container.innerHTML = ""
 
         const id = `mermaid-${Math.random().toString(36).slice(2, 11)}`
         const { svg } = await mermaid.render(id, chart.trim())
@@ -50,8 +47,8 @@ export default function MermaidDiagram({
         container.innerHTML = svg
         setIsRendered(true)
       } catch (err) {
-        console.error('Mermaid 渲染错误:', err)
-        setError(err instanceof Error ? err.message : '渲染失败')
+        console.error("Mermaid 渲染错误:", err)
+        setError(err instanceof Error ? err.message : "渲染失败")
       }
     }
 
@@ -72,9 +69,7 @@ export default function MermaidDiagram({
               <p className="font-semibold">渲染失败:</p>
               <p>{error}</p>
               <details className="mt-2">
-                <summary className="cursor-pointer text-xs">
-                  查看原始代码
-                </summary>
+                <summary className="cursor-pointer text-xs">查看原始代码</summary>
                 <pre className="mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs overflow-x-auto">
                   {chart}
                 </pre>
@@ -86,7 +81,7 @@ export default function MermaidDiagram({
               className="mermaid-container flex justify-center items-center min-h-50 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => setIsZoomed(true)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+                if (e.key === "Enter" || e.key === " ") {
                   setIsZoomed(true)
                 }
               }}
@@ -105,7 +100,7 @@ export default function MermaidDiagram({
             className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
             onClick={() => setIsZoomed(false)}
             onKeyDown={(e) => {
-              if (e.key === 'Escape') {
+              if (e.key === "Escape") {
                 setIsZoomed(false)
               }
             }}
@@ -136,12 +131,12 @@ export default function MermaidDiagram({
                 ref={(node) => {
                   if (node && containerRef.current) {
                     node.innerHTML = containerRef.current.innerHTML
-                    const svg = node.querySelector('svg')
+                    const svg = node.querySelector("svg")
                     if (svg) {
-                      svg.style.minWidth = '100%'
-                      svg.style.minHeight = '100%'
-                      svg.style.width = 'auto'
-                      svg.style.height = 'auto'
+                      svg.style.minWidth = "100%"
+                      svg.style.minHeight = "100%"
+                      svg.style.width = "auto"
+                      svg.style.height = "auto"
                     }
                   }
                 }}

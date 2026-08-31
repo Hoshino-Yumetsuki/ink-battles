@@ -1,14 +1,14 @@
-'use client'
+"use client"
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { motion } from 'framer-motion'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { ChevronLeft, ChevronRight, X } from 'lucide-react'
-import WriterScoreResult from '@/components/features/analysis/score-result'
-import type { WriterAnalysisResult } from '@/client/routes/HomePage'
-import { authFetch } from '@/utils/auth-client'
-import { buildApiUrl } from '@/utils/api-url'
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { motion } from "framer-motion"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { ChevronLeft, ChevronRight, X } from "lucide-react"
+import WriterScoreResult from "@/components/features/analysis/score-result"
+import type { WriterAnalysisResult } from "@/client/routes/HomePage"
+import { authFetch } from "@/utils/auth-client"
+import { buildApiUrl } from "@/utils/api-url"
 
 interface AnalysisHistory {
   id: string
@@ -58,19 +58,18 @@ export function DashboardHistoryPage() {
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [selectedHistory, setSelectedHistory] =
-    useState<AnalysisHistory | null>(null)
+  const [selectedHistory, setSelectedHistory] = useState<AnalysisHistory | null>(null)
 
   const fetchHistory = useCallback(async (pageNum: number) => {
     try {
       setLoading(true)
       const response = await authFetch(
-        `${buildApiUrl('/api/dashboard/history')}?page=${pageNum}&limit=10`,
-        { method: 'GET' }
+        `${buildApiUrl("/api/dashboard/history")}?page=${pageNum}&limit=10`,
+        { method: "GET" }
       )
 
       if (!response.ok) {
-        throw new Error('获取历史记录失败')
+        throw new Error("获取历史记录失败")
       }
 
       const data: HistoryResponse = await response.json()
@@ -89,7 +88,7 @@ export function DashboardHistoryPage() {
       setTotalPages(data.pagination?.totalPages || 1)
       setPage(data.pagination?.page || pageNum)
     } catch (error) {
-      console.error('Fetch history failed', error)
+      console.error("Fetch history failed", error)
       setHistories([])
       setTotalPages(1)
     } finally {
@@ -107,19 +106,16 @@ export function DashboardHistoryPage() {
     const end = Math.min(totalPages, start + maxVisible - 1)
     const adjustedStart = Math.max(1, end - maxVisible + 1)
 
-    return Array.from(
-      { length: end - adjustedStart + 1 },
-      (_, index) => adjustedStart + index
-    )
+    return Array.from({ length: end - adjustedStart + 1 }, (_, index) => adjustedStart + index)
   }, [page, totalPages])
 
   return (
     <>
       <motion.div
         key="history"
-        initial={{ opacity: 0, y: 20, filter: 'blur(4px)' }}
-        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-        exit={{ opacity: 0, y: -20, filter: 'blur(4px)' }}
+        initial={{ opacity: 0, y: 20, filter: "blur(4px)" }}
+        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+        exit={{ opacity: 0, y: -20, filter: "blur(4px)" }}
         transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
         className="space-y-6"
       >
@@ -129,9 +125,7 @@ export function DashboardHistoryPage() {
           {loading ? (
             <HistoryListSkeleton />
           ) : histories.length === 0 ? (
-            <p className="text-center text-muted-foreground py-12">
-              暂无分析记录
-            </p>
+            <p className="text-center text-muted-foreground py-12">暂无分析记录</p>
           ) : (
             <div className="flex flex-col">
               <div className="space-y-4">
@@ -150,12 +144,10 @@ export function DashboardHistoryPage() {
                           onClick={() => setSelectedHistory(history)}
                         >
                           <p className="font-medium hover:text-blue-600 transition-colors">
-                            {history.result?.title || '分析结果'}
+                            {history.result?.title || "分析结果"}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {new Date(history.createdAt).toLocaleString(
-                              'zh-CN'
-                            )}
+                            {new Date(history.createdAt).toLocaleString("zh-CN")}
                           </p>
                         </button>
                         {history.result && (
@@ -163,9 +155,7 @@ export function DashboardHistoryPage() {
                             <p className="text-2xl font-bold text-blue-600">
                               {history.result.overallScore}
                             </p>
-                            <p className="text-sm text-muted-foreground">
-                              分数
-                            </p>
+                            <p className="text-sm text-muted-foreground">分数</p>
                           </div>
                         )}
                       </div>
@@ -194,7 +184,7 @@ export function DashboardHistoryPage() {
                     {pageNumbers.map((pageNum) => (
                       <Button
                         key={pageNum}
-                        variant={pageNum === page ? 'default' : 'outline'}
+                        variant={pageNum === page ? "default" : "outline"}
                         size="sm"
                         onClick={() => setPage(pageNum)}
                       >
@@ -206,9 +196,7 @@ export function DashboardHistoryPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() =>
-                      setPage((prev) => Math.min(totalPages, prev + 1))
-                    }
+                    onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
                     disabled={page >= totalPages}
                   >
                     下一页

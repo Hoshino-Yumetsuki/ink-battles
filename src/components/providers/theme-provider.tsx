@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from "react"
 
-type Theme = 'light' | 'dark' | 'system'
+type Theme = "light" | "dark" | "system"
 
 type ThemeContextValue = {
   theme: Theme
@@ -10,40 +10,33 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
 function resolveTheme(theme: Theme) {
-  if (theme !== 'system') return theme
-  return window.matchMedia('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light'
+  if (theme !== "system") return theme
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
 }
 
 export function ThemeProvider({
   children,
-  defaultTheme = 'system'
+  defaultTheme = "system"
 }: {
   children: React.ReactNode
   defaultTheme?: Theme
 }) {
   const [theme, setThemeState] = useState<Theme>(() => {
-    const stored = window.localStorage.getItem('theme')
-    return stored === 'light' || stored === 'dark' || stored === 'system'
-      ? stored
-      : defaultTheme
+    const stored = window.localStorage.getItem("theme")
+    return stored === "light" || stored === "dark" || stored === "system" ? stored : defaultTheme
   })
 
   useEffect(() => {
     const applyTheme = () => {
-      document.documentElement.classList.toggle(
-        'dark',
-        resolveTheme(theme) === 'dark'
-      )
+      document.documentElement.classList.toggle("dark", resolveTheme(theme) === "dark")
     }
 
     applyTheme()
-    window.localStorage.setItem('theme', theme)
+    window.localStorage.setItem("theme", theme)
 
-    const media = window.matchMedia('(prefers-color-scheme: dark)')
-    media.addEventListener('change', applyTheme)
-    return () => media.removeEventListener('change', applyTheme)
+    const media = window.matchMedia("(prefers-color-scheme: dark)")
+    media.addEventListener("change", applyTheme)
+    return () => media.removeEventListener("change", applyTheme)
   }, [theme])
 
   const value = useMemo(
@@ -60,7 +53,7 @@ export function ThemeProvider({
 export function useTheme() {
   const context = useContext(ThemeContext)
   if (!context) {
-    throw new Error('useTheme must be used within ThemeProvider')
+    throw new Error("useTheme must be used within ThemeProvider")
   }
   return context
 }

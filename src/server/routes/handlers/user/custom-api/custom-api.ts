@@ -1,22 +1,22 @@
-import { json } from '@/server/http/json'
-import { readCookie } from '@/server/http/cookies'
-import { withDatabase } from '@/utils/mongodb'
-import { z } from 'zod'
-import { logger } from '@/utils/logger'
-import { verifyToken } from '@/utils/jwt'
-import { ObjectId } from 'mongodb'
-import { extractAccessTokenFromRequest } from '@/utils/auth-request'
-import { getAuthCookieNames } from '@/utils/auth-session'
-import { encryptObject, decryptObject } from '@/utils/crypto'
+import { json } from "@/server/http/json"
+import { readCookie } from "@/server/http/cookies"
+import { withDatabase } from "@/utils/mongodb"
+import { z } from "zod"
+import { logger } from "@/utils/logger"
+import { verifyToken } from "@/utils/jwt"
+import { ObjectId } from "mongodb"
+import { extractAccessTokenFromRequest } from "@/utils/auth-request"
+import { getAuthCookieNames } from "@/utils/auth-session"
+import { encryptObject, decryptObject } from "@/utils/crypto"
 
 const saveSchema = z.object({
-  baseUrl: z.string().url('请输入有效的 URL').trim(),
-  apiKey: z.string().min(1, 'API Key 不能为空').trim(),
-  model: z.string().min(1, 'Model 不能为空').trim()
+  baseUrl: z.string().url("请输入有效的 URL").trim(),
+  apiKey: z.string().min(1, "API Key 不能为空").trim(),
+  model: z.string().min(1, "Model 不能为空").trim()
 })
 
 async function getAuthContext(request: Request) {
-  const token = extractAccessTokenFromRequest(request, 'Authorization')
+  const token = extractAccessTokenFromRequest(request, "Authorization")
   if (!token) return null
   try {
     const payload = await verifyToken(token)
@@ -31,14 +31,11 @@ async function getAuthContext(request: Request) {
 export const GET = withDatabase(async (request: Request, db) => {
   try {
     const auth = await getAuthContext(request)
-    if (!auth) return json({ error: '未登录' }, { status: 401 })
-    if (!auth.encKey)
-      return json({ error: '缺少加密密钥，请重新登录' }, { status: 401 })
+    if (!auth) return json({ error: "未登录" }, { status: 401 })
+    if (!auth.encKey) return json({ error: "缺少加密密钥，请重新登录" }, { status: 401 })
 
-    const user = await db
-      .collection('users')
-      .findOne({ _id: new ObjectId(auth.userId) })
-    if (!user) return json({ error: '用户不存在' }, { status: 404 })
+    const user = await db.collection("users").findOne({ _id: new ObjectId(auth.userId) })
+    if (!user) return json({ error: "用户不存在" }, { status: 404 })
 
     if (!user.customApiConfig) {
       return json({ success: true, hasConfig: false })
@@ -54,14 +51,14 @@ export const GET = withDatabase(async (request: Request, db) => {
         success: true,
         hasConfig: true,
         // 返回脱敏数据供前端显示占位符
-        model: decrypted.model || ''
+        model: decrypted.model || ""
       })
     } catch {
       return json({ success: true, hasConfig: false })
     }
   } catch (error) {
-    logger.error('Error getting custom API config:', error)
-    return json({ error: '操作失败' }, { status: 500 })
+    logger.error("Error getting custom API config:", error)
+    return json({ error: "操作失败" }, { status: 500 })
   }
 })
 
@@ -69,32 +66,27 @@ export const GET = withDatabase(async (request: Request, db) => {
 export const POST = withDatabase(async (request: Request, db) => {
   try {
     const auth = await getAuthContext(request)
-    if (!auth) return json({ error: '未登录' }, { status: 401 })
-    if (!auth.encKey)
-      return json({ error: '缺少加密密钥，请重新登录' }, { status: 401 })
+    if (!auth) return json({ error: "未登录" }, { status: 401 })
+    if (!auth.encKey) return json({ error: "缺少加密密钥，请重新登录" }, { status: 401 })
 
     const body = await request.json()
     const result = saveSchema.safeParse(body)
-    if (!result.success)
-      return json({ error: result.error.issues[0].message }, { status: 400 })
+    if (!result.success) return json({ error: result.error.issues[0].message }, { status: 400 })
 
     const { baseUrl, apiKey, model } = result.data
-    const encrypted = await encryptObject(
-      { baseUrl, apiKey, model },
-      auth.encKey
-    )
+    const encrypted = await encryptObject({ baseUrl, apiKey, model }, auth.encKey)
 
     await db
-      .collection('users')
+      .collection("users")
       .updateOne(
         { _id: new ObjectId(auth.userId) },
         { $set: { customApiConfig: encrypted, updatedAt: new Date() } }
       )
 
-    return json({ success: true, message: '凭据已保存' })
+    return json({ success: true, message: "凭据已保存" })
   } catch (error) {
-    logger.error('Error saving custom API config:', error)
-    return json({ error: '操作失败' }, { status: 500 })
+    logger.error("Error saving custom API config:", error)
+    return json({ error: "操作失败" }, { status: 500 })
   }
 })
 
@@ -102,18 +94,18 @@ export const POST = withDatabase(async (request: Request, db) => {
 export const DELETE = withDatabase(async (request: Request, db) => {
   try {
     const auth = await getAuthContext(request)
-    if (!auth) return json({ error: '未登录' }, { status: 401 })
+    if (!auth) return json({ error: "未登录" }, { status: 401 })
 
     await db
-      .collection('users')
+      .collection("users")
       .updateOne(
         { _id: new ObjectId(auth.userId) },
-        { $unset: { customApiConfig: '' }, $set: { updatedAt: new Date() } }
+        { $unset: { customApiConfig: "" }, $set: { updatedAt: new Date() } }
       )
 
-    return json({ success: true, message: '凭据已删除' })
+    return json({ success: true, message: "凭据已删除" })
   } catch (error) {
-    logger.error('Error deleting custom API config:', error)
-    return json({ error: '操作失败' }, { status: 500 })
+    logger.error("Error deleting custom API config:", error)
+    return json({ error: "操作失败" }, { status: 500 })
   }
 })

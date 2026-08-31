@@ -1,21 +1,13 @@
-'use client'
+"use client"
 
-import { useEffect, useMemo, useState } from 'react'
-import { motion } from 'framer-motion'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import {
-  Clock,
-  ExternalLink,
-  FileText,
-  GitBranch,
-  Heart,
-  TrendingUp,
-  Zap
-} from 'lucide-react'
-import { useUser } from '@/components/providers/user-context'
-import { buildApiUrl } from '@/utils/api-url'
-import { authFetch } from '@/utils/auth-client'
+import { useEffect, useMemo, useState } from "react"
+import { motion } from "framer-motion"
+import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Clock, ExternalLink, FileText, GitBranch, Heart, TrendingUp, Zap } from "lucide-react"
+import { useUser } from "@/components/providers/user-context"
+import { buildApiUrl } from "@/utils/api-url"
+import { authFetch } from "@/utils/auth-client"
 
 interface DashboardStats {
   totalCount: number
@@ -26,10 +18,7 @@ function StatCardsSkeleton() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 shrink-0">
       {Array.from({ length: 3 }).map((_, index) => (
-        <Card
-          key={index}
-          className="p-3 flex flex-col items-center justify-center gap-2 h-full"
-        >
+        <Card key={index} className="p-3 flex flex-col items-center justify-center gap-2 h-full">
           <div className="animate-pulse bg-muted rounded-full h-8 w-8" />
           <div className="space-y-2 w-full flex flex-col items-center">
             <div className="animate-pulse bg-muted rounded-md h-3 w-16" />
@@ -43,7 +32,7 @@ function StatCardsSkeleton() {
 
 export function DashboardPage() {
   const { user } = useUser()
-  const [timeLeft, setTimeLeft] = useState('--:--')
+  const [timeLeft, setTimeLeft] = useState("--:--")
   const [statsLoading, setStatsLoading] = useState(true)
   const [stats, setStats] = useState<DashboardStats>({
     totalCount: 0,
@@ -55,21 +44,20 @@ export function DashboardPage() {
     const fetchStats = async () => {
       try {
         setStatsLoading(true)
-        const response = await authFetch(buildApiUrl('/api/dashboard/stats'), {
-          method: 'GET'
+        const response = await authFetch(buildApiUrl("/api/dashboard/stats"), {
+          method: "GET"
         })
 
         if (!response.ok) {
           return
         }
 
-        const data: { success?: boolean; stats?: DashboardStats } =
-          await response.json()
+        const data: { success?: boolean; stats?: DashboardStats } = await response.json()
         if (active && data.stats) {
           setStats(data.stats)
         }
       } catch (error) {
-        console.error('Fetch dashboard stats failed', error)
+        console.error("Fetch dashboard stats failed", error)
       } finally {
         if (active) {
           setStatsLoading(false)
@@ -86,7 +74,7 @@ export function DashboardPage() {
   useEffect(() => {
     const updateTimer = () => {
       if (!user?.usage?.resetTime) {
-        setTimeLeft('--:--')
+        setTimeLeft("--:--")
         return
       }
 
@@ -105,17 +93,15 @@ export function DashboardPage() {
 
   const accountAgeDays = useMemo(() => {
     if (!user?.createdAt) return 0
-    return Math.floor(
-      (Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24)
-    )
+    return Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24))
   }, [user?.createdAt])
 
   return (
     <motion.div
       key="overview"
-      initial={{ opacity: 0, y: 20, filter: 'blur(4px)' }}
-      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-      exit={{ opacity: 0, y: -20, filter: 'blur(4px)' }}
+      initial={{ opacity: 0, y: 20, filter: "blur(4px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      exit={{ opacity: 0, y: -20, filter: "blur(4px)" }}
       transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
       className="flex flex-col min-h-full gap-4"
     >
@@ -129,9 +115,7 @@ export function DashboardPage() {
               当前使用状态
             </h2>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground font-medium">
-                刷新倒计时
-              </span>
+              <span className="text-xs text-muted-foreground font-medium">刷新倒计时</span>
               <span className="text-sm font-mono font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">
                 {timeLeft}
               </span>
@@ -140,18 +124,12 @@ export function DashboardPage() {
 
           <div className="grid grid-cols-2 gap-8 mb-3">
             <div className="flex flex-col gap-1">
-              <span className="text-xs text-muted-foreground font-medium">
-                已用次数
-              </span>
-              <span className="text-2xl font-bold">
-                {user?.usage?.used || 0}
-              </span>
+              <span className="text-xs text-muted-foreground font-medium">已用次数</span>
+              <span className="text-2xl font-bold">{user?.usage?.used || 0}</span>
             </div>
 
             <div className="flex flex-col gap-1">
-              <span className="text-xs text-muted-foreground font-medium">
-                剩余可用
-              </span>
+              <span className="text-xs text-muted-foreground font-medium">剩余可用</span>
               <span className="text-2xl font-bold">
                 {(user?.usage?.limit || 0) - (user?.usage?.used || 0)}
               </span>
@@ -173,12 +151,7 @@ export function DashboardPage() {
           </div>
 
           <div className="flex flex-wrap gap-2 pt-3 border-t mt-auto">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 text-xs gap-1.5"
-              asChild
-            >
+            <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" asChild>
               <a
                 href="https://github.com/Hoshino-Yumetsuki/ink-battles"
                 target="_blank"
@@ -188,12 +161,7 @@ export function DashboardPage() {
                 GitHub
               </a>
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 text-xs gap-1.5"
-              asChild
-            >
+            <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" asChild>
               <a href="/guide">
                 <ExternalLink className="w-3.5 h-3.5" />
                 指南
@@ -205,11 +173,7 @@ export function DashboardPage() {
               className="h-8 text-xs gap-1.5 text-pink-600 hover:text-pink-700 hover:bg-pink-50 dark:hover:bg-pink-900/20"
               asChild
             >
-              <a
-                href="https://afdian.com/a/q78kg"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="https://afdian.com/a/q78kg" target="_blank" rel="noopener noreferrer">
                 <Heart className="w-3.5 h-3.5" />
                 支持
               </a>

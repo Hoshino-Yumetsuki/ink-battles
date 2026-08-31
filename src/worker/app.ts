@@ -1,7 +1,7 @@
-import { Elysia, type AnyElysia } from 'elysia'
-import { CloudflareAdapter } from 'elysia/adapter/cloudflare-worker'
-import { createDynamicErrorHandler } from './dynamic-error-handler'
-import { api } from '@/server/api'
+import { Elysia, type AnyElysia } from "elysia"
+import { CloudflareAdapter } from "elysia/adapter/cloudflare-worker"
+import { createDynamicErrorHandler } from "./dynamic-error-handler"
+import { api } from "@/server/api"
 
 /**
  * Cloudflare Workers disallow `new Function` / eval (Elysia AOT uses these in

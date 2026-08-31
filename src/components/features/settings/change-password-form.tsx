@@ -1,13 +1,13 @@
-'use client'
+"use client"
 
-import { useState, useRef } from 'react'
-import { Button } from '@/components/ui/button'
-import { Loader2, Lock, ShieldCheck, AlertTriangle } from 'lucide-react'
-import { CapWidget, type CapWidgetRef } from '@/components/wed/cap-widget'
-import { buildApiUrl } from '@/utils/api-url'
-import { authFetch } from '@/utils/auth-client'
+import { useState, useRef } from "react"
+import { Button } from "@/components/ui/button"
+import { Loader2, Lock, ShieldCheck, AlertTriangle } from "lucide-react"
+import { CapWidget, type CapWidgetRef } from "@/components/wed/cap-widget"
+import { buildApiUrl } from "@/utils/api-url"
+import { authFetch } from "@/utils/auth-client"
 
-const isCaptchaEnabled = import.meta.env.VITE_CAP_ENABLED === 'true'
+const isCaptchaEnabled = import.meta.env.VITE_CAP_ENABLED === "true"
 
 interface ChangePasswordFormProps {
   onSuccess: () => void
@@ -16,32 +16,32 @@ interface ChangePasswordFormProps {
 export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
   const capWidgetRef = useRef<CapWidgetRef>(null)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
   const [countdown, setCountdown] = useState(0)
-  const [captchaToken, setCaptchaToken] = useState('')
+  const [captchaToken, setCaptchaToken] = useState("")
 
-  const [newPassword, setNewPassword] = useState('')
-  const [code, setCode] = useState('')
+  const [newPassword, setNewPassword] = useState("")
+  const [code, setCode] = useState("")
 
   const handleSendCode = async () => {
-    setError('')
-    setSuccess('')
+    setError("")
+    setSuccess("")
 
     if (isCaptchaEnabled && !captchaToken) {
-      setError('请完成人机验证')
+      setError("请完成人机验证")
       return
     }
 
     try {
       setCountdown(60)
-      const res = await authFetch(buildApiUrl('/api/auth/send-code'), {
-        method: 'POST',
+      const res = await authFetch(buildApiUrl("/api/auth/send-code"), {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          type: 'change_password',
+          type: "change_password",
           captchaToken
         }) // Backend uses current user email
       })
@@ -49,16 +49,16 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
 
       if (!res.ok) {
         setCountdown(0)
-        setCaptchaToken('')
+        setCaptchaToken("")
         // Reset the Cap widget to allow user to solve again
         if (isCaptchaEnabled) {
           capWidgetRef.current?.reset()
         }
-        throw new Error(data.error || '发送验证码失败')
+        throw new Error(data.error || "发送验证码失败")
       }
 
-      setSuccess('验证码已发送至您的绑定邮箱')
-      setCaptchaToken('')
+      setSuccess("验证码已发送至您的绑定邮箱")
+      setCaptchaToken("")
 
       const timer = setInterval(() => {
         setCountdown((prev) => {
@@ -77,31 +77,31 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newPassword || !code) {
-      setError('请填写所有字段')
+      setError("请填写所有字段")
       return
     }
-    setError('')
-    setSuccess('')
+    setError("")
+    setSuccess("")
     setLoading(true)
 
     try {
-      const res = await authFetch(buildApiUrl('/api/user/change-password'), {
-        method: 'POST',
+      const res = await authFetch(buildApiUrl("/api/user/change-password"), {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({ newPassword, code })
       })
       const data = (await res.json()) as { error?: string }
 
       if (!res.ok) {
-        throw new Error(data.error || '修改失败')
+        throw new Error(data.error || "修改失败")
       }
 
       // enc_key cookie 由服务端在 change-password 响应中自动更新
-      setSuccess('密码修改成功')
-      setNewPassword('')
-      setCode('')
+      setSuccess("密码修改成功")
+      setNewPassword("")
+      setCode("")
       onSuccess()
     } catch (err: any) {
       setError(err.message)
@@ -155,7 +155,7 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
             disabled={countdown > 0}
             className="w-32"
           >
-            {countdown > 0 ? `${countdown}s` : '获取验证码'}
+            {countdown > 0 ? `${countdown}s` : "获取验证码"}
           </Button>
         </div>
       </div>
@@ -181,10 +181,10 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
         <div className="flex justify-center">
           <CapWidget
             ref={capWidgetRef}
-            endpoint={buildApiUrl('/api/cap')}
+            endpoint={buildApiUrl("/api/cap")}
             onSolve={(token) => setCaptchaToken(token)}
             onError={(message) => setError(message)}
-            onReset={() => setCaptchaToken('')}
+            onReset={() => setCaptchaToken("")}
           />
         </div>
       )}

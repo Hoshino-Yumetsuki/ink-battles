@@ -1,10 +1,10 @@
 export const llmConfig = {
-  baseUrl: process.env.OPENAI_BASE_URL || '',
-  apiKey: process.env.OPENAI_API_KEY || '',
-  model: process.env.MODEL || 'gemini-3.1-pro-preview',
+  baseUrl: process.env.OPENAI_BASE_URL || "",
+  apiKey: process.env.OPENAI_API_KEY || "",
+  model: process.env.MODEL || "gemini-3.1-pro-preview",
   temperature: Number(process.env.TEMPERATURE) || 1.2,
-  useStreaming: process.env.USE_STREAMING === 'true',
-  useStructuredOutput: process.env.USE_STRUCTURED_OUTPUT !== 'false' // 默认为true
+  useStreaming: process.env.USE_STREAMING === "true",
+  useStructuredOutput: process.env.USE_STRUCTURED_OUTPUT !== "false" // 默认为true
 } as const
 
 export function validateLlmConfig(): boolean {

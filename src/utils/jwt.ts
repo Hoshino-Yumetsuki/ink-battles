@@ -1,9 +1,9 @@
-import { SignJWT, jwtVerify } from 'jose'
+import { SignJWT, jwtVerify } from "jose"
 
 const JWT_SECRET = process.env.JWT_SECRET
 if (!JWT_SECRET) {
   throw new Error(
-    'JWT_SECRET environment variable is required. Refusing to start with a default secret.'
+    "JWT_SECRET environment variable is required. Refusing to start with a default secret."
   )
 }
 const secret = new TextEncoder().encode(JWT_SECRET)
@@ -40,7 +40,7 @@ function getRefreshTokenTtlSeconds(): number {
 export interface JWTPayload {
   userId: string
   username: string
-  tokenType?: 'access' | 'refresh'
+  tokenType?: "access" | "refresh"
   jti?: string
   familyId?: string
   fingerprint?: string
@@ -49,11 +49,11 @@ export interface JWTPayload {
 }
 
 export async function signToken(
-  payload: Omit<JWTPayload, 'iat' | 'exp'>,
+  payload: Omit<JWTPayload, "iat" | "exp">,
   expiresIn: number = getAccessTokenTtlSeconds()
 ): Promise<string> {
-  const token = await new SignJWT({ ...payload, tokenType: 'access' })
-    .setProtectedHeader({ alg: 'HS256' })
+  const token = await new SignJWT({ ...payload, tokenType: "access" })
+    .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(Math.floor(Date.now() / 1000) + expiresIn)
     .sign(secret)
@@ -65,12 +65,12 @@ export async function verifyToken(token: string): Promise<JWTPayload> {
   try {
     const { payload } = await jwtVerify(token, secret)
     const parsed = payload as unknown as JWTPayload
-    if (parsed.tokenType && parsed.tokenType !== 'access') {
-      throw new Error('Invalid token type')
+    if (parsed.tokenType && parsed.tokenType !== "access") {
+      throw new Error("Invalid token type")
     }
     return parsed
-  } catch  {
-    throw new Error('Invalid or expired token')
+  } catch {
+    throw new Error("Invalid or expired token")
   }
 }
 
@@ -80,12 +80,10 @@ export async function signRefreshToken(payload: {
   jti: string
   familyId: string
 }): Promise<string> {
-  return await new SignJWT({ ...payload, tokenType: 'refresh' })
-    .setProtectedHeader({ alg: 'HS256' })
+  return await new SignJWT({ ...payload, tokenType: "refresh" })
+    .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime(
-      Math.floor(Date.now() / 1000) + getRefreshTokenTtlSeconds()
-    )
+    .setExpirationTime(Math.floor(Date.now() / 1000) + getRefreshTokenTtlSeconds())
     .sign(secret)
 }
 
@@ -93,12 +91,12 @@ export async function verifyRefreshToken(token: string): Promise<JWTPayload> {
   try {
     const { payload } = await jwtVerify(token, secret)
     const parsed = payload as unknown as JWTPayload
-    if (parsed.tokenType !== 'refresh' || !parsed.jti || !parsed.familyId) {
-      throw new Error('Invalid refresh token')
+    if (parsed.tokenType !== "refresh" || !parsed.jti || !parsed.familyId) {
+      throw new Error("Invalid refresh token")
     }
     return parsed
-  } catch  {
-    throw new Error('Invalid or expired refresh token')
+  } catch {
+    throw new Error("Invalid or expired refresh token")
   }
 }
 
@@ -112,7 +110,7 @@ export function getRefreshTokenExpiresIn(): number {
 
 /** 从请求头中提取token，必须符合 "Bearer <token>" 格式 */
 export function extractToken(authHeader: string | null): string | null {
-  if (!authHeader?.startsWith('Bearer ')) {
+  if (!authHeader?.startsWith("Bearer ")) {
     return null
   }
   return authHeader.substring(7)

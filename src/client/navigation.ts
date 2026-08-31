@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from "react"
 
 function currentPathname() {
   return window.location.pathname
@@ -6,11 +6,11 @@ function currentPathname() {
 
 export function navigate(path: string, replace = false) {
   if (replace) {
-    window.history.replaceState(null, '', path)
+    window.history.replaceState(null, "", path)
   } else {
-    window.history.pushState(null, '', path)
+    window.history.pushState(null, "", path)
   }
-  window.dispatchEvent(new PopStateEvent('popstate'))
+  window.dispatchEvent(new PopStateEvent("popstate"))
 }
 
 export function usePathname() {
@@ -18,8 +18,8 @@ export function usePathname() {
 
   useEffect(() => {
     const update = () => setPathname(currentPathname())
-    window.addEventListener('popstate', update)
-    return () => window.removeEventListener('popstate', update)
+    window.addEventListener("popstate", update)
+    return () => window.removeEventListener("popstate", update)
   }, [])
 
   return pathname

@@ -1,17 +1,15 @@
-'use client'
+"use client"
 
-import { usePathname } from '@/client/navigation'
+import { usePathname } from "@/client/navigation"
 
 export default function Footer() {
   const pathname = usePathname()
-  const hideFooterPaths = ['/login', '/register', '/dashboard']
+  const hideFooterPaths = ["/login", "/register", "/dashboard"]
 
   // 检查当前路径是否以需要隐藏 footer 的路径开头
   // 对于 /dashboard 是必须的，因为它是子路由
   // 对于 /login 和 /register 是精确匹配或子路由
-  const shouldHideFooter = hideFooterPaths.some((path) =>
-    pathname?.startsWith(path)
-  )
+  const shouldHideFooter = hideFooterPaths.some((path) => pathname?.startsWith(path))
 
   if (shouldHideFooter) {
     return null
@@ -24,8 +22,7 @@ export default function Footer() {
           <div className="space-y-3">
             <h3 className="font-semibold text-foreground">关于 Ink Battles</h3>
             <p>
-              基于 AI 的作品分析工具，为您的创作提供深度洞察与评分。
-              本分析报告由AI生成，仅供参考。
+              基于 AI 的作品分析工具，为您的创作提供深度洞察与评分。 本分析报告由AI生成，仅供参考。
             </p>
           </div>
 
@@ -75,9 +72,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-8 pt-8 border-t text-center text-xs text-muted-foreground">
-          <p>
-            灵感来源 iykrzu，测试量表由三角之外设计，站点由 Q78KG 设计并编写。
-          </p>
+          <p>灵感来源 iykrzu，测试量表由三角之外设计，站点由 Q78KG 设计并编写。</p>
           <p className="mt-2">
             &copy; {new Date().getFullYear()} Ink Battles. All rights reserved.
           </p>
