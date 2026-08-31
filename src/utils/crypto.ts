@@ -134,7 +134,7 @@ export async function decrypt(
     )
 
     return new TextDecoder().decode(decryptedContent)
-  } catch (_error) {
+  } catch  {
     throw new Error('解密失败：密码错误或数据损坏')
   }
 }

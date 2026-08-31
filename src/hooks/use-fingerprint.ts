@@ -28,7 +28,7 @@ export function useFingerprint() {
       }
     }
 
-    fetchFingerprint()
+    void fetchFingerprint()
 
     return () => {
       mounted = false

@@ -62,7 +62,7 @@ export default function Navbar() {
       }
     }
 
-    checkLoginStatus()
+    void checkLoginStatus()
     // 监听 storage 和 auth-change 事件以响应登录/登出变化
     window.addEventListener('storage', checkLoginStatus)
     window.addEventListener('auth-change', checkLoginStatus)

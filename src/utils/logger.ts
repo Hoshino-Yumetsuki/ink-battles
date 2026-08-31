@@ -18,7 +18,7 @@ const formatLogEntry = (entry: LogEntry): string => {
       } else {
         formattedLog += `\n  Details: ${JSON.stringify(details, null, 2)}`
       }
-    } catch (_e) {
+    } catch  {
       formattedLog += `\n  Details: [Non-serializable object]`
     }
   }

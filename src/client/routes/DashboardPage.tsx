@@ -77,7 +77,7 @@ export function DashboardPage() {
       }
     }
 
-    fetchStats()
+    void fetchStats()
     return () => {
       active = false
     }

@@ -18,6 +18,35 @@ export function requestWithJsonBody(request: Request, body: unknown): Request {
   })
 }
 
+function stringifyFormValue(value: unknown): string {
+  if (value !== null && typeof value === 'object') {
+    return JSON.stringify(value) ?? ''
+  }
+
+  if (typeof value === 'string') {
+    return value
+  }
+
+  if (value === null) {
+    return 'null'
+  }
+
+  if (value === undefined) {
+    return 'undefined'
+  }
+
+  if (
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    typeof value === 'bigint' ||
+    typeof value === 'symbol'
+  ) {
+    return value.toString()
+  }
+
+  return ''
+}
+
 function bodyToFormData(body: unknown): FormData {
   if (body instanceof FormData) {
     return body
@@ -43,21 +72,14 @@ function bodyToFormData(body: unknown): FormData {
       for (const item of value) {
         if (item instanceof Blob) {
           formData.append(key, item)
-        } else if (item !== null && typeof item === 'object') {
-          formData.append(key, JSON.stringify(item))
         } else {
-          formData.append(key, String(item))
+          formData.append(key, stringifyFormValue(item))
         }
       }
       continue
     }
 
-    if (typeof value === 'object') {
-      formData.append(key, JSON.stringify(value))
-      continue
-    }
-
-    formData.append(key, String(value))
+    formData.append(key, stringifyFormValue(value))
   }
 
   return formData

@@ -68,7 +68,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    refreshUser()
+    void refreshUser()
   }, [refreshUser])
 
   const value = useMemo<UserContextValue>(

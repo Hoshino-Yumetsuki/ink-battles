@@ -272,6 +272,34 @@ function buildResponseFormat() {
   }
 }
 
+function normalizeStringValue(value: unknown, fallback?: string): string {
+  if (fallback !== undefined && !value) {
+    return fallback
+  }
+
+  if (value !== null && typeof value === 'object') {
+    try {
+      return JSON.stringify(value) ?? fallback ?? ''
+    } catch {
+      return fallback ?? ''
+    }
+  }
+
+  if (typeof value === 'string') {
+    return value
+  }
+
+  if (value === null) {
+    return 'null'
+  }
+
+  if (value === undefined) {
+    return 'undefined'
+  }
+
+  return JSON.stringify(value) ?? fallback ?? ''
+}
+
 function normalizeAnalysisResult(result: unknown): AnalysisResult {
   if (!result || typeof result !== 'object') {
     throw new Error('分析结果格式无效')
@@ -280,30 +308,30 @@ function normalizeAnalysisResult(result: unknown): AnalysisResult {
   const obj = result as Record<string, unknown>
 
   return {
-    overallAssessment: String(obj.overallAssessment || ''),
-    title: String(obj.title || '分析结果'),
-    ratingTag: String(obj.ratingTag || '未知'),
+    overallAssessment: normalizeStringValue(obj.overallAssessment, ''),
+    title: normalizeStringValue(obj.title, '分析结果'),
+    ratingTag: normalizeStringValue(obj.ratingTag, '未知'),
     dimensions: Array.isArray(obj.dimensions)
       ? obj.dimensions
           .filter((item) => item && typeof item === 'object')
           .map((item) => {
             const dim = item as Record<string, unknown>
             return {
-              name: String(dim.name || ''),
+              name: normalizeStringValue(dim.name, ''),
               score: Math.min(5, Math.max(1, Number(dim.score || 1))),
-              description: String(dim.description || '')
+              description: normalizeStringValue(dim.description, '')
             }
           })
       : [],
     strengths: Array.isArray(obj.strengths)
-      ? obj.strengths.map((item) => String(item))
+      ? obj.strengths.map((item) => normalizeStringValue(item))
       : [],
     improvements: Array.isArray(obj.improvements)
-      ? obj.improvements.map((item) => String(item))
+      ? obj.improvements.map((item) => normalizeStringValue(item))
       : [],
-    comment: String(obj.comment || ''),
+    comment: normalizeStringValue(obj.comment, ''),
     structural_analysis: Array.isArray(obj.structural_analysis)
-      ? obj.structural_analysis.map((item) => String(item))
+      ? obj.structural_analysis.map((item) => normalizeStringValue(item))
       : [],
     mermaid_diagrams: Array.isArray(obj.mermaid_diagrams)
       ? obj.mermaid_diagrams
@@ -311,14 +339,15 @@ function normalizeAnalysisResult(result: unknown): AnalysisResult {
           .map((item) => {
             const diagram = item as Record<string, unknown>
             return {
-              type: String(diagram.type || 'graph'),
-              title: String(diagram.title || '结构图'),
-              code: String(diagram.code || '')
+              type: normalizeStringValue(diagram.type, 'graph'),
+              title: normalizeStringValue(diagram.title, '结构图'),
+              code: normalizeStringValue(diagram.code, '')
             }
           })
       : []
   }
 }
+
 
 function parseAnalysisText(generatedText: string): AnalysisResult {
   const jsonText = extractCodeBlock(generatedText, 'json')
@@ -637,7 +666,7 @@ function isValidLlmApiConfig(config: LlmApiConfig): boolean {
 
 function parseFormJsonField(
   raw: FormDataEntryValue | null
-): Record<string, unknown> {
+): Record<string, boolean> {
   if (raw == null) {
     return {}
   }
@@ -653,9 +682,17 @@ function parseFormJsonField(
 
   try {
     const parsed: unknown = JSON.parse(trimmed)
-    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-      ? (parsed as Record<string, unknown>)
-      : {}
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return {}
+    }
+
+    const options: Record<string, boolean> = {}
+    for (const [key, value] of Object.entries(parsed)) {
+      if (typeof value === 'boolean') {
+        options[key] = value
+      }
+    }
+    return options
   } catch {
     return {}
   }
@@ -672,7 +709,7 @@ export const POST = withDatabase(
       try {
         const payload = await verifyToken(token)
         userId = payload.userId
-      } catch (_error) {
+      } catch  {
         logger.warn('Invalid token provided for analysis request')
       }
     }
@@ -868,7 +905,7 @@ export const POST = withDatabase(
           try {
             const heartbeat = `${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n`
             controller.enqueue(encoder.encode(heartbeat))
-          } catch (_error) {
+          } catch  {
             // Stream already closed, ignore
             isStreamClosed = true
           }

@@ -69,7 +69,7 @@ export async function verifyToken(token: string): Promise<JWTPayload> {
       throw new Error('Invalid token type')
     }
     return parsed
-  } catch (_error) {
+  } catch  {
     throw new Error('Invalid or expired token')
   }
 }
@@ -97,7 +97,7 @@ export async function verifyRefreshToken(token: string): Promise<JWTPayload> {
       throw new Error('Invalid refresh token')
     }
     return parsed
-  } catch (_error) {
+  } catch  {
     throw new Error('Invalid or expired refresh token')
   }
 }

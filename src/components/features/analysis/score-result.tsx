@@ -10,7 +10,7 @@ import {
   CardTitle
 } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import type { WriterAnalysisResult } from '@/app/page'
+import type { WriterAnalysisResult } from '@/client/routes/HomePage'
 import MermaidDiagram from '@/components/renderers/mermaid-diagram'
 import MarkdownRenderer from '@/components/renderers/markdown-renderer'
 

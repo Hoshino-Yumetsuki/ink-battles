@@ -33,7 +33,7 @@ export async function decodeTextFromFile(file: File): Promise<string> {
   try {
     const decoded = iconv.decode(uint8, enc)
     return decoded.replace(/^\uFEFF/, '')
-  } catch (_e) {
+  } catch  {
     throw new Error('文本解码失败')
   }
 }

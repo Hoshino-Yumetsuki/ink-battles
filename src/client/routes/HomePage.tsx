@@ -126,7 +126,7 @@ export function HomePage() {
   }, [fingerprint])
 
   useEffect(() => {
-    fetchLimits()
+    void fetchLimits()
 
     // Listen for auth changes (login/logout from Navbar)
     const handleAuthChange = () => {
@@ -351,7 +351,7 @@ export function HomePage() {
                 clearInterval(progressInterval)
                 setProgress(100)
                 setResult(finalResult)
-                fetchLimits() // 刷新用量
+                void fetchLimits() // 刷新用量
               } else if (message.type === 'error') {
                 clearInterval(progressInterval)
                 setProgress(0)

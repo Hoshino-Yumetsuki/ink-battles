@@ -98,7 +98,7 @@ export function DashboardHistoryPage() {
   }, [])
 
   useEffect(() => {
-    fetchHistory(page)
+    void fetchHistory(page)
   }, [fetchHistory, page])
 
   const pageNumbers = useMemo(() => {

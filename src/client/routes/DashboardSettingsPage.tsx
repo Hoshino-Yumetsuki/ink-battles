@@ -178,7 +178,7 @@ export function DashboardSettingsPage() {
               <ChangeEmailForm
                 hasEmail={!!user?.email}
                 onSuccess={() => {
-                  refreshUser()
+                  void refreshUser()
                 }}
               />
             </div>

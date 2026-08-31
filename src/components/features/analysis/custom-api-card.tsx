@@ -68,7 +68,7 @@ export default function CustomApiCard({
   }, [isLoggedIn, onChange])
 
   useEffect(() => {
-    loadSavedConfig()
+    void loadSavedConfig()
   }, [loadSavedConfig])
 
   const handleSave = async () => {

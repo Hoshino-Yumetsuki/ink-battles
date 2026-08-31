@@ -27,7 +27,7 @@ export const POST = withDatabase(async (request: Request, db) => {
     let payload: JWTPayload
     try {
       payload = await verifyToken(token)
-    } catch (_e) {
+    } catch  {
       return json({ error: '无效的会话' }, { status: 401 })
     }
 

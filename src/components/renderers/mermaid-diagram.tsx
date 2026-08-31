@@ -25,7 +25,10 @@ export default function MermaidDiagram({
   }, [])
 
   useEffect(() => {
-    if (!chart || !containerRef.current) return
+    if (!chart) return
+
+    const container = containerRef.current
+    if (!container) return
 
     const renderDiagram = async () => {
       try {
@@ -39,22 +42,20 @@ export default function MermaidDiagram({
           fontFamily: 'inherit'
         })
 
-        containerRef.current.innerHTML = ''
+        container.innerHTML = ''
 
         const id = `mermaid-${Math.random().toString(36).slice(2, 11)}`
         const { svg } = await mermaid.render(id, chart.trim())
 
-        if (containerRef.current) {
-          containerRef.current.innerHTML = svg
-          setIsRendered(true)
-        }
-      } catch (err: any) {
+        container.innerHTML = svg
+        setIsRendered(true)
+      } catch (err) {
         console.error('Mermaid 渲染错误:', err)
-        setError(err.message || '渲染失败')
+        setError(err instanceof Error ? err.message : '渲染失败')
       }
     }
 
-    renderDiagram()
+    void renderDiagram()
   }, [chart])
 
   if (!chart) return null

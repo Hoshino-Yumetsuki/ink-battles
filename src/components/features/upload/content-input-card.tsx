@@ -265,7 +265,7 @@ export default function ContentInputCard({
               onChange={(e) => {
                 const file = e.target.files?.[0] || null
                 if (file) {
-                  processFile(file)
+                  void processFile(file)
                 }
               }}
               accept=".txt,.md,.markdown,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp"

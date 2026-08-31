@@ -134,7 +134,7 @@ const CapWidget = forwardRef<CapWidgetRef, CapWidgetProps>(
 
       // 只在客户端执行
       if (typeof window !== 'undefined') {
-        loadWidget()
+        void loadWidget()
       }
 
       return () => {

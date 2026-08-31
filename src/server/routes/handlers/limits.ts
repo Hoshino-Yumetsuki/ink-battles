@@ -24,7 +24,7 @@ export const GET = withDatabase(async (req: Request, db) => {
         userId = payload.userId
         isLoggedIn = true
         username = payload.username
-      } catch (_e) {
+      } catch  {
         // Token invalid, treat as guest
       }
     }
