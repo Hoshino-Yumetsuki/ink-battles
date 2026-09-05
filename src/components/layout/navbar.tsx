@@ -13,7 +13,7 @@ import { motion, useScroll, useMotionValueEvent } from "framer-motion"
 import { useId, useState, useEffect } from "react"
 import { User, LogOut, LayoutDashboard } from "lucide-react"
 import { buildApiUrl } from "@/utils/api-url"
-import { authFetch, clearAuthStorage } from "@/utils/auth-client"
+import { authFetch, cacheUser, clearAuthStorage, clearCachedUser, readCachedUser } from "@/utils/auth-client"
 
 export default function Navbar() {
   const pathname = usePathname()
@@ -22,7 +22,10 @@ export default function Navbar() {
   const [hidden, setHidden] = useState(false)
   const [lastScrollY, setLastScrollY] = useState(0)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [avatar, setAvatar] = useState<string | null>(null)
+  const [avatar, setAvatar] = useState<string | null>(() => {
+    const cached = readCachedUser<{ avatar?: string }>()
+    return cached?.avatar ?? null
+  })
   const logoTitleId = useId()
 
   const navItems = [
@@ -51,10 +54,13 @@ export default function Navbar() {
           setIsLoggedIn(true)
           if (data.user?.avatar) {
             setAvatar(data.user.avatar)
+            const cached = readCachedUser<Record<string, unknown>>()
+            if (cached) cacheUser({ ...cached, avatar: data.user.avatar })
           }
         } else {
           setIsLoggedIn(false)
           setAvatar(null)
+          clearCachedUser()
         }
       } catch (error) {
         console.error("Failed to fetch user info", error)
@@ -75,6 +81,7 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     clearAuthStorage(false)
+    clearCachedUser()
     await fetch(buildApiUrl("/api/auth/logout"), {
       method: "POST",
       credentials: "include"

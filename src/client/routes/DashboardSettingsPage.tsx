@@ -7,11 +7,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChangeEmailForm } from "@/components/features/settings/change-email-form"
 import { ChangePasswordForm } from "@/components/features/settings/change-password-form"
 import { DeleteAccountForm } from "@/components/features/settings/delete-account-form"
-import { Camera, User } from "lucide-react"
+import { authFetch, cacheUser } from "@/utils/auth-client"
 import { compressImage } from "@/utils/image-compressor"
 import { useUser } from "@/components/providers/user-context"
 import { buildApiUrl } from "@/utils/api-url"
-import { authFetch } from "@/utils/auth-client"
 
 export function DashboardSettingsPage() {
   const { user, refreshUser, setUser } = useUser()
@@ -53,7 +52,12 @@ export function DashboardSettingsPage() {
           throw new Error(data?.error || "上传失败")
         }
 
-        setUser((prev) => (prev ? { ...prev, avatar: base64 } : prev))
+        setUser((prev) => {
+          if (!prev) return prev
+          const nextUser = { ...prev, avatar: base64 }
+          cacheUser(nextUser)
+          return nextUser
+        })
       } catch (error) {
         console.error("Avatar upload failed", error)
         alert("头像上传失败，请重试")

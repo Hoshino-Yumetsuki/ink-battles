@@ -29,6 +29,34 @@ export function clearAuthStorage(emitEvent = true): void {
   }
 }
 
+const USER_CACHE_KEY = "ink-battles:user"
+
+export function readCachedUser<T>(): T | null {
+  try {
+    const value = window.localStorage.getItem(USER_CACHE_KEY)
+    return value ? (JSON.parse(value) as T) : null
+  } catch {
+    return null
+  }
+}
+
+export function cacheUser(user: unknown): void {
+  try {
+    window.localStorage.setItem(USER_CACHE_KEY, JSON.stringify(user))
+  } catch {
+    // Storage may be unavailable or full; the server remains authoritative.
+  }
+}
+
+export function clearCachedUser(): void {
+  try {
+    window.localStorage.removeItem(USER_CACHE_KEY)
+  } catch {
+    // Ignore unavailable storage.
+  }
+}
+
+
 export async function authFetch(
   input: string,
   init?: RequestInit,

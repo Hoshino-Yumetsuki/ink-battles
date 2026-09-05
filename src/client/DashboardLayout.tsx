@@ -8,7 +8,7 @@ import AnimatedBackground from "@/components/common/animated-background"
 import { UserProvider, useUser } from "@/components/providers/user-context"
 import { compressImage } from "@/utils/image-compressor"
 import { buildApiUrl } from "@/utils/api-url"
-import { authFetch, clearAuthStorage } from "@/utils/auth-client"
+import { authFetch, cacheUser, clearAuthStorage, clearCachedUser } from "@/utils/auth-client"
 
 function HomeGridIcon() {
   return (
@@ -48,7 +48,7 @@ function DashboardShell({ children }: { children: ReactNode }) {
 
   const handleLogout = useCallback(async () => {
     clearAuthStorage(false)
-
+    clearCachedUser()
     try {
       await fetch(buildApiUrl("/api/auth/logout"), {
         method: "POST",
@@ -96,7 +96,12 @@ function DashboardShell({ children }: { children: ReactNode }) {
           throw new Error(data?.error || "上传失败")
         }
 
-        setUser((prev) => (prev ? { ...prev, avatar: base64 } : prev))
+        setUser((prev) => {
+          if (!prev) return prev
+          const nextUser = { ...prev, avatar: base64 }
+          cacheUser(nextUser)
+          return nextUser
+        })
       } catch (error) {
         console.error("Avatar upload failed", error)
         alert("头像上传失败，请重试")

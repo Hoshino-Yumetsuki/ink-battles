@@ -12,7 +12,7 @@ import {
   type SetStateAction
 } from "react"
 import { buildApiUrl } from "@/utils/api-url"
-import { authFetch } from "@/utils/auth-client"
+import { authFetch, cacheUser, clearCachedUser, readCachedUser } from "@/utils/auth-client"
 
 export interface UserInfo {
   id: string
@@ -38,7 +38,7 @@ interface UserContextValue {
 const UserContext = createContext<UserContextValue | null>(null)
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UserInfo | null>(null)
+  const [user, setUser] = useState<UserInfo | null>(() => readCachedUser<UserInfo>())
   const [loading, setLoading] = useState(true)
 
   const refreshUser = useCallback(async () => {
@@ -54,14 +54,22 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
       if (!response.ok) {
         setUser(null)
+        clearCachedUser()
         return
       }
 
       const data: { success?: boolean; user?: UserInfo } = await response.json()
-      setUser(data.user ?? null)
+      const nextUser = data.user ?? null
+      setUser(nextUser)
+      if (nextUser) {
+        cacheUser(nextUser)
+      } else {
+        clearCachedUser()
+      }
+
     } catch (error) {
       console.error("Failed to fetch user info", error)
-      setUser(null)
+      // Keep cached profile during transient network failures.
     } finally {
       setLoading(false)
     }
