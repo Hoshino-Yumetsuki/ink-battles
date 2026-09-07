@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react"
 import { motion } from "framer-motion"
+import { Camera, User } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChangeEmailForm } from "@/components/features/settings/change-email-form"

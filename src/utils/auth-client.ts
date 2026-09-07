@@ -56,7 +56,6 @@ export function clearCachedUser(): void {
   }
 }
 
-
 export async function authFetch(
   input: string,
   init?: RequestInit,

@@ -1,6 +1,7 @@
 "use client"
 
 import { ArrowLeft } from "lucide-react"
+import { Link } from "@/client/navigation"
 import { Button } from "@/components/ui/button"
 
 interface AuthLayoutProps {
@@ -32,7 +33,10 @@ export function AuthLayout({
         </div>
       )}
 
-      <a href="/" className="absolute top-8 left-8 z-50 transition-transform hover:-translate-x-1">
+      <Link
+        href="/"
+        className="absolute top-8 left-8 z-50 transition-transform hover:-translate-x-1"
+      >
         <Button
           variant="ghost"
           className={`gap-2 ${
@@ -44,7 +48,7 @@ export function AuthLayout({
           <ArrowLeft className="h-5 w-5" />
           <span className="font-medium">返回首页</span>
         </Button>
-      </a>
+      </Link>
 
       <div className="w-full max-w-5xl bg-white dark:bg-zinc-900 rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row min-h-150 z-10 relative">
         <div className="hidden md:block w-1/2 relative bg-gray-900">

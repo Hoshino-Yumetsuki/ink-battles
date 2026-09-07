@@ -66,7 +66,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
       } else {
         clearCachedUser()
       }
-
     } catch (error) {
       console.error("Failed to fetch user info", error)
       // Keep cached profile during transient network failures.
@@ -74,6 +73,19 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setLoading(false)
     }
   }, [])
+
+  // 登录/注册/登出（本页或其他标签页）后重新拉取用户信息，保证全局唯一数据源。
+  useEffect(() => {
+    const onChange = () => {
+      void refreshUser()
+    }
+    window.addEventListener("auth-change", onChange)
+    window.addEventListener("storage", onChange)
+    return () => {
+      window.removeEventListener("auth-change", onChange)
+      window.removeEventListener("storage", onChange)
+    }
+  }, [refreshUser])
 
   useEffect(() => {
     void refreshUser()

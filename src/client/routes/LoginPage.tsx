@@ -1,24 +1,38 @@
 "use client"
 
-import { useState, useRef } from "react"
-import { useRouter } from "@/client/navigation"
+import { useEffect, useState, useRef } from "react"
+import { Link, useRouter } from "@/client/navigation"
 import { Button } from "@/components/ui/button"
 import { AuthLayout } from "@/components/layout/auth-layout"
 import { User, Lock, Mail } from "lucide-react"
 import { CapWidget, type CapWidgetRef } from "@/components/wed/cap-widget"
 import { buildApiUrl } from "@/utils/api-url"
+import { useUser } from "@/components/providers/user-context"
 
 const isCaptchaEnabled = import.meta.env.VITE_CAP_ENABLED === "true"
 
 export function LoginPage() {
   const router = useRouter()
   const capWidgetRef = useRef<CapWidgetRef>(null)
+  const { user, loading: authLoading } = useUser()
 
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [captchaToken, setCaptchaToken] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+
+  // 已登录用户不该看到登录页；缓存命中时立即跳转，其余在 /me 校验完成后跳转。
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace("/dashboard")
+    }
+  }, [authLoading, user, router])
+
+  // 等待跳转期间不渲染表单，避免已登录用户瞥见登录界面。
+  if (user) {
+    return null
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -138,7 +152,7 @@ export function LoginPage() {
         )}
 
         <div className="flex gap-4 pt-2">
-          <a href="/register" className="flex-1">
+          <Link href="/register" className="flex-1">
             <Button
               type="button"
               className="w-full py-6 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 border-none text-base font-normal shadow-none"
@@ -146,7 +160,7 @@ export function LoginPage() {
             >
               注册
             </Button>
-          </a>
+          </Link>
           <Button
             type="submit"
             className="flex-1 py-6 bg-blue-500 hover:bg-blue-600 text-white text-base font-normal shadow-md shadow-blue-500/20"

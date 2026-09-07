@@ -1,11 +1,11 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
-import { usePathname, useRouter } from "@/client/navigation"
+import { Link, usePathname, useRouter } from "@/client/navigation"
 import { motion } from "framer-motion"
 import { Camera, FileText, LayoutDashboard, LogOut, Settings, User } from "lucide-react"
 import AnimatedBackground from "@/components/common/animated-background"
-import { UserProvider, useUser } from "@/components/providers/user-context"
+import { useUser } from "@/components/providers/user-context"
 import { compressImage } from "@/utils/image-compressor"
 import { buildApiUrl } from "@/utils/api-url"
 import { authFetch, cacheUser, clearAuthStorage, clearCachedUser } from "@/utils/auth-client"
@@ -47,8 +47,6 @@ function DashboardShell({ children }: { children: ReactNode }) {
   }, [loading, user, router])
 
   const handleLogout = useCallback(async () => {
-    clearAuthStorage(false)
-    clearCachedUser()
     try {
       await fetch(buildApiUrl("/api/auth/logout"), {
         method: "POST",
@@ -57,9 +55,11 @@ function DashboardShell({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Logout request failed", error)
     } finally {
-      window.location.href = "/"
+      clearCachedUser()
+      clearAuthStorage()
+      router.push("/")
     }
-  }, [])
+  }, [router])
 
   const handleAvatarUpload = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -168,25 +168,25 @@ function DashboardShell({ children }: { children: ReactNode }) {
             const Icon = item.icon
             const active = isActive(item.href)
             return (
-              <a
+              <Link
                 key={item.href}
                 href={item.href}
                 title={item.title}
                 className={`w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors ${active ? "bg-white/30" : "bg-white/20 hover:bg-white/30"}`}
               >
                 <Icon className="w-5 h-5 text-white" />
-              </a>
+              </Link>
             )
           })}
         </nav>
 
-        <a
+        <Link
           href="/"
           title="返回首页"
           className="mt-auto p-3 hover:bg-white/10 rounded-full cursor-pointer transition-colors"
         >
           <HomeGridIcon />
-        </a>
+        </Link>
       </motion.aside>
 
       <motion.div
@@ -205,24 +205,24 @@ function DashboardShell({ children }: { children: ReactNode }) {
           const active = isActive(item.href)
 
           return (
-            <a
+            <Link
               key={item.href}
               href={item.href}
               className={`flex-1 flex items-center justify-center py-3 rounded-full transition-colors ${active ? "bg-white/30" : "bg-white/20 hover:bg-white/30"}`}
             >
               <Icon className="w-5 h-5" />
-            </a>
+            </Link>
           )
         })}
 
         <div className="w-px h-6 bg-white/20"></div>
 
-        <a
+        <Link
           href="/"
           className="flex-1 flex items-center justify-center py-3 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
         >
           <HomeGridIcon />
-        </a>
+        </Link>
       </motion.div>
 
       <motion.main
@@ -314,9 +314,5 @@ function DashboardShell({ children }: { children: ReactNode }) {
 }
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
-  return (
-    <UserProvider>
-      <DashboardShell>{children}</DashboardShell>
-    </UserProvider>
-  )
+  return <DashboardShell>{children}</DashboardShell>
 }

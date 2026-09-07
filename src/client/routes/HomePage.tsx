@@ -14,6 +14,7 @@ import FeaturesSection from "@/components/sections/features-section"
 import CustomApiCard, { type CustomApiConfig } from "@/components/features/analysis/custom-api-card"
 import { calculateOverallScore } from "@/utils/score-calculator"
 import { useFingerprint } from "@/hooks/use-fingerprint"
+import { readCachedUser } from "@/utils/auth-client"
 import { buildApiUrl } from "@/utils/api-url"
 import type { CapWidgetRef } from "@/components/wed/cap-widget"
 
@@ -67,6 +68,7 @@ export function HomePage() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [progress, setProgress] = useState<number>(0)
   const [result, setResult] = useState<WriterAnalysisResult | null>(null)
+  // 先用缓存的登录状态渲染，/api/limits 返回后再校正，避免已登录用户看到登录按钮闪烁。
   const [usageInfo, setUsageInfo] = useState<
     | {
         isLoggedIn: boolean
@@ -76,7 +78,12 @@ export function HomePage() {
         resetTime?: string | null
       }
     | undefined
-  >(undefined)
+  >(() => {
+    const cached = readCachedUser<{ username?: string }>()
+    return cached
+      ? { isLoggedIn: true, username: cached.username, used: 0, limit: 0, resetTime: null }
+      : undefined
+  })
 
   const [enabledOptions, setEnabledOptions] = useState<{
     [key: string]: boolean

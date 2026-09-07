@@ -10,10 +10,11 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { motion, useScroll, useMotionValueEvent } from "framer-motion"
-import { useId, useState, useEffect } from "react"
+import { useId, useState } from "react"
 import { User, LogOut, LayoutDashboard } from "lucide-react"
 import { buildApiUrl } from "@/utils/api-url"
-import { authFetch, cacheUser, clearAuthStorage, clearCachedUser, readCachedUser } from "@/utils/auth-client"
+import { clearAuthStorage, clearCachedUser } from "@/utils/auth-client"
+import { useUser } from "@/components/providers/user-context"
 
 export default function Navbar() {
   const pathname = usePathname()
@@ -21,11 +22,10 @@ export default function Navbar() {
   const { scrollY } = useScroll()
   const [hidden, setHidden] = useState(false)
   const [lastScrollY, setLastScrollY] = useState(0)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [avatar, setAvatar] = useState<string | null>(() => {
-    const cached = readCachedUser<{ avatar?: string }>()
-    return cached?.avatar ?? null
-  })
+  // 登录状态来自全局 UserProvider：缓存命中立即渲染，/api/auth/me 返回后校正。
+  const { user, setUser } = useUser()
+  const isLoggedIn = !!user
+  const avatar = user?.avatar ?? null
   const logoTitleId = useId()
 
   const navItems = [
@@ -33,62 +33,20 @@ export default function Navbar() {
     { label: "使用指南", path: "/guide" }
   ]
 
-  useEffect(() => {
-    // 检查登录状态
-    const checkLoginStatus = async () => {
-      // access token 是 httpOnly cookie，直接请求 /api/auth/me 判断登录状态
-      try {
-        const res = await authFetch(
-          buildApiUrl("/api/auth/me"),
-          {
-            method: "GET"
-          },
-          { retryOnUnauthorized: false }
-        )
-        if (res.ok) {
-          const data = (await res.json()) as {
-            user?: {
-              avatar?: string
-            }
-          }
-          setIsLoggedIn(true)
-          if (data.user?.avatar) {
-            setAvatar(data.user.avatar)
-            const cached = readCachedUser<Record<string, unknown>>()
-            if (cached) cacheUser({ ...cached, avatar: data.user.avatar })
-          }
-        } else {
-          setIsLoggedIn(false)
-          setAvatar(null)
-          clearCachedUser()
-        }
-      } catch (error) {
-        console.error("Failed to fetch user info", error)
-        // 网络异常时不强制登出，保持当前状态
+  const handleLogout = async () => {
+    try {
+      await fetch(buildApiUrl("/api/auth/logout"), {
+        method: "POST",
+        credentials: "include"
+      })
+    } finally {
+      clearCachedUser()
+      setUser(null)
+      clearAuthStorage()
+      if (pathname !== "/") {
+        router.push("/")
       }
     }
-
-    void checkLoginStatus()
-    // 监听 storage 和 auth-change 事件以响应登录/登出变化
-    window.addEventListener("storage", checkLoginStatus)
-    window.addEventListener("auth-change", checkLoginStatus)
-
-    return () => {
-      window.removeEventListener("storage", checkLoginStatus)
-      window.removeEventListener("auth-change", checkLoginStatus)
-    }
-  }, []) // 依赖 pathname 变化来重新检查登录状态
-
-  const handleLogout = async () => {
-    clearAuthStorage(false)
-    clearCachedUser()
-    await fetch(buildApiUrl("/api/auth/logout"), {
-      method: "POST",
-      credentials: "include"
-    })
-
-    // 直接刷新页面以更新状态
-    window.location.href = "/"
   }
 
   useMotionValueEvent(scrollY, "change", (latest) => {

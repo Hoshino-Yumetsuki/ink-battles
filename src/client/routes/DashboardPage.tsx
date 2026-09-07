@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { motion } from "framer-motion"
+import { Link } from "@/client/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Clock, ExternalLink, FileText, GitBranch, Heart, TrendingUp, Zap } from "lucide-react"
@@ -162,10 +163,10 @@ export function DashboardPage() {
               </a>
             </Button>
             <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" asChild>
-              <a href="/guide">
+              <Link href="/guide">
                 <ExternalLink className="w-3.5 h-3.5" />
                 指南
-              </a>
+              </Link>
             </Button>
             <Button
               variant="ghost"
@@ -222,10 +223,10 @@ export function DashboardPage() {
         <h2 className="text-base font-bold mb-2">快速操作</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Button asChild className="h-full text-base">
-            <a href="/">新建分析</a>
+            <Link href="/">新建分析</Link>
           </Button>
           <Button asChild variant="outline" className="h-full text-base">
-            <a href="/dashboard/history">查看历史记录</a>
+            <Link href="/dashboard/history">查看历史记录</Link>
           </Button>
         </div>
       </Card>

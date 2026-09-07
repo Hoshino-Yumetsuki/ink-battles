@@ -1,15 +1,17 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "@/client/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AlertTriangle, Trash2, X } from "lucide-react"
 import { buildApiUrl } from "@/utils/api-url"
-import { authFetch, clearAuthStorage } from "@/utils/auth-client"
+import { authFetch, clearAuthStorage, clearCachedUser } from "@/utils/auth-client"
 
 export function DeleteAccountForm() {
+  const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -52,11 +54,10 @@ export function DeleteAccountForm() {
         throw new Error(data.error || "注销失败")
       }
 
-      // 清除本地存储
-      clearAuthStorage(false)
-
-      // 跳转首页并刷新
-      window.location.href = "/"
+      // 清除本地缓存并回首页（SPA 导航，避免整页刷新）
+      clearCachedUser()
+      clearAuthStorage()
+      router.push("/")
     } catch (err: any) {
       setError(err.message)
     } finally {

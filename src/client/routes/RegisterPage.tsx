@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { useRouter } from "@/client/navigation"
+import { Link, useRouter } from "@/client/navigation"
 import { Toaster, toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { AuthLayout } from "@/components/layout/auth-layout"
@@ -254,7 +254,7 @@ export function RegisterPage() {
         )}
 
         <div className="flex gap-4 pt-2">
-          <a href="/login" className="flex-1">
+          <Link href="/login" className="flex-1">
             <Button
               type="button"
               className="w-full py-6 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 border-none text-base font-normal shadow-none"
@@ -262,7 +262,7 @@ export function RegisterPage() {
             >
               登录
             </Button>
-          </a>
+          </Link>
           <Button
             type="submit"
             className="flex-1 py-6 bg-blue-600 hover:bg-blue-700 text-white text-base font-normal shadow-md shadow-blue-500/20"

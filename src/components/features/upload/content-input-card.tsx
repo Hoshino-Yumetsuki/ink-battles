@@ -10,6 +10,7 @@ import { compressImage, toReadableSize } from "@/utils/image-compressor"
 import { decodeTextFromFile } from "@/utils/decode-text"
 import { CapWidget, type CapWidgetRef } from "@/components/wed/cap-widget"
 import { buildApiUrl } from "@/utils/api-url"
+import { Link } from "@/client/navigation"
 
 interface UsageInfo {
   isLoggedIn: boolean
@@ -208,12 +209,15 @@ export default function ContentInputCard({
               )}
               {!usageInfo?.isLoggedIn ? (
                 <div className="flex gap-3 text-sm font-medium ml-auto">
-                  <a href="/login" className="text-blue-600 hover:text-blue-700 hover:underline">
+                  <Link href="/login" className="text-blue-600 hover:text-blue-700 hover:underline">
                     登录
-                  </a>
-                  <a href="/register" className="text-blue-600 hover:text-blue-700 hover:underline">
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="text-blue-600 hover:text-blue-700 hover:underline"
+                  >
                     注册
-                  </a>
+                  </Link>
                 </div>
               ) : (
                 <div className="text-xs text-muted-foreground ml-auto">
