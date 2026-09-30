@@ -1,18 +1,25 @@
-FROM node:lts-slim
+FROM node:lts-slim AS build
 
 WORKDIR /app
 
-COPY . .
+RUN npm install --global corepack && corepack enable
 
-RUN npm install -g corepack
-RUN corepack enable
-RUN corepack install -g yarn
-
-RUN export NODE_ENV=production
-
+COPY package.json yarn.lock .yarnrc.yml ./
 RUN yarn install --immutable
+
+COPY . .
 RUN yarn build
+
+FROM node:lts-slim AS runtime
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
 
 EXPOSE 3000
 
-CMD ["yarn", "start"]
+CMD ["node", "dist/server/index.js"]

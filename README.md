@@ -17,13 +17,13 @@ Ink Battles 是一个 AI 写作作品分析平台。它允许用户输入文本�
 ## 技术栈
 
 - Vite + React SPA
-- Elysia API
-- Cloudflare Workers + Rolldown worker build
+- Node.js + Elysia API
+- tsdown 服务端构建
 - Yarn 4
 
 ## 环境变量
 
-在根目录创建 `.env` 并填入。浏览器可见变量必须使用 `VITE_` 前缀，服务端密钥保持为 Worker 环境变量或 Wrangler secret。
+在根目录创建 `.env` 并填入。浏览器可见变量必须使用 `VITE_` 前缀，服务端密钥通过 Node.js 进程环境变量提供。
 
 ```
 # 客户端公开变量
@@ -60,22 +60,17 @@ yarn dev
 yarn build
 ```
 
-### 4. 本地预览
+### 4. 启动服务
 
 ```bash
-yarn preview
+yarn start
 ```
 
-### 5. 部署
+### 5. Docker
 
 ```bash
-yarn deploy
-```
-
-### 6. Cloudflare 类型生成
-
-```bash
-yarn cf-typegen
+docker build -t ink-battles .
+docker run --env-file .env -p 3000:3000 ink-battles
 ```
 
 ## 许可证

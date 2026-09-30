@@ -18,6 +18,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "vite.config.ts", "cloudflare-env.d.ts"],
+  "include": ["src", "vite.config.ts", "tsdown.config.ts"],
   "exclude": ["node_modules"]
 }

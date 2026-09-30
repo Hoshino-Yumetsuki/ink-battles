@@ -2,6 +2,7 @@ import { createServer, type IncomingMessage } from "node:http"
 import { Readable } from "node:stream"
 import type { ReadableStream as NodeReadableStream } from "node:stream/web"
 import { createServerApp } from "@/server/app"
+import { disconnectFromDatabase } from "@/utils/mongodb"
 
 const port = Number.parseInt(process.env.PORT ?? "3000", 10)
 const app = createServerApp()
@@ -41,7 +42,7 @@ function toRequest(req: IncomingMessage) {
   return new Request(url, init)
 }
 
-createServer(async (req, res) => {
+const server = createServer(async (req, res) => {
   try {
     const response = await app.fetch(toRequest(req))
     res.statusCode = response.status
@@ -63,4 +64,19 @@ createServer(async (req, res) => {
   }
 }).listen(port, () => {
   console.log(`Ink Battles server listening on http://localhost:${port}`)
+})
+
+async function shutdown(signal: string) {
+  console.log(`Received ${signal}, shutting down`)
+  server.close(async () => {
+    await disconnectFromDatabase()
+    process.exit(0)
+  })
+}
+
+process.once("SIGINT", () => {
+  void shutdown("SIGINT")
+})
+process.once("SIGTERM", () => {
+  void shutdown("SIGTERM")
 })

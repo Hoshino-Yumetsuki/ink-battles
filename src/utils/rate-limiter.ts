@@ -1,5 +1,5 @@
-import { type Db, type MongoClient, ObjectId } from "mongodb"
-import { getDatabase, closeDatabaseConnection } from "./mongodb"
+import { type Db, ObjectId } from "mongodb"
+import { getDatabase } from "./mongodb"
 import { logger } from "./logger"
 import { rateLimitConfig } from "@/config/rate-limit"
 
@@ -36,7 +36,7 @@ function formatWaitTime(seconds: number): string {
 
 export async function checkRateLimit(
   request: Request,
-  sharedDb?: { db: Db; client: MongoClient },
+  sharedDb?: Db,
   userId?: string
 ): Promise<{
   allowed: boolean
@@ -49,19 +49,10 @@ export async function checkRateLimit(
     return { allowed: true }
   }
 
-  let client: MongoClient | undefined
   let db: Db
-  const shouldCloseConnection = !sharedDb
 
   try {
-    if (sharedDb) {
-      db = sharedDb.db
-      client = sharedDb.client
-    } else {
-      const dbConnection = await getDatabase()
-      db = dbConnection.db
-      client = dbConnection.client
-    }
+    db = sharedDb ?? (await getDatabase())
 
     const now = new Date()
     const windowStart = new Date(now.getTime() - rateLimitConfig.windowSeconds * 1000)
@@ -249,16 +240,11 @@ export async function checkRateLimit(
   } catch (error) {
     logger.error("Error checking rate limit", error)
     return { allowed: false, error: "Rate limit check failed" }
-  } finally {
-    if (shouldCloseConnection && client) {
-      await closeDatabaseConnection(client)
-    }
   }
 }
-
 export async function incrementRateLimit(
   identifier: string | null,
-  sharedDb?: { db: Db; client: MongoClient }
+  sharedDb?: Db
 ): Promise<void> {
   if (!rateLimitConfig.enabled) {
     return
@@ -269,19 +255,10 @@ export async function incrementRateLimit(
     return
   }
 
-  let client: MongoClient | undefined
   let db: Db
-  const shouldCloseConnection = !sharedDb
 
   try {
-    if (sharedDb) {
-      db = sharedDb.db
-      client = sharedDb.client
-    } else {
-      const dbConnection = await getDatabase()
-      db = dbConnection.db
-      client = dbConnection.client
-    }
+    db = sharedDb ?? (await getDatabase())
 
     const now = new Date()
 
@@ -369,10 +346,6 @@ export async function incrementRateLimit(
     }
   } catch (error) {
     logger.error("Error incrementing rate limit", error)
-  } finally {
-    if (shouldCloseConnection && client) {
-      await closeDatabaseConnection(client)
-    }
   }
 }
 
@@ -402,21 +375,12 @@ async function cleanExpiredRecords(db: Db, windowStart: Date) {
 export async function recordVisit(
   fingerprint: string,
   metadata?: Record<string, any>,
-  sharedDb?: { db: Db; client: MongoClient }
+  sharedDb?: Db
 ) {
-  let client: MongoClient | undefined
   let db: Db
-  const shouldCloseConnection = !sharedDb
 
   try {
-    if (sharedDb) {
-      db = sharedDb.db
-      client = sharedDb.client
-    } else {
-      const dbConnection = await getDatabase()
-      db = dbConnection.db
-      client = dbConnection.client
-    }
+    db = sharedDb ?? (await getDatabase())
     const collection = db.collection("visits")
 
     await collection.insertOne({
@@ -429,9 +393,5 @@ export async function recordVisit(
     await collection.createIndex({ timestamp: 1 })
   } catch (error) {
     logger.error("Error recording visit", error)
-  } finally {
-    if (shouldCloseConnection && client) {
-      await closeDatabaseConnection(client)
-    }
   }
 }

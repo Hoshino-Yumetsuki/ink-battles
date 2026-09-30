@@ -13,12 +13,6 @@
 # testing
 /coverage
 
-# next.js
-/.next/
-/out/
-
-# open-next
-/.open-next/
 
 # production
 /build
@@ -36,18 +30,13 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env
 
-# vercel
-.vercel
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts
 
-.wrangler
 .sisyphus
 superpowers
 migration
 dist
-cloudflare-env.d.ts
 .playwright-mcp
 .omc

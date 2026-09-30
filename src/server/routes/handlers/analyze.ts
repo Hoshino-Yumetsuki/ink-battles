@@ -8,10 +8,9 @@ import { verifyToken } from "@/utils/jwt"
 import { encryptObject, decryptObject } from "@/utils/crypto"
 import { calculateOverallScore } from "@/utils/score-calculator"
 import { extractCodeBlock } from "@/utils/markdown-parser"
-import { getDatabase, closeDatabaseConnection } from "@/utils/mongodb"
 import { llmConfig } from "@/config/llm"
 import { verifyCaptchaWithDb, isCaptchaEnabled } from "@/utils/captcha"
-import type { Db, MongoClient } from "mongodb"
+import type { Db } from "mongodb"
 import { extractAccessTokenFromRequest } from "@/utils/auth-request"
 import { getAuthCookieNames } from "@/utils/auth-session"
 import { ObjectId } from "mongodb"
@@ -675,9 +674,7 @@ function parseFormJsonField(raw: FormDataEntryValue | null): Record<string, bool
   }
 }
 
-export const maxDuration = 300
-
-export const POST = withDatabase(async (request: Request, db: Db, dbClient: MongoClient) => {
+export const POST = withDatabase(async (request: Request, db: Db) => {
   let userId: string | undefined
   const token = extractAccessTokenFromRequest(request, "authorization")
 
@@ -725,10 +722,10 @@ export const POST = withDatabase(async (request: Request, db: Db, dbClient: Mong
   if (userApiConfig) {
     rateLimitResult = { allowed: true }
   } else if (userId) {
-    rateLimitResult = await checkRateLimit(request, { db, client: dbClient }, userId)
+    rateLimitResult = await checkRateLimit(request, db, userId)
     identifier = rateLimitResult.identifier
   } else {
-    rateLimitResult = await checkRateLimit(request, { db, client: dbClient })
+    rateLimitResult = await checkRateLimit(request, db)
     identifier = rateLimitResult.identifier
   }
 
@@ -751,14 +748,14 @@ export const POST = withDatabase(async (request: Request, db: Db, dbClient: Mong
     )
   }
 
-  if (!userId && identifier && db && dbClient) {
+  if (!userId && identifier) {
     await recordVisit(
       identifier,
       {
         userAgent: request.headers.get("user-agent"),
         timestamp: new Date()
       },
-      { db, client: dbClient }
+      db
     ).catch((err) => logger.error("Failed to record visit", err))
   }
 
@@ -977,9 +974,8 @@ export const POST = withDatabase(async (request: Request, db: Db, dbClient: Mong
           parsedResult = parseAnalysisText(generatedText)
         }
 
-        // incrementRateLimit 需要独立连接，因为主连接在 stream 返回后会关闭
         if (identifier) {
-          await incrementRateLimit(identifier).catch((err) =>
+          await incrementRateLimit(identifier, db).catch((err) =>
             logger.error("Failed to increment rate limit", err)
           )
         }
@@ -988,15 +984,9 @@ export const POST = withDatabase(async (request: Request, db: Db, dbClient: Mong
         parsedResult.overallScore = score
 
         if (userId && encKey) {
-          let saveClient: MongoClient | undefined
           try {
             const encryptedResult = await encryptObject(parsedResult, encKey)
-
-            const dbResult = await getDatabase()
-            const saveDb = dbResult.db
-            saveClient = dbResult.client
-
-            const historyCollection = saveDb.collection("analysis_history")
+            const historyCollection = db.collection("analysis_history")
 
             await historyCollection.insertOne({
               userId,
@@ -1007,10 +997,6 @@ export const POST = withDatabase(async (request: Request, db: Db, dbClient: Mong
             })
           } catch (error) {
             logger.error("Failed to save analysis history", error)
-          } finally {
-            if (saveClient) {
-              await closeDatabaseConnection(saveClient)
-            }
           }
         } else if (userId && !encKey) {
           logger.warn("User logged in but no enc_key cookie found, history not saved", { userId })
