@@ -2,6 +2,7 @@ import { createServer, type IncomingMessage } from "node:http"
 import { Readable } from "node:stream"
 import type { ReadableStream as NodeReadableStream } from "node:stream/web"
 import { createServerApp } from "@/server/app"
+import { setResponseHeaders } from "@/server/http/response"
 import { disconnectFromDatabase } from "@/utils/mongodb"
 
 const port = Number.parseInt(process.env.PORT ?? "3000", 10)
@@ -47,9 +48,7 @@ const server = createServer(async (req, res) => {
     const response = await app.fetch(toRequest(req))
     res.statusCode = response.status
     res.statusMessage = response.statusText
-    response.headers.forEach((value, name) => {
-      res.setHeader(name, value)
-    })
+    setResponseHeaders(response, (name, value) => res.setHeader(name, value))
 
     if (!response.body || req.method === "HEAD") {
       res.end()
