@@ -4,9 +4,9 @@ WORKDIR /app
 
 RUN npm install --g corepack
 RUN corepack enable
-RUN corepack prepare
 
 COPY package.json yarn.lock .yarnrc.yml ./
+RUN corepack prepare
 RUN yarn install --immutable
 
 COPY . .
