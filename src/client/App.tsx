@@ -1,6 +1,7 @@
 import Navbar from "@/components/layout/navbar"
 import Footer from "@/components/layout/footer"
 import ErrorBoundary from "@/components/providers/error-boundary"
+import { AppConfigProvider } from "@/components/providers/app-config-provider"
 import { ThemeProvider } from "@/components/providers/theme-provider"
 import { UserProvider } from "@/components/providers/user-context"
 import { DashboardLayout } from "@/client/DashboardLayout"
@@ -43,16 +44,18 @@ function CurrentRoute() {
 
 export function App() {
   return (
-    <ThemeProvider defaultTheme="system">
-      <ErrorBoundary>
-        <UserProvider>
-          <Navbar />
-          <main className="flex-1">
-            <CurrentRoute />
-          </main>
-          <Footer />
-        </UserProvider>
-      </ErrorBoundary>
-    </ThemeProvider>
+    <AppConfigProvider>
+      <ThemeProvider defaultTheme="system">
+        <ErrorBoundary>
+          <UserProvider>
+            <Navbar />
+            <main className="flex-1">
+              <CurrentRoute />
+            </main>
+            <Footer />
+          </UserProvider>
+        </ErrorBoundary>
+      </ThemeProvider>
+    </AppConfigProvider>
   )
 }

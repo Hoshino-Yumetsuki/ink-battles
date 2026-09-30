@@ -6,14 +6,14 @@ import { Loader2, Lock, ShieldCheck, AlertTriangle } from "lucide-react"
 import { CapWidget, type CapWidgetRef } from "@/components/wed/cap-widget"
 import { buildApiUrl } from "@/utils/api-url"
 import { authFetch } from "@/utils/auth-client"
-
-const isCaptchaEnabled = import.meta.env.VITE_CAP_ENABLED === "true"
+import { useAppConfig } from "@/components/providers/app-config-provider"
 
 interface ChangePasswordFormProps {
   onSuccess: () => void
 }
 
 export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
+  const { captchaEnabled: isCaptchaEnabled } = useAppConfig()
   const capWidgetRef = useRef<CapWidgetRef>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")

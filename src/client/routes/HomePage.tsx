@@ -17,8 +17,7 @@ import { useFingerprint } from "@/hooks/use-fingerprint"
 import { readCachedUser } from "@/utils/auth-client"
 import { buildApiUrl } from "@/utils/api-url"
 import type { CapWidgetRef } from "@/components/wed/cap-widget"
-
-const isCaptchaEnabled = import.meta.env.VITE_CAP_ENABLED === "true"
+import { useAppConfig } from "@/components/providers/app-config-provider"
 
 export interface MermaidDiagram {
   type: string
@@ -58,8 +57,10 @@ interface ApiErrorResponse {
 }
 
 export function HomePage() {
+  const { captchaEnabled: isCaptchaEnabled } = useAppConfig()
   const { fingerprint } = useFingerprint()
   const capWidgetRef = useRef<CapWidgetRef>(null)
+
   const [content, setContent] = useState<string>("")
   const [uploadedText, setUploadedText] = useState<string>("")
   const [file, setFile] = useState<File | null>(null)

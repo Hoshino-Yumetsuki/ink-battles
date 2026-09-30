@@ -23,13 +23,9 @@ Ink Battles 是一个 AI 写作作品分析平台。它允许用户输入文本�
 
 ## 环境变量
 
-在根目录创建 `.env` 并填入。浏览器可见变量必须使用 `VITE_` 前缀，服务端密钥通过 Node.js 进程环境变量提供。
+前端通过当前 Node 服务的相对路径访问 API，并在启动时从后端 `/api/config` 获取公开配置；不需要在前端构建阶段注入环境变量。
 
-```
-# 客户端公开变量
-VITE_API_BASE_URL=
-VITE_CAP_ENABLED=false
-
+```bash
 # 服务端密钥和业务配置
 OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 OPENAI_BASE_URL=https://api.openai.com/v1
@@ -38,6 +34,7 @@ USE_STREAMING=false
 MONGODB_URI=
 MONGODB_DB_NAME=ink-battles
 JWT_SECRET=
+CAP_ENABLED=false
 ```
 
 ## 快速开始

@@ -8,11 +8,11 @@ import { User, Lock, Mail } from "lucide-react"
 import { CapWidget, type CapWidgetRef } from "@/components/wed/cap-widget"
 import { buildApiUrl } from "@/utils/api-url"
 import { useUser } from "@/components/providers/user-context"
-
-const isCaptchaEnabled = import.meta.env.VITE_CAP_ENABLED === "true"
+import { useAppConfig } from "@/components/providers/app-config-provider"
 
 export function LoginPage() {
   const router = useRouter()
+  const { captchaEnabled: isCaptchaEnabled } = useAppConfig()
   const capWidgetRef = useRef<CapWidgetRef>(null)
   const { user, loading: authLoading } = useUser()
 
