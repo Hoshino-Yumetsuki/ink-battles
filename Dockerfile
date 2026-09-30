@@ -2,7 +2,9 @@ FROM node:lts-slim AS build
 
 WORKDIR /app
 
-RUN npm install --global corepack && corepack enable
+RUN npm install --g corepack
+RUN corepack enable
+RUN corepack prepare
 
 COPY package.json yarn.lock .yarnrc.yml ./
 RUN yarn install --immutable
