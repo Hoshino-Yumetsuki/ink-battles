@@ -84,6 +84,10 @@ export function createServerApp(options: ServerAppOptions = {}) {
 
       return assetResponse(clientRoot, pathname)
     })
+    .get("/G13s14MbIAADlgb.jpg", ({ request }) => {
+      const pathname = new URL(request.url).pathname
+      return assetResponse(clientRoot, pathname)
+    })
     .onError(({ code, request }) => {
       const pathname = new URL(request.url).pathname
 
